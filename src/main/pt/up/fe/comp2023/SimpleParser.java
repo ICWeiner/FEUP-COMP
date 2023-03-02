@@ -1,5 +1,7 @@
 package pt.up.fe.comp2023;
 
+import pt.up.fe.comp2023.JavammLexer;
+import pt.up.fe.comp2023.JavammParser;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import pt.up.fe.comp.jmm.analysis.table.SymbolTable;
@@ -11,7 +13,7 @@ import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 
-
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.Map;
 
@@ -47,6 +49,8 @@ public class SimpleParser implements JmmParser {
             var tokens = new CommonTokenStream(lex);
             // Transforms tokens into a parse tree
             var parser = new JavammParser(tokens);
+
+            //System.out.println(parser.getNumberOfSyntaxErrors());
 
             // Convert ANTLR CST to JmmNode AST
             return AntlrParser.parse(lex, parser, startingRule)
