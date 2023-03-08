@@ -6,7 +6,8 @@ grammar Javamm;
 
 INTEGER : [0-9]+ ;
 ID : [a-zA-Z_][a-zA-Z_0-9]* ;
-
+LineComment: '//' ~[\r\n]* -> skip;
+Comment: '/*' .*? '*/' -> skip;
 WS : [ \t\n\r\f]+ -> skip ;
 
 program
@@ -15,11 +16,11 @@ program
     ;
 
 importDeclaration
-    : 'import' value=ID ('.' value=ID)* ';'
+    : 'import' value+=ID ('.' value+=ID)* ';'
     ;
 
 classDeclaration
-    : 'class' value=ID ('extends' ID)? '{' (varDeclaration)* (methodDeclaration)* '}'
+    : 'class' value+=ID ('extends' value+=ID)? '{' (varDeclaration)* (methodDeclaration)* '}'
     ;
 
 varDeclaration
@@ -27,8 +28,8 @@ varDeclaration
     ;
 
 methodDeclaration
-    : ('public')? type value=ID '(' (type ID (',' type ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}' #CustomMethod
-    | ('public')? 'static' 'void' 'main' '(' ID '[' ']' ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
+    : ('public')? type value+=ID '(' (type value+=ID (',' type value+=ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}' #CustomMethod
+    | ('public')? 'static' 'void' 'main' '(' value+=ID '[' ']' value+=ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
     ;
 
 type
