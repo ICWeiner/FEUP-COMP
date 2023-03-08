@@ -7,6 +7,8 @@ import pt.up.fe.comp.jmm.parser.JmmParserResult;
 public class JmmAnalyser implements JmmAnalysis {
     @Override
     public JmmSemanticsResult semanticAnalysis(JmmParserResult jmmParserResult) {
-        return null;
+
+
+        return new JmmSemanticsResult(jmmParserResult,null,null);//TODO: add error reports and symbol table here
     }
 }
