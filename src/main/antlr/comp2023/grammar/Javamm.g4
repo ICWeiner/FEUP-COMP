@@ -12,7 +12,7 @@ WS : [ \t\n\r\f]+ -> skip ;
 
 program
     : (importDeclaration)* classDeclaration EOF #ImportStmt
-    | statement+ EOF #ProgramStmt
+    | statement+ EOF #ProgramStmt //not needed?
     ;
 
 importDeclaration
@@ -38,6 +38,11 @@ type
     | 'int' #IntegerType
     | value=ID #CustomType
     ;
+/* //TODO: implement this better version
+type locals[boolean isArray=false, boolean isPrimitive=true]
+    : name = (INT | BOOLEAN) (LSQUARE RSQUARE {$isArray=true;})? #primitiveType
+    | value=ID #CustomType
+    ;*/
 
 statement
     : '{' ( statement )* '}' #Curlys
