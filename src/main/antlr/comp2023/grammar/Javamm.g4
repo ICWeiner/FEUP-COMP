@@ -26,12 +26,11 @@ classDeclaration
     ;
 
 varDeclaration
-    : kind=type name=ID ';'
+    : type name=ID ';'
     ;
 
-
 methodDeclaration
-    : ('public')? kind=type name=ID '(' (paramKind+=type paramName+=ID (',' paramKind+=type paramName+=ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' returnType=expression ';' '}' #CustomMethod
+    : ('public')? type name=ID '(' (type paramName+=ID (',' type paramName+=ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' returnType=expression ';' '}' #CustomMethod
     | ('public')? 'static' 'void' 'main' '(' value+=ID '[' ']' value+=ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
     ;
 
