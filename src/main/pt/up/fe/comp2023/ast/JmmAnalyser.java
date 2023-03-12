@@ -36,9 +36,9 @@ public class JmmAnalyser implements JmmAnalysis {
         System.out.println("Visitor - Filling Symbol Table...");
         SymbolTableVisitor visitor = new SymbolTableVisitor(table, reports);
 
-        System.out.println("Node is of type " + node);
-        System.out.println("Node has this many children:" + node.getNumChildren());
-        System.out.println("First children is a " + node.getJmmChild(0));
+        System.out.println("Root node is of type " + node);
+        /*System.out.println("Node has this many children:" + node.getNumChildren());
+        System.out.println("First children is a " + node.getJmmChild(0));*/
 
         visitor.visit(node);
         System.out.println("Symbol Table Filled!");

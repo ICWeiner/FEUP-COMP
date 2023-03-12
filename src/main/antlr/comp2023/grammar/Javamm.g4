@@ -18,27 +18,28 @@ program
     ;
 
 importDeclaration
-    : 'import' value+=ID ('.' value+=ID)* ';'
+    : 'import' name+=ID ('.' name+=ID)* ';'
     ;
 
 classDeclaration
-    : 'class' value=ID ('extends' superValue=ID)? '{' (varDeclaration)* (methodDeclaration)* '}' //TODO:Naming of fields might need revision
+    : 'class' name=ID ('extends' superName=ID)? '{' (varDeclaration)* (methodDeclaration)* '}' //TODO:Naming of fields might need revision
     ;
 
 varDeclaration
-    : type value=ID ';'
+    : kind=type name=ID ';'
     ;
 
+
 methodDeclaration
-    : ('public')? type value+=ID '(' (type value+=ID (',' type value+=ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}' #CustomMethod
+    : ('public')? kind=type name=ID '(' (paramKind+=type paramName+=ID (',' paramKind+=type paramName+=ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' returnType=expression ';' '}' #CustomMethod
     | ('public')? 'static' 'void' 'main' '(' value+=ID '[' ']' value+=ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
     ;
 
 type
-    : 'int' '[' ']' #IntArrayType
-    | 'boolean' #BooleanType
-    | 'int' #IntegerType
-    | value=ID #CustomType
+    : 'int' '[' ']' //#IntArrayType//TODO: this adds clutter to visitor, rethink names here aswell
+    | 'boolean' //#BooleanType
+    | 'int' //#IntegerType
+    | name=ID //#CustomType
     ;
 /* //TODO: implement this better version
 type locals[boolean isArray=false, boolean isPrimitive=true]
@@ -51,8 +52,8 @@ statement
     | 'if' '(' expression ')' statement 'else' statement #IfElseStmt
     | 'while' '(' expression ')' statement #WhileStmt
     | expression ';' #ExprStmt
-    | value=ID '=' expression ';' #Assignment
-    | value=ID '[' expression ']' '=' expression ';' #ArrayAssignment
+    | name=ID '=' expression ';' #Assignment
+    | name=ID '[' expression ']' '=' expression ';' #ArrayAssignment
     ;
 
 expression

@@ -31,8 +31,8 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         this.addVisit("ClassDeclaration", this::dealWithClassDeclaration);
         this.addVisit("MainMethod", this::dealWithMainDeclaration);
         this.addVisit("CustomMethod", this::dealWithMethodDeclaration);
-        this.addVisit("Param", this::dealWithParameter);
-        this.addVisit("type", this::dealWithVarDeclaration);
+        //this.addVisit("Type", this::dealWithParameter);
+        this.addVisit("VarDeclaration", this::dealWithVarDeclaration);
         this.addVisit("ImportStmt", this::dealWithProgram); //TODO: sort of hacked into working, should probably fix
 
 
@@ -50,26 +50,34 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
     private String dealWithImport(JmmNode node, String space) {
         System.out.println("Import visit happening");
-        table.addImport(node.get("value"));
+        table.addImport(node.get("name"));
         return space + "IMPORT";
     }
 
     private String dealWithClassDeclaration(JmmNode node, String space) {
         System.out.println("Class visit happening");
-        table.setClassName(node.get("value"));
+        table.setClassName(node.get("name"));
         try {
-            table.setSuper(node.get("superValue"));
+            table.setSuper(node.get("superName"));
         } catch (NullPointerException ignored) {
 
         }
 
         scope = "CLASS";
+
+        System.out.println("Class node has :" + node.getNumChildren() + " children");
+        for ( JmmNode child : node.getChildren()){
+            //System.out.println("Child of type:" + child + " found");
+            visit(child);
+        }
+
+
         return space + "CLASS";
     }
 
     private String dealWithVarDeclaration(JmmNode node, String space) {
         System.out.println("Var visit happening");
-        Symbol field = new Symbol(SymbolTable.getType(node, "type"), node.get("identifier"));
+        Symbol field = new Symbol(SymbolTable.getType(node, "kind"), node.get("name"));
 
         if (scope.equals("CLASS")) {
             if (table.fieldExists(field.getName())) {
@@ -79,19 +87,22 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
                         Integer.parseInt(node.get("col")),
                         "Variable already declared: " + field.getName()));
                 return space + "ERROR";
+            }else{
+                table.addField(field);
             }
-            table.addField(field);
         } else {
             if (table.getCurrentMethod().fieldExists(field.getName())) {
                 this.reports.add(new Report(
-                        ReportType.ERROR,
-                        Stage.SEMANTIC,
+                        ReportType.ERROR, Stage.SEMANTIC,
                         Integer.parseInt(node.get("line")),
                         Integer.parseInt(node.get("col")),
                         "Variable already declared: " + field.getName()));
                 return space + "ERROR";
             }
-            table.getCurrentMethod().addLocalVariable(field);
+            else{
+                table.getCurrentMethod().addLocalVariable(field);
+            }
+
         }
 
         return space + "VARDECLARATION";
@@ -100,9 +111,15 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     private String dealWithMethodDeclaration(JmmNode node, String space) {
         System.out.println("Method visit happening");
         scope = "METHOD";
-        table.addMethod(node.get("name"), SymbolTable.getType(node, "return"));
+        table.addMethod(node.get("name"), SymbolTable.getType(node, "returnType"));
 
-        node.put("params", "");
+        for ( JmmNode child : node.getChildren()){//TODO: Not working fix in grammar or here, idk
+            System.out.println("parameter of type: " + child.getKind() + " has: "+ node.get("paramKind") + " name:" + node.get("paramName") + " found");
+            table.getCurrentMethod().addParameter(new Symbol(SymbolTable.getType(node, "kind"), node.get("name")));
+            //visit(child);
+        }
+
+        //node.put("params", "");
 
         return node.toString();
     }
@@ -110,7 +127,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     private String dealWithParameter(JmmNode node, String space) {
         System.out.println("Parameter visit happening");
         if (scope.equals("METHOD")) {
-            Symbol field = new Symbol(SymbolTable.getType(node, "type"), node.get("value"));
+            Symbol field = new Symbol(SymbolTable.getType(node, "kind"), node.get("value"));
             table.getCurrentMethod().addParameter(field);
 
 
