@@ -10,8 +10,10 @@ LineComment: '//' ~[\r\n]* -> skip;
 Comment: '/*' .*? '*/' -> skip;
 WS : [ \t\n\r\f]+ -> skip ;
 
+//TODO:Review names of rules and fields here
+
 program
-    : (importDeclaration)* classDeclaration EOF #ImportStmt
+    : (importDeclaration)* value=classDeclaration EOF #ImportStmt //TODO: name not too good
     | statement+ EOF #ProgramStmt //not needed?
     ;
 
@@ -20,7 +22,7 @@ importDeclaration
     ;
 
 classDeclaration
-    : 'class' value+=ID ('extends' value+=ID)? '{' (varDeclaration)* (methodDeclaration)* '}'
+    : 'class' value=ID ('extends' superValue=ID)? '{' (varDeclaration)* (methodDeclaration)* '}' //TODO:Naming of fields might need revision
     ;
 
 varDeclaration

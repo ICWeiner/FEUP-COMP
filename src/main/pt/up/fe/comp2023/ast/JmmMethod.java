@@ -95,4 +95,22 @@ public class JmmMethod {
         return new ArrayList<>(this.localVars.keySet());
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder("ast.JmmMethod").append("\n");
+
+        builder.append("Name: ").append(methodName).append(" | Return: ").append(returnType).append("\n");
+
+        builder.append("Parameters").append("\n");
+        for (Map.Entry<Symbol, String> param : this.parameters)
+            builder.append("\t").append(param.getKey()).append("\n");
+
+        builder.append("Local Variables").append("\n");
+        for (Map.Entry<Symbol, Boolean> localVariable : this.localVars.entrySet()) {
+            builder.append("\t").append(localVariable.getKey()).append(" Initialized: ").append(localVariable.getValue()).append("\n");
+        }
+
+        return builder.toString();
+    }
+
 }
