@@ -31,8 +31,9 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         this.addVisit("ClassDeclaration", this::dealWithClassDeclaration);
         this.addVisit("MainMethod", this::dealWithMainDeclaration);
         this.addVisit("CustomMethod", this::dealWithMethodDeclaration);
+        this.addVisit("VarDeclaration", this::dealWithMethodDeclaration);
         //this.addVisit("Type", this::dealWithParameter);
-        this.addVisit("VarDeclaration", this::dealWithVarDeclaration);
+
         this.addVisit("ImportStmt", this::dealWithProgram); //TODO: sort of hacked into working, should probably fix
         //this.addVisit("Type",this::dealWithParameter);
 
@@ -76,7 +77,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         return space + "CLASS";
     }
 
-    private String dealWithVarDeclaration(JmmNode node, String varName, String space) {
+    private String dealWithVarDeclaration(JmmNode node, String space) {
         System.out.println("Var visit happening");
         System.out.println("Var node has the following attributes " +node.getAttributes());
         System.out.println("Var node has this many children " +node.getNumChildren());
