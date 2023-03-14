@@ -9,6 +9,10 @@ ID : [a-zA-Z_][a-zA-Z_0-9]* ;
 LineComment: '//' ~[\r\n]* -> skip;
 Comment: '/*' .*? '*/' -> skip;
 WS : [ \t\n\r\f]+ -> skip ;
+LSQUARE : '[' ;
+RSQUARE : ']' ;
+BOOLEAN : ( 'true' | 'false' );
+
 
 //TODO:Review names of rules and fields here
 
@@ -30,20 +34,21 @@ varDeclaration
     ;
 
 methodDeclaration
-    : ('public')? type name=ID '(' (type paramName+=ID (',' type paramName+=ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' returnType=expression ';' '}' #CustomMethod
+    : ('public')? type name=ID '(' (type paramName+=ID (',' type paramName+=ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}' #CustomMethod
     | ('public')? 'static' 'void' 'main' '(' value+=ID '[' ']' value+=ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
     ;
 
-type
-    : 'int' '[' ']' //#IntArrayType//TODO: this adds clutter to visitor, rethink names here aswell
-    | 'boolean' //#BooleanType
-    | 'int' //#IntegerType
+type locals [boolean isArray = false]
+    : name='int' ('[' ']'{$isArray = true;})? //#IntArrayType//TODO: this adds clutter to visitor, rethink names here aswell
+    | name='boolean' //#BooleanType
+    | name='int' //#IntegerType
     | name=ID //#CustomType
     ;
-/* //TODO: implement this better version
+ //TODO: implement this better version
+ /*
 type locals[boolean isArray=false, boolean isPrimitive=true]
-    : name = (INT | BOOLEAN) (LSQUARE RSQUARE {$isArray=true;})? #primitiveType
-    | value=ID #CustomType
+    : name = (INTEGER | BOOLEAN) (LSQUARE RSQUARE {$isArray=true;})? #primitiveType
+    | name = ID #CustomType
     ;*/
 
 statement
@@ -61,7 +66,7 @@ expression
     | '(' expression ')' #Parenthesis
     | expression '[' expression ']' #ArrayAccess
     | expression '.' value=ID '(' ( expression ( ',' expression )* )? ')' #MethodAccess
-    | 'new' ID '(' ')' #NewObject
+    | 'new' name=ID '(' ')' #NewObject
     | 'new' 'int' '[' expression ']' #NewArray
     | expression op='.' 'length' #AccessOp
     | op='!' expression #UnaryOp

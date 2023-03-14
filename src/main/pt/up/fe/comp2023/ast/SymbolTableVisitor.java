@@ -34,6 +34,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         //this.addVisit("Type", this::dealWithParameter);
         this.addVisit("VarDeclaration", this::dealWithVarDeclaration);
         this.addVisit("ImportStmt", this::dealWithProgram); //TODO: sort of hacked into working, should probably fix
+        //this.addVisit("Type",this::dealWithParameter);
 
 
         this.setDefaultVisit(this::defaultVisit);
@@ -75,11 +76,14 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         return space + "CLASS";
     }
 
-    private String dealWithVarDeclaration(JmmNode node, String space) {
+    private String dealWithVarDeclaration(JmmNode node, String varName, String space) {
         System.out.println("Var visit happening");
-        Symbol field = new Symbol(SymbolTable.getType(node, "kind"), node.get("name"));
+        System.out.println("Var node has the following attributes " +node.getAttributes());
+        System.out.println("Var node has this many children " +node.getNumChildren());
+        System.out.println(node.getJmmChild(0).getAttributes());
+        //Symbol field = new Symbol(SymbolTable.getType(node, "name",node.get("isArray")), varName);
 
-        if (scope.equals("CLASS")) {
+        /*if (scope.equals("CLASS")) {
             if (table.fieldExists(field.getName())) {
                 this.reports.add(new Report(
                         ReportType.ERROR, Stage.SEMANTIC,
@@ -103,7 +107,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
                 table.getCurrentMethod().addLocalVariable(field);
             }
 
-        }
+        }*/
 
         return space + "VARDECLARATION";
     }
@@ -111,12 +115,17 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     private String dealWithMethodDeclaration(JmmNode node, String space) {
         System.out.println("Method visit happening");
         scope = "METHOD";
-        table.addMethod(node.get("name"), SymbolTable.getType(node, "returnType"));
 
+
+        //table.addMethod(node.get("name"), SymbolTable.getType(node, "returnType"));
+
+        System.out.println("Method has this many children:" + node.getNumChildren());
+        //for(int i = 0; i < node.getNumChildren())
         for ( JmmNode child : node.getChildren()){//TODO: Not working fix in grammar or here, idk
-            System.out.println("parameter of type: " + child.getKind() + /*" has: "+ node.get("paramKind") +*/ " name:" + node.get("name") + " found");
-            table.getCurrentMethod().addParameter(new Symbol(SymbolTable.getType(node, "kind"), node.get("name")));
-            //visit(child);
+            System.out.println(child.getAttributes());
+            System.out.println("parameter of type: " + child.getKind() + /*" has: "+ node.get("paramKind") +*/" name:" + node.get("paramName") + " found");
+            //table.getCurrentMethod().addParameter(new Symbol(SymbolTable.getType(node, "kind"), node.get("name")));
+            visit(child);
         }
 
         //node.put("params", "");
@@ -124,9 +133,10 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         return space + "METHODDECLARATION";
     }
 
-    /*private String dealWithParameter(JmmNode node, String space) {
+    private String dealWithParameter(JmmNode node,String nodeName ,String space) {
         System.out.println("Parameter visit happening");
-        if (scope.equals("METHOD")) {
+        //System.out.println(node.get("ID"));
+        /*if (scope.equals("METHOD")) {
             Symbol field = new Symbol(SymbolTable.getType(node, "kind"), node.get("value"));
             table.getCurrentMethod().addParameter(field);
 
@@ -139,10 +149,10 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
             String paramType = field.getType().getName() + ((field.getType().isArray()) ? " []" : "");
             node.getJmmParent().put("params", node.getJmmParent().get("params") + paramType + ",");
-        }
+        }*/
 
         return space + "PARAM";
-    }*/
+    }
 
     private String dealWithMainDeclaration(JmmNode node, String space) {
         System.out.println("Main visit happening");

@@ -18,12 +18,10 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     private final Map<Symbol, Boolean> fields = new HashMap<>();
     private final List<JmmMethod> methods = new ArrayList<>();
 
-    public static Type getType(JmmNode node, String attribute) {
+    public static Type getType(JmmNode node, String attribute,Boolean isArray) {
         Type type;
-        if (node.get(attribute).equals("int[]"))
-            type = new Type("int", true);
-        else if (node.get(attribute).equals("int"))
-            type = new Type("int", false);
+        if (node.get(attribute).equals("int"))
+            type = new Type("int", isArray);
         else
             type = new Type(node.get(attribute), false);
 
