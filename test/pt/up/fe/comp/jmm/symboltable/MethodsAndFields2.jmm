@@ -1,0 +1,7 @@
+class MethodsAndFields{
+    public int[] all(int a, boolean b, MethodsAndFields maf){
+        int[] c;
+        int a;
+        return c;
+    }
+}

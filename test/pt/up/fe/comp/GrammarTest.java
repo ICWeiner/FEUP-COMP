@@ -243,4 +243,9 @@ public class GrammarTest {
     //@Test
     //public void testClassParams(){ TestUtils.parseVerbose("class Parameters{public int all(int a, boolean b, Parameters maf){return 0;}",INSTANCE_METHOD);}
 
+    @Test
+    public void testMethodVarsDcl() {
+        TestUtils.parseVerbose("public int[] all(int a, boolean b, MethodsAndFields maf){int[] c;return c;}",
+                INSTANCE_METHOD);
+    }
 }
