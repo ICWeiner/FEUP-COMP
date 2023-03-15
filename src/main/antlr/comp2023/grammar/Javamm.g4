@@ -32,13 +32,12 @@ varDeclaration
 
 methodDeclaration
     : ('public')? type '(' (type (',' type )* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}' #CustomMethod
-    | ('public')? 'static' 'void' name='main' '('  'String[' ']' value+=ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
+    | ('public')? 'static' 'void' name='main' '(' value+=ID '[' ']' value+=ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
     ;
 
 type locals [boolean isArray = false]
-    : typeName='int' ('[' ']'{$isArray = true;})? name=ID //#IntArrayType//TODO: this adds clutter to visitor, rethink names here aswell
+    : typeName='int' ('[' ']'{$isArray = true;})? name=ID //#IntType
     | typeName='boolean' name=ID //#BooleanType
-    | typeName='int' name=ID //#IntegerType
     | typeName=ID name=ID //#CustomType
     ;
 
