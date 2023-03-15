@@ -9,6 +9,7 @@ import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.specs.util.utilities.StringLines;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         this.addVisit("ClassDeclaration", this::dealWithClassDeclaration);
         this.addVisit("MainMethod", this::dealWithMainDeclaration);
         this.addVisit("CustomMethod", this::dealWithMethodDeclaration);
-        this.addVisit("VarDeclaration", this::dealWithMethodDeclaration);
+        //this.addVisit("VarDeclaration", this::dealWithMethodDeclaration);
         //this.addVisit("Type", this::dealWithParameter);
 
         this.addVisit("ImportStmt", this::dealWithProgram); //TODO: sort of hacked into working, should probably fix
@@ -117,19 +118,65 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         System.out.println("Method visit happening");
         scope = "METHOD";
 
+        String methodName = node.get("name");
 
+        List<Symbol> methodParams = new ArrayList<>();
+
+        List<String> params;
+
+        List<Symbol> localVars = new ArrayList<>();
+        /*
+        if(methodName.equals("main")){
+            Type paramsType = new Type("String",true);
+            String paramName = node.get("args");
+            Symbol paramSymbol = new Symbol(paramsType,paramName);
+            methodParams.add(paramSymbol);
+            Type returnType = new Type("void", false);
+            //methodsReturns.put(methodName,returnType); not like this
+
+            for(JmmNode child: node.getChildren()){
+                //add child here
+            }
+        }*/
+
+        //else {
+            params = (List<String>) node.getObject("paramName");
+            JmmNode childType = node.getChildren().get(0);
+            String returnTypeName = childType.get("Name");
+            Boolean returnIsArray = (Boolean) childType.getObject("isArray");
+            Type type = new Type(returnTypeName, returnIsArray);
+
+            //methodsReturns.put(methodName, type); not like this
+
+            for(JmmNode child: node.getChildren()){
+                if(child.getKind().equals("Declaration")){
+                    //addLocalVariable(declaration, localVars);
+                }
+                else if(child.getKind().equals("Type")) {
+                    String typeName = child.get("name");
+                    Boolean isArray = (Boolean) child.getObject("isArray");
+                    String paramName = params.get(child.getIndexOfSelf());
+                    Type paramType = new Type(typeName, isArray);
+                    Symbol symbol = new Symbol(paramType, paramName);
+                    methodParams.add(symbol);
+                }
+            }
+        //}
+        //methodsParams.put(methodName, methodParams);
+        //localVariables.put(methodName, localVars);
+    /*
         //table.addMethod(node.get("name"), SymbolTable.getType(node, "returnType"));
 
         System.out.println("Method has this many children:" + node.getNumChildren());
         //for(int i = 0; i < node.getNumChildren())
         for ( JmmNode child : node.getChildren()){//TODO: Not working fix in grammar or here, idk
             System.out.println(child.getAttributes());
-            System.out.println("parameter of type: " + child.getKind() + /*" has: "+ node.get("paramKind") +*/" name:" + node.get("paramName") + " found");
+            System.out.println("parameter of type: " + child.getKind() + /*" has: "+ node.get("paramKind") +*//*" name:" + node.get("paramName") + " found");
             //table.getCurrentMethod().addParameter(new Symbol(SymbolTable.getType(node, "kind"), node.get("name")));
             visit(child);
         }
 
-        //node.put("params", "");
+        //node.put("params", "");*/
 
         return space + "METHODDECLARATION";
     }
