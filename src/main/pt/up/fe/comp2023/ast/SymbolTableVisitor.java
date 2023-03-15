@@ -27,12 +27,8 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     protected void buildVisitor() {
         this.addVisit("ImportDeclaration", this::dealWithImport);
         this.addVisit("ClassDeclaration", this::dealWithClassDeclaration);
-        this.addVisit("MainMethod", this::dealWithMainDeclaration);
-        this.addVisit("CustomMethod", this::dealWithMethodDeclaration);;
-
+        this.addVisit("MethodDeclaration", this::dealWithMethodDeclaration);;
         this.addVisit("ImportStmt", this::dealWithProgram); //TODO: sort of hacked into working, should probably fix
-
-        this.setDefaultVisit(this::defaultVisit);
     }
 
     private String dealWithProgram(JmmNode node, String space){
@@ -72,6 +68,11 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     private String dealWithMethodDeclaration(JmmNode node, String space) {
         scope = "METHOD";
 
+        if (node.getKind().equals("MainMethod")){
+            scope = "MAIN";
+            table.addMethod("main", new Type("void", false));
+            node.put("params", "");
+        } else{
             for(JmmNode child: node.getChildren()){
                 if(child.getIndexOfSelf() == 0){
                     table.addMethod(child.get("name"),new Type(child.get("typeName"), (Boolean) child.getObject("isArray")));
@@ -84,31 +85,9 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
                     table.getCurrentMethod().addParameter(new Symbol(new Type(child.get("typeName"), (Boolean) child.getObject("isArray")),child.get("name")));
                 }
             }
+        }
+
 
         return space + "METHODDECLARATION";
-    }
-
-
-    private String dealWithMainDeclaration(JmmNode node, String space) {
-        scope = "MAIN";
-
-        table.addMethod("main", new Type("void", false));
-
-        node.put("params", "");
-
-        return node.toString();
-    }
-
-    private String defaultVisit(JmmNode node, String space) {
-        String content = space + node.getKind();
-        String attrs = node.getAttributes()
-                .stream()
-                .filter(a -> !a.equals("line"))
-                .map(a -> a + "=" + node.get(a))
-                .collect(Collectors.joining(", ", "[", "]"));
-
-        content += ((attrs.length() > 2) ? attrs : "");
-
-        return content;
     }
 }
