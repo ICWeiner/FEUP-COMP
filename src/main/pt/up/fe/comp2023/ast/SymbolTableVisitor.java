@@ -70,8 +70,16 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
         System.out.println("Class node has :" + node.getNumChildren() + " children");
         for ( JmmNode child : node.getChildren()){
-            //System.out.println("Child of type:" + child + " found");
-            visit(child);
+            System.out.println("child of type: " + child.getKind());
+            if(child.getKind().equals("VarDeclaration")){
+
+                table.addField(new Symbol(new Type(child.getJmmChild(0).get("typeName"), (Boolean) child.getJmmChild(0).getObject("isArray")),child.getJmmChild(0).get("name")));
+                System.out.println("Hello");
+                //addLocalVariable(declaration, localVars); add local var here
+            }else{
+                visit(child);
+            }
+
         }
 
 
@@ -149,7 +157,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
                     table.addMethod(child.get("name"),new Type(child.get("typeName"), (Boolean) child.getObject("isArray")));
                 }
                 else if(child.getKind().equals("varDeclaration")){
-
+                    table.addField(new Symbol(new Type(child.get("typeName"), (Boolean) child.getObject("isArray")),child.get("name")));
                     //addLocalVariable(declaration, localVars); add local var here
                 }
                 else if(child.getKind().equals("Type")) {
