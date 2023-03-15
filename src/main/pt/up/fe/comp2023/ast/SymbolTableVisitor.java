@@ -74,19 +74,19 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
             node.put("params", "");
         } else{
             for(JmmNode child: node.getChildren()){
+                System.out.println("Child node of type:" + child.getKind() +  " has this many children:" + child.getNumChildren());
                 if(child.getIndexOfSelf() == 0){
                     table.addMethod(child.get("name"),new Type(child.get("typeName"), (Boolean) child.getObject("isArray")));
                 }
-                else if(child.getKind().equals("varDeclaration")){
-                    table.addField(new Symbol(new Type(child.get("typeName"), (Boolean) child.getObject("isArray")),child.get("name")));
-                    //addLocalVariable(declaration, localVars); add local var here
+                else if(child.getKind().equals("VarDeclaration")){
+                    //table.addField(new Symbol(new Type(child.get("typeName"), (Boolean) child.getObject("isArray")),child.get("name"))); delete?
+                    table.addFieldToCurrentMethod(new Symbol(new Type(child.getJmmChild(0).get("typeName"), (Boolean) child.getJmmChild(0).getObject("isArray")),child.getJmmChild(0).get("name")));
                 }
                 else if(child.getKind().equals("Type")) {
                     table.getCurrentMethod().addParameter(new Symbol(new Type(child.get("typeName"), (Boolean) child.getObject("isArray")),child.get("name")));
                 }
             }
         }
-
 
         return space + "METHODDECLARATION";
     }
