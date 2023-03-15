@@ -41,12 +41,12 @@ type locals [boolean isArray = false]
     | typeName='int' name=ID //#IntegerType
     | typeName=ID name=ID //#CustomType
     ;
- //TODO: implement this better version
  /*
 type locals[boolean isArray=false, boolean isPrimitive=true]
     : name = (INTEGER | BOOLEAN) (LSQUARE RSQUARE {$isArray=true;})? #primitiveType
     | name = ID #CustomType
-    ;*/
+    ;
+*/
 
 statement
     : '{' ( statement )* '}' #Curlys

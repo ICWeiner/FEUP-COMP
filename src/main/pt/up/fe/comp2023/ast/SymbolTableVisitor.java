@@ -118,7 +118,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         System.out.println("Method visit happening");
         scope = "METHOD";
 
-        String methodName = node.get("name");
+        String methodName = node.getJmmChild(0).get("name");
 
         List<Symbol> methodParams = new ArrayList<>();
 
@@ -140,25 +140,27 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         }*/
 
         //else {
-            params = (List<String>) node.getObject("paramName");
-            JmmNode childType = node.getChildren().get(0);
-            String returnTypeName = childType.get("Name");
-            Boolean returnIsArray = (Boolean) childType.getObject("isArray");
-            Type type = new Type(returnTypeName, returnIsArray);
+            //params = (List<String>) node.getObject("paramName");
 
             //methodsReturns.put(methodName, type); not like this
 
             for(JmmNode child: node.getChildren()){
-                if(child.getKind().equals("Declaration")){
-                    //addLocalVariable(declaration, localVars);
+                if(child.getIndexOfSelf() == 0){
+                    table.addMethod(child.get("name"),new Type(child.get("typeName"), (Boolean) child.getObject("isArray")));
+                }
+                else if(child.getKind().equals("varDeclaration")){
+
+                    //addLocalVariable(declaration, localVars); add local var here
                 }
                 else if(child.getKind().equals("Type")) {
+                    table.getCurrentMethod().addParameter(new Symbol(new Type(child.get("typeName"), (Boolean) child.getObject("isArray")),child.get("name")));
+                    /*
                     String typeName = child.get("name");
                     Boolean isArray = (Boolean) child.getObject("isArray");
                     String paramName = params.get(child.getIndexOfSelf());
                     Type paramType = new Type(typeName, isArray);
                     Symbol symbol = new Symbol(paramType, paramName);
-                    methodParams.add(symbol);
+                    methodParams.add(symbol);*/
                 }
             }
         //}
