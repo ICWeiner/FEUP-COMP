@@ -97,7 +97,7 @@ public class JmmMethod {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder("ast.JmmMethod").append("\n");
+        StringBuilder builder = new StringBuilder("JmmMethod").append("\n");
 
         builder.append("Name: ").append(methodName).append(" | Return: ").append(returnType).append("\n");
 

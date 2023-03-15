@@ -36,22 +36,18 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithProgram(JmmNode node, String space){
-        System.out.println("Program visit happening");
         for ( JmmNode child : node.getChildren()){
-            System.out.println("Child of type:" + child + " found");
             visit(child);
         }
         return space + "PROGRAM";
     }
 
     private String dealWithImport(JmmNode node, String space) {
-        System.out.println("Import visit happening");
         table.addImport(node.get("name"));
         return space + "IMPORT";
     }
 
     private String dealWithClassDeclaration(JmmNode node, String space) {
-        System.out.println("Class visit happening");
         table.setClassName(node.get("name"));
         try {
             table.setSuper(node.get("superName"));
@@ -61,12 +57,9 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
         scope = "CLASS";
 
-        System.out.println("Class node has :" + node.getNumChildren() + " children");
         for ( JmmNode child : node.getChildren()){
-            System.out.println("child of type: " + child.getKind());
             if(child.getKind().equals("VarDeclaration")){
                 table.addField(new Symbol(new Type(child.getJmmChild(0).get("typeName"), (Boolean) child.getJmmChild(0).getObject("isArray")),child.getJmmChild(0).get("name")));
-                System.out.println("Hello");
             }else{
                 visit(child);
             }
@@ -77,7 +70,6 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
 
     private String dealWithMethodDeclaration(JmmNode node, String space) {
-        System.out.println("Method visit happening");
         scope = "METHOD";
 
             for(JmmNode child: node.getChildren()){
@@ -98,7 +90,6 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
 
 
     private String dealWithMainDeclaration(JmmNode node, String space) {
-        System.out.println("Main visit happening");
         scope = "MAIN";
 
         table.addMethod("main", new Type("void", false));
@@ -109,7 +100,6 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     }
 
     private String defaultVisit(JmmNode node, String space) {
-        System.out.println("Default visit happening");
         String content = space + node.getKind();
         String attrs = node.getAttributes()
                 .stream()
