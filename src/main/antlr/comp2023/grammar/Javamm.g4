@@ -27,19 +27,19 @@ classDeclaration
     ;
 
 varDeclaration
-    : type name=ID ';'
+    : type ';'
     ;
 
 methodDeclaration
-    : ('public')? type name=ID '(' (type paramName+=ID (',' type paramName+=ID)* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}' #CustomMethod
+    : ('public')? type '(' (type (',' type )* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}' #CustomMethod
     | ('public')? 'static' 'void' name='main' '(' value+=ID '[' ']' value+=ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
     ;
 
 type locals [boolean isArray = false]
-    : name='int' ('[' ']'{$isArray = true;})? ID //#IntArrayType//TODO: this adds clutter to visitor, rethink names here aswell
-    | name='boolean' //#BooleanType
-    | name='int' //#IntegerType
-    | name=ID //#CustomType
+    : typeName='int' ('[' ']'{$isArray = true;})? name=ID //#IntArrayType//TODO: this adds clutter to visitor, rethink names here aswell
+    | typeName='boolean' name=ID //#BooleanType
+    | typeName='int' name=ID //#IntegerType
+    | typeName=ID name=ID //#CustomType
     ;
  //TODO: implement this better version
  /*
