@@ -74,7 +74,6 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
             node.put("params", "");
         } else{
             for(JmmNode child: node.getChildren()){
-                System.out.println("Child node of type:" + child.getKind() +  " has this many children:" + child.getNumChildren());
                 if(child.getIndexOfSelf() == 0){
                     table.addMethod(child.get("name"),new Type(child.get("typeName"), (Boolean) child.getObject("isArray")));
                 }

@@ -32,7 +32,7 @@ varDeclaration
 
 methodDeclaration
     : ('public')? type '(' (type (',' type )* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}' #CustomMethod
-    | ('public')? 'static' 'void' name='main' '(' value+=ID '[' ']' value+=ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
+    | ('public')? 'static' 'void' name='main' '('  'String[' ']' value+=ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
     ;
 
 type locals [boolean isArray = false]

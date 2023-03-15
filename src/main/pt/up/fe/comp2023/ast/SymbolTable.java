@@ -142,8 +142,6 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     public void addFieldToCurrentMethod(Symbol field){
         if (currentMethod == null) return;
         methods.get(methods.size() -1).addLocalVariable(field);
-        System.out.println("OLA 2");
-        System.out.println(methods.get(methods.size()-1).getLocalVariables());
     }
 
     public void addImport(String importStatement) {
