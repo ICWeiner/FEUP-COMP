@@ -81,7 +81,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
                     //table.addField(new Symbol(new Type(child.get("typeName"), (Boolean) child.getObject("isArray")),child.get("name"))); delete?
                     table.addFieldToCurrentMethod(new Symbol(new Type(child.getJmmChild(0).get("typeName"), (Boolean) child.getJmmChild(0).getObject("isArray")),child.getJmmChild(0).get("name")));
                 }
-                else if(child.getKind().equals("Type")) {
+                else if(child.getKind().equals("Type")) {//TODO:make this more similar to line above
                     table.getCurrentMethod().addParameter(new Symbol(new Type(child.get("typeName"), (Boolean) child.getObject("isArray")),child.get("name")));
                 }
             }
