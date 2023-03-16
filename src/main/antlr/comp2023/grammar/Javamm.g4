@@ -16,6 +16,7 @@ WS : [ \t\n\r\f]+ -> skip ;
 program
     : (importDeclaration)* classDeclaration EOF #ImportStmt //TODO: name not too good
     | statement+ EOF #ProgramStmt //not needed?
+    //|: (importDeclaration | WS)* (classDeclaration | WS)* (statement | WS)* EOF #EntireProgram TODO:Tentative program statement
     ;
 
 importDeclaration
@@ -42,7 +43,7 @@ type locals [boolean isArray = false]
     ;
 
 statement
-    : '{' ( statement )* '}' #Curlys
+    : '{' ( statement )* '}' #BlockStatement
     | 'if' '(' expression ')' statement 'else' statement #IfElseStmt
     | 'while' '(' expression ')' statement #WhileStmt
     | expression ';' #ExprStmt
@@ -53,14 +54,14 @@ statement
 expression
     : '(' expression ')' #Parenthesis
     | expression '[' expression ']' #ArrayAccess
-    | expression '.' value=ID '(' ( expression ( ',' expression )* )? ')' #MethodAccess
-    | expression op='.' 'length' #AccessOp
+    | expression '.' value=ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
+    | expression op='.' 'length' #LenghtOp //#AccessOp
     | op='!' expression #UnaryOp
     | expression op=('*' | '/') expression #BinaryOp
     | expression op=('+' | '-') expression #BinaryOp
     | expression op=('&&' | '<') expression #BinaryOp
-    | 'new' name=ID '(' ')' #NewObject
-    | 'new' 'int' '[' expression ']' #NewArray
+    | 'new' name=ID '(' ')' #GeneralDeclaration
+    | 'new' 'int' '[' expression ']' #IntArrayDeclaration
     | value=('true' | 'false') #Boolean
     | 'this' #This
     | value=INTEGER #Integer
