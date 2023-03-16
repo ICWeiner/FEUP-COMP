@@ -46,7 +46,7 @@ public class Launcher {
             System.out.println(parserResult.getRootNode().toTree());
 
         // Check if there are parsing errors
-        //TestUtils.noErrors(parserResult.getReports());
+        TestUtils.noErrors(parserResult.getReports());
 
 
         // ... add remaining stages

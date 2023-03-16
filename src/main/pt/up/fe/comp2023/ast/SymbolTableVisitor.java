@@ -28,7 +28,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         this.addVisit("ImportDeclaration", this::dealWithImport);
         this.addVisit("ClassDeclaration", this::dealWithClassDeclaration);
         this.addVisit("MethodDeclaration", this::dealWithMethodDeclaration);;
-        this.addVisit("ImportStmt", this::dealWithProgram); //TODO: sort of hacked into working, should probably fix
+        this.addVisit("Program", this::dealWithProgram); //TODO: sort of hacked into working, should probably fix
     }
 
     private String dealWithProgram(JmmNode node, String space){

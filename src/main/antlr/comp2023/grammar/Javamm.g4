@@ -14,8 +14,9 @@ WS : [ \t\n\r\f]+ -> skip ;
 //TODO:Review names of rules and fields here
 
 program
-    : (importDeclaration)* classDeclaration EOF #ImportStmt //TODO: name not too good
-    | statement+ EOF #ProgramStmt //not needed?
+    : (importDeclaration | WS)* (classDeclaration | WS)* (statement | WS)* EOF
+     //(importDeclaration)* classDeclaration EOF #ImportStmt //TODO: name not too good
+    //| statement+ EOF #ProgramStmt //not needed?
     //|: (importDeclaration | WS)* (classDeclaration | WS)* (statement | WS)* EOF #EntireProgram TODO:Tentative program statement
     ;
 
