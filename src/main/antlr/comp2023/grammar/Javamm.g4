@@ -54,13 +54,13 @@ expression
     : '(' expression ')' #Parenthesis
     | expression '[' expression ']' #ArrayAccess
     | expression '.' value=ID '(' ( expression ( ',' expression )* )? ')' #MethodAccess
-    | 'new' name=ID '(' ')' #NewObject
-    | 'new' 'int' '[' expression ']' #NewArray
     | expression op='.' 'length' #AccessOp
     | op='!' expression #UnaryOp
     | expression op=('*' | '/') expression #BinaryOp
     | expression op=('+' | '-') expression #BinaryOp
     | expression op=('&&' | '<') expression #BinaryOp
+    | 'new' name=ID '(' ')' #NewObject
+    | 'new' 'int' '[' expression ']' #NewArray
     | value=('true' | 'false') #Boolean
     | 'this' #This
     | value=INTEGER #Integer
