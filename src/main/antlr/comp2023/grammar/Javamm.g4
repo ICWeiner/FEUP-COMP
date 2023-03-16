@@ -11,13 +11,10 @@ Comment: '/*' .*? '*/' -> skip;
 WS : [ \t\n\r\f]+ -> skip ;
 
 
-//TODO:Review names of rules and fields here
+//TODO:Review names of rules and fields here --> Looks better now?
 
 program
-    : (importDeclaration | WS)* (classDeclaration | WS)* (statement | WS)* EOF
-     //(importDeclaration)* classDeclaration EOF #ImportStmt //TODO: name not too good
-    //| statement+ EOF #ProgramStmt //not needed?
-    //|: (importDeclaration | WS)* (classDeclaration | WS)* (statement | WS)* EOF #EntireProgram TODO:Tentative program statement
+    : (importDeclaration | WS)* (classDeclaration | WS)* (statement | WS)* EOF //dont particularly like statement part, but it wont pass a tutorial test withoutit
     ;
 
 importDeclaration
@@ -25,7 +22,7 @@ importDeclaration
     ;
 
 classDeclaration
-    : 'class' name=ID ('extends' superName=ID)? '{' (varDeclaration)* (methodDeclaration)* '}' //TODO:Naming of fields might need revision
+    : 'class' name=ID ('extends' superName=ID)? '{' (varDeclaration)* (methodDeclaration)* '}'
     ;
 
 varDeclaration
@@ -60,7 +57,8 @@ expression
     | op='!' expression #UnaryOp
     | expression op=('*' | '/') expression #BinaryOp
     | expression op=('+' | '-') expression #BinaryOp
-    | expression op=('&&' | '<') expression #BinaryOp
+    | expression op='<' expression #BinaryOp
+    | expression op='&&' expression #BinaryOp
     | 'new' name=ID '(' ')' #GeneralDeclaration
     | 'new' 'int' '[' expression ']' #IntArrayDeclaration
     | value=('true' | 'false') #Boolean

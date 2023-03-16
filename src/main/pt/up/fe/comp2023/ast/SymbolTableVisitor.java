@@ -28,7 +28,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         this.addVisit("ImportDeclaration", this::dealWithImport);
         this.addVisit("ClassDeclaration", this::dealWithClassDeclaration);
         this.addVisit("MethodDeclaration", this::dealWithMethodDeclaration);;
-        this.addVisit("Program", this::dealWithProgram); //TODO: sort of hacked into working, should probably fix
+        this.addVisit("Program", this::dealWithProgram);
     }
 
     private String dealWithProgram(JmmNode node, String space){
@@ -68,25 +68,31 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     private String dealWithMethodDeclaration(JmmNode node, String space) {
         scope = "METHOD";
 
-        if (node.getKind().equals("MainMethod")){
+        if (node.getKind().equals("MainMethod")){//TODO: is this really needed, cant we just treat main like any other method? :thinking:
             scope = "MAIN";
             table.addMethod("main", new Type("void", false));
-            node.put("params", "");
+            //node.put("params", "");
+            for(JmmNode child: node.getChildren()){
+                populateMethod(child);
+            }
         } else{
             for(JmmNode child: node.getChildren()){
                 if(child.getIndexOfSelf() == 0){
                     table.addMethod(child.get("name"),new Type(child.get("typeName"), (Boolean) child.getObject("isArray")));
                 }
-                else if(child.getKind().equals("VarDeclaration")){
-                    //table.addField(new Symbol(new Type(child.get("typeName"), (Boolean) child.getObject("isArray")),child.get("name"))); delete?
-                    table.addFieldToCurrentMethod(new Symbol(new Type(child.getJmmChild(0).get("typeName"), (Boolean) child.getJmmChild(0).getObject("isArray")),child.getJmmChild(0).get("name")));
-                }
-                else if(child.getKind().equals("Type")) {//TODO:make this more similar to line above
-                    table.getCurrentMethod().addParameter(new Symbol(new Type(child.get("typeName"), (Boolean) child.getObject("isArray")),child.get("name")));
-                }
+                else populateMethod(child);
             }
         }
 
         return space + "METHODDECLARATION";
+    }
+
+    private void populateMethod(JmmNode child) {//Add fields and local vars to corresponding method in symbol table
+        if(child.getKind().equals("VarDeclaration")){
+            table.addFieldToCurrentMethod(new Symbol(new Type(child.getJmmChild(0).get("typeName"), (Boolean) child.getJmmChild(0).getObject("isArray")),child.getJmmChild(0).get("name")));
+        }
+        else if(child.getKind().equals("Type")) {
+            table.addParameterToCurrentMethod(new Symbol(new Type(child.get("typeName"), (Boolean) child.getObject("isArray")),child.get("name")));
+        }
     }
 }

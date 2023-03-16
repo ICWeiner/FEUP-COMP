@@ -144,6 +144,11 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         methods.get(methods.size() -1).addLocalVariable(field);
     }
 
+    public void addParameterToCurrentMethod(Symbol param){
+        if (currentMethod == null) return;
+        currentMethod.addParameter(param);
+    }
+
     public void addImport(String importStatement) {
         imports.add(importStatement);
     }

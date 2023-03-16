@@ -99,15 +99,15 @@ public class JmmMethod {
     public String toString() {
         StringBuilder builder = new StringBuilder("JmmMethod").append("\n");
 
-        builder.append("Name: ").append(methodName).append(" | Return: ").append(returnType).append("\n");
+        builder.append("Name: ").append(methodName).append(" | Return: ").append(returnType.print()).append("\n");
 
         builder.append("Parameters").append("\n");
         for (Map.Entry<Symbol, String> param : this.parameters)
-            builder.append("\t").append(param.getKey()).append("\n");
+            builder.append("\t").append("Type: ").append(param.getKey().getType().print()).append(" Name: ").append(param.getKey().getName()).append("\n");
 
         builder.append("Local Variables").append("\n");
         for (Map.Entry<Symbol, Boolean> localVariable : this.localVars.entrySet()) {
-            builder.append("\t").append(localVariable.getKey()).append(" Initialized: ").append(localVariable.getValue()).append("\n");
+            builder.append("\t").append("Type: ").append(localVariable.getKey().getType().print()).append(" Name: ").append(localVariable.getKey().getName()).append(" Initialized: ").append(localVariable.getValue()).append("\n");
         }
 
         return builder.toString();
