@@ -42,6 +42,7 @@ public class JmmAnalyser implements JmmAnalysis {
 
         System.out.println(table);
 
+        System.out.println("Visitor - Semantic Analysis...");
         JmmExpressionAnalyser expressionAnalyser = new JmmExpressionAnalyser(table, reports);
         expressionAnalyser.visit(node, null);
         System.out.println("Semantic Analysis Done!");
