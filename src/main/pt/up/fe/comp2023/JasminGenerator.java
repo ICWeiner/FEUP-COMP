@@ -191,5 +191,86 @@ public class JasminGenerator {
     private String dealWithSingleOpInstruction(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         return loadElement(instruction.getSingleOperand(), varTable);
     }
-}
 
+    private String loadElement(Element element, HashMap<String, Descriptor> varTable) {
+        if (element instanceof LiteralElement) {
+            String num = ((LiteralElement) element).getLiteral();
+            this.incrementStackCounter(1);
+            return this.selectConstType(num) + "\n";
+        }
+        else if (element instanceof ArrayOperand) {
+            ArrayOperand OperandofArray = (ArrayOperand) element;
+            // Load array
+            String stringBuilder = String.format("aload%s\n", this.getVirtualReg(OperandofArray.getName(), varTable));
+            this.incrementStackCounter(1);
+            // Load index
+            stringBuilder += loadElement(OperandofArray.getIndexOperands().get(0), varTable);
+            // ..., arrayref, index →
+            // ..., value
+            this.decrementStackCounter(1);
+            return stringBuilder + "iaload\n";
+        }
+        else if (element instanceof Operand) {
+            Operand OperandofArray = (Operand) element;
+            switch (OperandofArray.getType().getTypeOfElement()) {
+                case THIS -> {
+                    this.incrementStackCounter(1);
+                    return "aload_0\n";
+                }
+                case INT32, BOOLEAN -> {
+                    this.incrementStackCounter(1);
+                    return String.format("iload%s\n", this.getVirtualReg(OperandofArray.getName(), varTable));
+                }
+                case OBJECTREF, ARRAYREF -> {
+                    this.incrementStackCounter(1);
+                    return String.format("aload%s\n", this.getVirtualReg(OperandofArray.getName(), varTable));
+                }
+                case CLASS -> { //TODO deal with class
+                    return "";
+                }
+                default -> {
+                    return "Error in operand loadElements\n";
+                }
+            }
+        }
+        System.out.println(element);
+        return "Error in loadElements\n";
+    }
+
+    private String getVirtualReg(String varName, HashMap<String, Descriptor> varTable) {
+        int virtualReg = varTable.get(varName).getVirtualReg();
+        if (virtualReg > 3) {
+            return " " + virtualReg;
+        }
+        return "_" + virtualReg;
+    }
+
+    private String getTrueLabel() {
+        return "myTrue" + this.ConditionInt;
+    }
+
+    private String getEndIfLabel() {
+        return "myEndIf" + this.ConditionInt;
+    }
+
+    private String selectConstType(String literal){
+        return Integer.parseInt(literal) < -1 || Integer.parseInt(literal) > 5 ?
+                Integer.parseInt(literal) < -128 || Integer.parseInt(literal) > 127 ?
+                        Integer.parseInt(literal) < -32768 || Integer.parseInt(literal) > 32767 ?
+                                "ldc " + literal :
+                                "sipush " + literal :
+                        "bipush " + literal :
+                "iconst_" + literal;
+    }
+
+    private void decrementStackCounter(int i) {
+        this.CounterStack -= i;
+    }
+
+    private void incrementStackCounter(int i) {
+        this.CounterStack += i;
+        if (this.CounterStack > this.CounterMax) {
+            this.CounterMax = CounterStack;
+        }
+    }
+}
