@@ -42,5 +42,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         for(JmmNode child : node.getChildren()){
 
         }
+        return null;
     }
 }

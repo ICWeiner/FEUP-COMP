@@ -16,9 +16,9 @@ public class JmmOptimizer implements JmmOptimization {
         OllirVisitor ollirVisitor = new OllirVisitor((SymbolTable) jmmSemanticsResult.getSymbolTable(),jmmSemanticsResult.getReports());
 
         System.out.println("Generating OLLIR...");
-        String ollirResult = ollirVisitor.visit(root);
+        //String ollirResult = ollirVisitor.visit(root);
         System.out.println("OLLIR sucessfully generated");
 
-        return new OllirResult(jmmSemanticsResult, ollirResult,jmmSemanticsResult.getReports());
+        return null;//new OllirResult(jmmSemanticsResult, ollirResult,jmmSemanticsResult.getReports());
     }
 }
