@@ -7,6 +7,8 @@ import pt.up.fe.comp.jmm.ollir.OllirResult;
 import pt.up.fe.comp2023.ast.OllirVisitor;
 import pt.up.fe.comp2023.ast.SymbolTable;
 
+import java.util.Arrays;
+
 public class JmmOptimizer implements JmmOptimization {
 
     @Override
@@ -16,9 +18,9 @@ public class JmmOptimizer implements JmmOptimization {
         OllirVisitor ollirVisitor = new OllirVisitor((SymbolTable) jmmSemanticsResult.getSymbolTable(),jmmSemanticsResult.getReports());
 
         System.out.println("Generating OLLIR...");
-        //String ollirResult = ollirVisitor.visit(root);
+        String ollirResult = (String) ollirVisitor.visit(root, Arrays.asList("DEFAULT_VISIT")).get(0);
         System.out.println("OLLIR sucessfully generated");
 
-        return null;//new OllirResult(jmmSemanticsResult, ollirResult,jmmSemanticsResult.getReports());
+        return new OllirResult(jmmSemanticsResult, ollirResult,jmmSemanticsResult.getReports());
     }
 }
