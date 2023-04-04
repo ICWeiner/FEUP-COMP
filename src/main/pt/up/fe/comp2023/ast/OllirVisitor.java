@@ -3,6 +3,7 @@ package pt.up.fe.comp2023.ast;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.*;
 
@@ -21,7 +22,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
     @Override
     protected void buildVisitor() {
         this.addVisit("Program",this::dealWithProgram);
+
         this.addVisit("ClassDeclaration",this::dealWithClass);
+        this.addVisit("MethodDeclaration", this::dealWithMethodDeclaration);
 
         // setDefaultVisit(this::defaultVisit);
     }
@@ -77,5 +80,56 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         System.out.println(ollir);
 
         return Collections.singletonList(ollir.toString());
+    }
+
+
+    private List<Object> dealWithMethodDeclaration(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        visited.add(node);
+
+        scope = "METHOD";
+
+        List<Type> params = JmmMethod.parseParameters(node.get("params"));
+
+        try {
+            if (node.getKind() == "MainMethod")
+                currentMethod = table.getMethod("main", Collections.singletonList(new Type("String", true)), new Type("void", false));
+            else
+                currentMethod = table.getMethod(node.get("name"), params, SymbolTable.getType(node, "return"));
+
+        } catch (Exception e) {
+            currentMethod = null;
+            e.printStackTrace();
+        }
+
+        StringBuilder builder;
+
+        if (node.getKind() == "MainMethod")
+            builder = new StringBuilder(OllirTemplates.method(
+                    "main",
+                    currentMethod.parametersToOllir(),
+                    OllirTemplates.type(currentMethod.getReturnType()),
+                    true));
+        else
+            builder = new StringBuilder(OllirTemplates.method(
+                    currentMethod.getName(),
+                    currentMethod.parametersToOllir(),
+                    OllirTemplates.type(currentMethod.getReturnType())));
+
+
+        List<String> body = new ArrayList<>();
+
+        for (JmmNode child : node.getChildren()) {
+            String ollirChild = (String) visit(child, Collections.singletonList("METHOD")).get(0);
+            if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT"))
+                if (ollirChild.equals("")) continue;
+            body.add(ollirChild);
+        }
+
+        builder.append(String.join("\n", body));
+
+        builder.append(OllirTemplates.closeBrackets());
+
+        return Collections.singletonList(builder.toString());
     }
 }
