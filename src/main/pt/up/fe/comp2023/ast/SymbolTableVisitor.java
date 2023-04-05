@@ -75,6 +75,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         if (node.getKind().equals("MainMethod")){//TODO: is this really needed, cant we just treat main like any other method? :thinking:
             scope = "MAIN";
             table.addMethod("main", new Type("void", false));
+            table.addParameterToCurrentMethod(new Symbol(new Type("String", true),"args"));
             //node.put("params", "");
             for(JmmNode child: node.getChildren()){
                 populateMethod(child);
