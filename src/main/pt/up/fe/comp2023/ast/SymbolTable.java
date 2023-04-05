@@ -4,7 +4,7 @@ import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
-import pt.up.fe.comp2023.ast.JmmMethod;
+
 
 import java.util.*;
 
@@ -123,10 +123,9 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     @Override
     public List<Symbol> getLocalVariables(String s) {
-        for(JmmMethod method : methods){
-            if (method.getName().equals(s));
-            return method.getLocalVariables();
-        }
+        for(JmmMethod method : methods)
+            if (s.equals(method.getName()))
+                return method.getLocalVariables();
         return null;
     }
 
@@ -141,7 +140,7 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     public void addFieldToCurrentMethod(Symbol field){
         if (currentMethod == null) return;
-        methods.get(methods.size() -1).addLocalVariable(field);
+        currentMethod.addLocalVariable(field);
     }
 
     public void addParameterToCurrentMethod(Symbol param){
@@ -158,25 +157,12 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     }
 
     @Override
+    public String print() {
+        return pt.up.fe.comp.jmm.analysis.table.SymbolTable.super.print();
+    }
+    @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder("SYMBOL TABLE\n");
-        builder.append("Imports").append("\n");
-        for (String importStmt : imports)
-            builder.append("\t").append(importStmt).append("\n");
-
-        builder.append("Class Name: ").append(className).append(" | Extends: ").append(superClassName).append("\n");
-
-        builder.append("--- Local Variables ---").append("\n");
-        for (Map.Entry<Symbol, Boolean> field : fields.entrySet())
-            builder.append("\t").append(field.getKey()).append(" Initialized: ").append(field.getValue()).append("\n");
-
-        builder.append("--- Methods ---").append("\n");
-        for (JmmMethod method : this.methods) {
-            builder.append(method);
-            builder.append("---------").append("\n");
-        }
-
-        return builder.toString();
+        return pt.up.fe.comp.jmm.analysis.table.SymbolTable.super.print();
     }
 
 }

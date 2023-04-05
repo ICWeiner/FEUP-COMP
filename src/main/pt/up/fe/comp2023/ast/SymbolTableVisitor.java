@@ -5,13 +5,11 @@ import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
-import pt.up.fe.comp.jmm.report.ReportType;
-import pt.up.fe.comp.jmm.report.Stage;
-import pt.up.fe.specs.util.utilities.StringLines;
+
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+
 
 public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     private final SymbolTable table;
@@ -39,7 +37,13 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
     }
 
     private String dealWithImport(JmmNode node, String space) {
-        table.addImport(node.get("name"));
+        StringBuilder importName = new StringBuilder();
+        for(String name: (ArrayList<String>) node.getObject("name")){
+            importName.append(name);
+            importName.append(".");
+        }
+        importName.setLength(importName.length() - 1);//remove last character
+        table.addImport(String.valueOf(importName));
         return space + "IMPORT";
     }
 
@@ -71,6 +75,7 @@ public class SymbolTableVisitor extends AJmmVisitor<String, String> {
         if (node.getKind().equals("MainMethod")){//TODO: is this really needed, cant we just treat main like any other method? :thinking:
             scope = "MAIN";
             table.addMethod("main", new Type("void", false));
+            table.addParameterToCurrentMethod(new Symbol(new Type("String", true),"args"));
             //node.put("params", "");
             for(JmmNode child: node.getChildren()){
                 populateMethod(child);

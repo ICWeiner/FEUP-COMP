@@ -29,6 +29,7 @@ public class JmmAnalyser implements JmmAnalysis {
             return new JmmSemanticsResult(jmmParserResult, null, Collections.singletonList(errorReport));
         }
 
+
         JmmNode node = jmmParserResult.getRootNode();
         SymbolTable table = new SymbolTable();
         List<Report> reports = new ArrayList<>();
