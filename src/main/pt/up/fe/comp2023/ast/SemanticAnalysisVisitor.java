@@ -81,30 +81,56 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
         JmmNode left = node.getChildren().get(0);
         JmmNode right = node.getChildren().get(1);
-
-        List<Symbol> localVariables = table.getLocalVariables(currentMethod);
-        //System.out.println("aaaaaaaa " + localVariables);
+        
         Type leftType = null;
         Type rightType = null;
-        for(Symbol localVariable : localVariables) {
-            if(localVariable.getName().equals(left.get("value"))) { //é preciso ver se uma variavel foi inicializada duas vezes??
+
+        //TODO é preciso ver se uma variavel foi inicializada duas vezes??
+        List<Symbol> localVariables = table.getLocalVariables(currentMethod);
+        for (Symbol localVariable : localVariables) {
+            if (localVariable.getName().equals(left.get("value"))) {
                 leftType = localVariable.getType();
-            }
-            if(localVariable.getName().equals(right.get("value"))) {
+            } else if (localVariable.getName().equals(right.get("value"))) {
                 rightType = localVariable.getType();
             }
         }
 
-        //TODO verificar quando não é identifier (ou seja, qd é só um int)
-        if(leftType == null) {
+        List<Symbol> parameters = table.getParameters(currentMethod);
+        for (Symbol parameter : parameters) {
+            if (parameter.getName().equals(left.get("value"))) {
+                leftType = parameter.getType();
+            } else if (parameter.getName().equals(right.get("value"))) {
+                rightType = parameter.getType();
+            }
+        }
+
+        boolean leftIsIdentifier = left.getKind().equals("Identifier");
+        if (!leftIsIdentifier){
+            if(left.getKind().equals("Integer"))
+                leftType = new Type("int",false);
+            else {
+                leftType = new Type("boolean",false);
+            }
+        }
+        else if (leftType == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Left type is null"));
             return false;
         }
-        if(rightType == null) {
+
+        boolean rightIsIdentifier = right.getKind().equals("Identifier");
+        if (!rightIsIdentifier) {
+            if(right.getKind().equals("Integer"))
+                rightType = new Type("int",false);
+            else {
+                rightType = new Type("boolean",false);
+            }
+        }
+        else if (rightType == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Right type is null"));
             return false;
         }
-        if(!node.get("op").equals("<") && !node.get("op").equals("&&")) {
+
+        if (!node.get("op").equals("<") && !node.get("op").equals("&&")) {
             if (!leftType.getName().equals("int") || !rightType.getName().equals("int")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Different types: " + leftType.getName() + " and " + rightType.getName()));
                 return false;
@@ -116,16 +142,17 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 return false;
             }
         }
-        if(leftType.isArray() && !rightType.isArray()) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array cannot be used in arithmetic operations : " + leftType.getName() + "[] and " + rightType.getName()));
+
+        if (leftType.isArray() && !rightType.isArray()) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array cannot be used in arithmetic operations: " + leftType.getName() + "[] and " + rightType.getName()));
             return false;
         }
-        if(!leftType.isArray() && rightType.isArray()) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array cannot be used in arithmetic operations : " + leftType.getName() + " and " + rightType.getName() + "[]"));
+        if (!leftType.isArray() && rightType.isArray()) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array cannot be used in arithmetic operations: " + leftType.getName() + " and " + rightType.getName() + "[]"));
             return false;
         }
-        if(leftType.isArray() && rightType.isArray()) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array cannot be used in arithmetic operations : " + leftType.getName() + "[] and " + rightType.getName() + "[]"));
+        if (leftType.isArray() && rightType.isArray()) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array cannot be used in arithmetic operations: " + leftType.getName() + "[] and " + rightType.getName() + "[]"));
             return false;
         }
 
