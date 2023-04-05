@@ -124,8 +124,8 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     @Override
     public List<Symbol> getLocalVariables(String s) {
         for(JmmMethod method : methods){
-            if (method.getName().equals(s));
-            return method.getLocalVariables();
+            if (method.getName().equals(s))
+                return method.getLocalVariables();
         }
         return null;
     }
