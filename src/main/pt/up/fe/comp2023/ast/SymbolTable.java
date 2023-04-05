@@ -123,10 +123,9 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     @Override
     public List<Symbol> getLocalVariables(String s) {
-        for(JmmMethod method : methods){
-            if (method.getName().equals(s));
-            return method.getLocalVariables();
-        }
+        for(JmmMethod method : methods)
+            if (s.equals(method.getName()))
+                return method.getLocalVariables();
         return null;
     }
 
@@ -141,7 +140,7 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     public void addFieldToCurrentMethod(Symbol field){
         if (currentMethod == null) return;
-        methods.get(methods.size() -1).addLocalVariable(field);
+        currentMethod.addLocalVariable(field);
     }
 
     public void addParameterToCurrentMethod(Symbol param){
