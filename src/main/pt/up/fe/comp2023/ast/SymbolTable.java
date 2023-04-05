@@ -130,17 +130,17 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         return null;
     }
 
-    public Symbol getLocalVariable(String s, String method) {
+    public Type getLocalVariableType(String s, String method) {
         List<Symbol> localVariables = getLocalVariables(method);
         for (Symbol localVariable : localVariables) {
             if (localVariable.getName().equals(s)) {
-                return localVariable;
+                return localVariable.getType();
             }
         }
         List<Symbol> parameters = getParameters(method);
         for (Symbol parameter : parameters) {
             if (parameter.getName().equals(s)) {
-                return parameter;
+                return parameter.getType();
             }
         }
         return null;

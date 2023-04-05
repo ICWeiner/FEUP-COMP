@@ -77,8 +77,9 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
     private Boolean dealWithConditionalStmt(JmmNode node, Boolean data){
         System.out.println("ConditionalStmt: " + node.getChildren());
+        //TODO Arrays
         for (JmmNode child : node.getChildren()) {
-            if(child.getKind().equals("BinaryOp") && (!child.get("op").equals("<") || !child.get("op").equals("&&"))){ //TODO é preciso tratar de casos em que, por exemplo, (a+b) == (b+a)??
+            if(child.getKind().equals("BinaryOp") && (!child.get("op").equals("<") || !child.get("op").equals("&&"))){ //TODO é preciso tratar de casos em que, por exemplo, (a+b) < (b+a)??
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional expression not boolean"));
                 return false;
             }
@@ -88,9 +89,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
     private Boolean dealWithArrayAccess(JmmNode node, Boolean data) {
         System.out.println("ArrayAccess: " + node.getChildren());
+
         JmmNode index = node.getJmmChild(1);
-        Type indexType = table.getLocalVariable(index.get("value"),currentMethod).getType();
+        Type indexType = table.getLocalVariableType(index.get("value"),currentMethod);
         boolean indexIsIdentifier = index.getKind().equals("Identifier");
+
         if (!indexIsIdentifier) {
             indexType = new Type(index.getKind(),false);
         }
@@ -115,11 +118,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         JmmNode left = node.getChildren().get(0);
         JmmNode right = node.getChildren().get(1);
 
-        Type leftType = table.getLocalVariable(left.get("value"),currentMethod).getType();
-        Type rightType = table.getLocalVariable(right.get("value"),currentMethod).getType();
+        Type leftType = table.getLocalVariableType(left.get("value"),currentMethod);
+        Type rightType = table.getLocalVariableType(right.get("value"),currentMethod);
 
         //TODO é preciso ver se uma variavel foi inicializada duas vezes??
-
+        System.out.println("plusObject:");
         boolean leftIsIdentifier = left.getKind().equals("Identifier");
         if (!leftIsIdentifier){
             leftType = new Type(left.getKind(),false);
@@ -152,7 +155,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
 
         if (!node.get("op").equals("<") && !node.get("op").equals("&&")) {
-            if (!leftType.getName().equals("int") || !leftType.getName().equals("Integer") || !rightType.getName().equals("int") || !rightType.getName().equals("Integer")) {
+            if ((!leftType.getName().equals("int") && !leftType.getName().equals("Integer")) || (!rightType.getName().equals("int") && !rightType.getName().equals("Integer"))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Different types: " + leftType.getName() + " and " + rightType.getName()));
                 return false;
             }
