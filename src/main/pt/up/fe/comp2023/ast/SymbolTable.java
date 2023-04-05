@@ -4,7 +4,7 @@ import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
-import pt.up.fe.comp2023.ast.JmmMethod;
+
 
 import java.util.*;
 
