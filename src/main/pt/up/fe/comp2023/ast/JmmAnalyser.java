@@ -40,7 +40,7 @@ public class JmmAnalyser implements JmmAnalysis {
         visitor.visit(node);
         System.out.println("Symbol Table Filled!");
 
-        System.out.println(table);
+        System.out.println(table.print());
 
 
         return new JmmSemanticsResult(jmmParserResult, table, reports);

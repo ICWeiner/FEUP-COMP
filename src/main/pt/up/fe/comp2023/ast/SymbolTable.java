@@ -158,25 +158,8 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     }
 
     @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder("SYMBOL TABLE\n");
-        builder.append("Imports").append("\n");
-        for (String importStmt : imports)
-            builder.append("\t").append(importStmt).append("\n");
-
-        builder.append("Class Name: ").append(className).append(" | Extends: ").append(superClassName).append("\n");
-
-        builder.append("--- Local Variables ---").append("\n");
-        for (Map.Entry<Symbol, Boolean> field : fields.entrySet())
-            builder.append("\t").append(field.getKey()).append(" Initialized: ").append(field.getValue()).append("\n");
-
-        builder.append("--- Methods ---").append("\n");
-        for (JmmMethod method : this.methods) {
-            builder.append(method);
-            builder.append("---------").append("\n");
-        }
-
-        return builder.toString();
+    public String print() {
+        return pt.up.fe.comp.jmm.analysis.table.SymbolTable.super.print();
     }
 
 }
