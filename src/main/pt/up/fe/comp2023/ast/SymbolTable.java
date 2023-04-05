@@ -160,5 +160,9 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
     public String print() {
         return pt.up.fe.comp.jmm.analysis.table.SymbolTable.super.print();
     }
+    @Override
+    public String toString() {
+        return pt.up.fe.comp.jmm.analysis.table.SymbolTable.super.print();
+    }
 
 }
