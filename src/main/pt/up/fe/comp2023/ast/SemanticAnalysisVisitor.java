@@ -30,7 +30,9 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         this.addVisit("MainMethod", this::dealWithMainMethod);
         this.addVisit("CustomMethod", this::dealWithCustomMethod);
         this.addVisit("BinaryOp", this::dealWithBinaryOp);
-        //this.addVisit("Assignment", this::dealWithAssignment);
+        this.addVisit("IfElseStmt", this::dealWithConditionalStmt);
+        this.addVisit("WhileStmt", this::dealWithConditionalStmt);
+
     }
 
     private Boolean dealWithDefault(JmmNode node, Boolean data) {
@@ -38,14 +40,14 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         for (JmmNode child : node.getChildren()) {
             visit(child);
         }
-        return null;
+        return true;
     }
 
     private Boolean dealWithProgram(JmmNode node, Boolean data){
         for (JmmNode child : node.getChildren()) {
             visit(child);
         }
-        return null;
+        return true;
     }
 
     private Boolean dealWithMainMethod(JmmNode node, Boolean data){
@@ -54,7 +56,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         for (JmmNode child : node.getChildren()) {
             visit(child);
         }
-        return null;
+        return true;
     }
 
     private Boolean dealWithCustomMethod(JmmNode node, Boolean data){
@@ -69,7 +71,18 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         for (JmmNode child : node.getChildren()) {
             visit(child);
         }
-        return null;
+        return true;
+    }
+
+    private Boolean dealWithConditionalStmt(JmmNode node, Boolean data){
+        System.out.println("ConditionalStmt: " + node.getChildren());
+        for (JmmNode child : node.getChildren()) {
+            if(child.getKind().equals("BinaryOp") && (!child.get("op").equals("<") || !child.get("op").equals("&&"))){
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional expression not boolean"));
+                return false;
+            }
+        }
+        return true;
     }
 
     private Boolean dealWithBinaryOp(JmmNode node, Boolean data) {
@@ -81,7 +94,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
         JmmNode left = node.getChildren().get(0);
         JmmNode right = node.getChildren().get(1);
-        
+
         Type leftType = null;
         Type rightType = null;
 
