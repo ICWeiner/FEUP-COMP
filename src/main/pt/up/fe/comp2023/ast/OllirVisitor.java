@@ -1,5 +1,6 @@
 package pt.up.fe.comp2023.ast;
 
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
@@ -89,13 +90,18 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         scope = "METHOD";
 
-        List<Type> params = JmmMethod.parseParameters(node.get("params"));
+        //List<Type> params = JmmMethod.parseParameters(node.get("params"));
+
+
 
         try {
-            if (node.getKind() == "MainMethod")
+            if (node.getKind().equals("MainMethod")){
                 currentMethod = table.getMethod("main", Collections.singletonList(new Type("String", true)), new Type("void", false));
-            else
+            }else{
+                List<Type> params = JmmMethod.parseParameters(node.get("params"));
                 currentMethod = table.getMethod(node.get("name"), params, SymbolTable.getType(node, "return"));
+            }
+
 
         } catch (Exception e) {
             currentMethod = null;
