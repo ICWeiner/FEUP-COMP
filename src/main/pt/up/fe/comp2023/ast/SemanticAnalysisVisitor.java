@@ -121,6 +121,22 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     private Boolean dealWithArrayAccess(JmmNode node, Boolean data) {
         System.out.println("ArrayAccess: " + node.getChildren());
 
+        JmmNode array = node.getJmmChild(0);
+
+        if(array.getKind().equals("Identifier")) {
+            Type arrayType = table.getLocalVariableType(array.get("value"),currentMethod);
+            if (arrayType == null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array type is null"));
+                return false;
+            }
+            if(!arrayType.isArray()) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is done over an array"));
+            }
+        }
+        else {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is done over an array"));
+        }
+
         JmmNode index = node.getJmmChild(1);
         Type indexType = table.getLocalVariableType(index.get("value"),currentMethod);
         boolean indexIsIdentifier = index.getKind().equals("Identifier");
@@ -132,15 +148,12 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is null"));
             return false;
         }
+
         if(indexType.isArray() || (!indexType.getName().equals("int") && !indexType.getName().equals("Integer"))) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is not an int"));
             return false;
         }
-        if(!indexType.isArray()) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is not done over an array"));
-            return false;
-        }
-        
+
         return true;
     }
 
