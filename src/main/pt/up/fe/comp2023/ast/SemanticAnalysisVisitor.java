@@ -77,13 +77,45 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
     private Boolean dealWithConditionalStmt(JmmNode node, Boolean data){
         System.out.println("ConditionalStmt: " + node.getChildren());
-        //TODO Arrays
-        for (JmmNode child : node.getChildren()) {
-            if(child.getKind().equals("BinaryOp") && (!child.get("op").equals("<") || !child.get("op").equals("&&"))){ //TODO é preciso tratar de casos em que, por exemplo, (a+b) < (b+a)??
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional expression not boolean"));
+
+        JmmNode child = node.getChildren().get(0);
+
+        if (child.getKind().equals("Identifier")) {
+            Type childType = table.getLocalVariableType(child.get("value"),currentMethod);
+            if (childType == null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement is null"));
+                return false;
+            }
+            if (childType.isArray()) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement is an array"));
+                return false;
+            }
+            if (!childType.getName().equals("Boolean")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement is an array"));
                 return false;
             }
         }
+        else if(child.getKind().equals("BinaryOp") && (child.get("op").equals("<") || child.get("op").equals("&&"))) {
+            JmmNode left = node.getChildren().get(0);
+            JmmNode right = node.getChildren().get(0).getChildren().get(1);
+
+            Type leftType = table.getLocalVariableType(left.get("value"),currentMethod);
+            Type rightType = table.getLocalVariableType(right.get("value"),currentMethod);
+
+            if (leftType == null || rightType == null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement is null"));
+                return false;
+            }
+            if (leftType.isArray() || rightType.isArray()) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement is an array"));
+                return false;
+            }
+        }
+        else if (!child.getKind().equals("Boolean")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement not boolean"));
+            return false;
+        }
+
         return true;
     }
 
@@ -102,7 +134,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
         if(indexType.isArray() || (!indexType.getName().equals("int") && !indexType.getName().equals("Integer"))) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: "));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is not an int"));
             return false;
         }
         return true;
@@ -154,14 +186,14 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        if (!node.get("op").equals("<") && !node.get("op").equals("&&")) {
+        if (!node.get("op").equals("&&")) {
             if ((!leftType.getName().equals("int") && !leftType.getName().equals("Integer")) || (!rightType.getName().equals("int") && !rightType.getName().equals("Integer"))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Different types: " + leftType.getName() + " and " + rightType.getName()));
                 return false;
             }
         }
         else {
-            if (!leftType.getName().equals("boolean") || !rightType.getName().equals("boolean")) {
+            if (!leftType.getName().equals("boolean") || !rightType.getName().equals("Boolean")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Different types: " + leftType.getName() + " and " + rightType.getName()));
                 return false;
             }
