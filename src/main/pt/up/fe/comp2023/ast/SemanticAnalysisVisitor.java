@@ -33,7 +33,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         this.addVisit("IfElseStmt", this::dealWithConditionalStmt);
         this.addVisit("WhileStmt", this::dealWithConditionalStmt);
         this.addVisit("ArrayAccess", this::dealWithArrayAccess);
-
     }
 
     private Boolean dealWithDefault(JmmNode node, Boolean data) {
@@ -91,12 +90,12 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 return false;
             }
             if (!childType.getName().equals("Boolean")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement is an array"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement is not boolean"));
                 return false;
             }
         }
         else if(child.getKind().equals("BinaryOp") && (child.get("op").equals("<") || child.get("op").equals("&&"))) {
-            JmmNode left = node.getChildren().get(0);
+            JmmNode left = node.getChildren().get(0).getChildren().get(0);
             JmmNode right = node.getChildren().get(0).getChildren().get(1);
 
             Type leftType = table.getLocalVariableType(left.get("value"),currentMethod);
@@ -137,6 +136,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is not an int"));
             return false;
         }
+        if(!indexType.isArray()) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is not done over an array"));
+            return false;
+        }
+        
         return true;
     }
 
@@ -188,13 +192,13 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
         if (!node.get("op").equals("&&")) {
             if ((!leftType.getName().equals("int") && !leftType.getName().equals("Integer")) || (!rightType.getName().equals("int") && !rightType.getName().equals("Integer"))) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Different types: " + leftType.getName() + " and " + rightType.getName()));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible types in " + node.get("op") + " operation: " + leftType.getName() + " and " + rightType.getName()));
                 return false;
             }
         }
         else {
             if (!leftType.getName().equals("boolean") || !rightType.getName().equals("Boolean")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Different types: " + leftType.getName() + " and " + rightType.getName()));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible types in " + node.get("op") + " operation: " + leftType.getName() + " and " + rightType.getName()));
                 return false;
             }
         }
