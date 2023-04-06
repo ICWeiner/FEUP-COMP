@@ -76,6 +76,10 @@ public class OllirTemplates {
         return param.toString();
     }
 
+    public static String field(Symbol variable) {
+        return String.format(".field public %s;", variable(variable));
+    }
+
     public static String openBrackets() {
         return " {\n";
     }

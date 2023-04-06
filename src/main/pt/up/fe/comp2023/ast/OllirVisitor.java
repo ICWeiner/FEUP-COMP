@@ -27,6 +27,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         this.addVisit("ClassDeclaration",this::dealWithClass);
         this.addVisit("MethodDeclaration", this::dealWithMethodDeclaration);
 
+        this.addVisit("VarDeclaration", this::dealWithVarDeclaration);
+
         // setDefaultVisit(this::defaultVisit);
     }
 
@@ -90,16 +92,11 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         scope = "METHOD";
 
-        //List<Type> params = JmmMethod.parseParameters(node.get("params"));
-
-
-
         try {
             if (node.getKind().equals("MainMethod")){
-                currentMethod = table.getMethod("main", Collections.singletonList(new Type("String", true)), new Type("void", false));
+                currentMethod = table.getMethod("main");
             }else{
-                List<Type> params = JmmMethod.parseParameters(node.get("params"));
-                currentMethod = table.getMethod(node.get("name"), params, SymbolTable.getType(node, "return"));
+                currentMethod = table.getMethod(node.getJmmChild(0).get("name"));//method attributes stored in first child
             }
 
 
@@ -126,6 +123,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         List<String> body = new ArrayList<>();
 
         for (JmmNode child : node.getChildren()) {
+            if (child.getIndexOfSelf() == 0) continue;
             String ollirChild = (String) visit(child, Collections.singletonList("METHOD")).get(0);
             if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT"))
                 if (ollirChild.equals("")) continue;
@@ -137,5 +135,16 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         builder.append(OllirTemplates.closeBrackets());
 
         return Collections.singletonList(builder.toString());
+    }
+
+    private List<Object> dealWithVarDeclaration(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        visited.add(node);
+
+        if ("CLASS".equals(data.get(0))) {
+            Map.Entry<Symbol, Boolean> variable = table.getField(node.get("identifier"));
+            return Arrays.asList(OllirTemplates.field(variable.getKey()));
+        }
+        return Arrays.asList("DEFAULT_VISIT");
     }
 }
