@@ -20,7 +20,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
     public SemanticAnalysisVisitor(SymbolTable table, List<Report> reports) {
         this.table = table;
-        this.reports = reports;
+        this.reports = reports; //TODO: os reports estão a aparecer duplicados
     }
 
     @Override
@@ -33,6 +33,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         this.addVisit("IfElseStmt", this::dealWithConditionalStmt);
         this.addVisit("WhileStmt", this::dealWithConditionalStmt);
         this.addVisit("ArrayAccess", this::dealWithArrayAccess);
+        this.addVisit("Assignment", this::dealWithAssignment);
     }
 
     private Boolean dealWithDefault(JmmNode node, Boolean data) {
@@ -71,6 +72,24 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         for (JmmNode child : node.getChildren()) {
             visit(child);
         }
+        return true;
+    }
+
+    private Boolean dealWithAssignment(JmmNode node, Boolean data){
+        System.out.println("Assignment: " + node + " " + node.getChildren());
+
+        Type varType = table.getLocalVariableType(node.get("name"),currentMethod);
+        if(varType == null) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assignment variable type is null"));
+            return false;
+        }
+        JmmNode child = node.getChildren().get(0);
+        System.out.println("bbbbb " + varType.getName() + " " + child.getKind());
+        if(!(varType.getName().equals("int") && child.getKind().equals("Integer")) && !(varType.getName().equals("boolean") && child.getKind().equals("Boolean")) && !(varType.getName().equals(child.getKind()))) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + varType.getName() + " to " + child.getKind()));
+            return false;
+        }
+
         return true;
     }
 
@@ -131,17 +150,18 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
             if(!arrayType.isArray()) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is done over an array"));
+                return false;
             }
         }
         else {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is done over an array"));
+            return false;
         }
 
         JmmNode index = node.getJmmChild(1);
         Type indexType = table.getLocalVariableType(index.get("value"),currentMethod);
-        boolean indexIsIdentifier = index.getKind().equals("Identifier");
 
-        if (!indexIsIdentifier) {
+        if (!index.getKind().equals("Identifier")) {
             indexType = new Type(index.getKind(),false);
         }
         else if (indexType == null) {
@@ -172,8 +192,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
         //TODO é preciso ver se uma variavel foi inicializada duas vezes??
         System.out.println("plusObject:");
-        boolean leftIsIdentifier = left.getKind().equals("Identifier");
-        if (!leftIsIdentifier){
+        if (!left.getKind().equals("Identifier")){
             leftType = new Type(left.getKind(),false);
         }
         else if (leftType == null) {
@@ -181,8 +200,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        boolean rightIsIdentifier = right.getKind().equals("Identifier");
-        if (!rightIsIdentifier) {
+        if (!right.getKind().equals("Identifier")) {
             rightType = new Type(right.getKind(),false);
         }
         else if (rightType == null) {
