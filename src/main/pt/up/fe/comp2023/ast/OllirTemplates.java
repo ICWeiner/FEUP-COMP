@@ -68,6 +68,17 @@ public class OllirTemplates {
         return ollir.toString();
     }
 
+    private static Symbol escapeVariable(Symbol variable) {
+        if (variable.getName().charAt(0) == '$') {
+            return new Symbol(variable.getType(), "dollar_" + variable.getName().substring(1));
+        } else if (variable.getName().charAt(0) == '_') {
+            return new Symbol(variable.getType(), "under_" + variable.getName().substring(1));
+        } else if (variable.getName().equals("ret") || variable.getName().equals("array")) {
+            return new Symbol(variable.getType(), "escaped_" + variable.getName());
+        }
+        return variable;
+    }
+
     public static String variable(Symbol variable) {
         StringBuilder param = new StringBuilder(variable.getName());
 
@@ -76,8 +87,35 @@ public class OllirTemplates {
         return param.toString();
     }
 
+    public static String variable(Symbol variable, String parameter) {
+        variable = escapeVariable(variable);
+
+        if (parameter == null) return variable(variable);
+        return parameter + "." + variable(variable);
+    }
+
     public static String field(Symbol variable) {
         return String.format(".field public %s;", variable(variable));
+    }
+
+    public static String getfield(Symbol variable) {
+        return String.format("getfield(this, %s)%s", variable(variable), type(variable.getType()));
+    }
+
+    public static String putfield(String variable, String value) {
+        return String.format("putfield(this, %s, %s).V", variable, value);
+    }
+
+    public static String objectinstance(Symbol variable) {
+        return String.format("invokespecial(%s,\"<init>\").V;", variable(variable));
+    }
+
+    public static String arrayaccess(Symbol variable, String parameter, String index) {
+        variable = escapeVariable(variable);
+
+        if (parameter == null)
+            return String.format("%s[%s]%s", variable.getName(), index, type(new Type(variable.getType().getName(), false)));
+        return String.format("%s.%s[%s]%s", parameter, variable.getName(), index, type(new Type(variable.getType().getName(), false)));
     }
 
     public static String openBrackets() {
