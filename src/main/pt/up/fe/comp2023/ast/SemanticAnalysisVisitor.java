@@ -83,11 +83,28 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assignment variable type is null"));
             return false;
         }
+        //TODO tratar de imports
         JmmNode child = node.getChildren().get(0);
         System.out.println("bbbbb " + varType.getName() + " " + child.getKind());
-        if(!(varType.getName().equals("int") && child.getKind().equals("Integer")) && !(varType.getName().equals("boolean") && child.getKind().equals("Boolean")) && !(varType.getName().equals(child.getKind()))) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + varType.getName() + " to " + child.getKind()));
-            return false;
+        if(!child.getKind().equals("Identifier")) {
+            if (!(varType.isArray() && varType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration"))
+                    && !(!varType.isArray() && varType.getName().equals("int") && child.getKind().equals("Integer"))
+                    && !(varType.getName().equals("boolean") && child.getKind().equals("Boolean"))
+                    && !(child.getKind().equals("GeneralDeclaration") && varType.getName().equals(child.get("name")))) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + varType.getName() + " to " + child.getKind()));
+                return false;
+            }
+        }
+        else {
+            Type childType = table.getLocalVariableType(node.get("name"),currentMethod);
+            if(childType == null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign is null"));
+                return false;
+            }
+            if(childType.getName().equals(child.getKind())) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + varType.getName() + " to " + child.getKind()));
+                return false;
+            }
         }
 
         return true;
@@ -228,7 +245,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
         }
         else {
-            if (!leftType.getName().equals("boolean") || !rightType.getName().equals("Boolean")) {
+            if ((!leftType.getName().equals("boolean") && !rightType.getName().equals("boolean")) || (!leftType.getName().equals("Boolean") && !rightType.getName().equals("Boolean"))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible types in " + node.get("op") + " operation: " + leftType.getName() + " and " + rightType.getName()));
                 return false;
             }
