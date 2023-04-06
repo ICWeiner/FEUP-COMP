@@ -88,7 +88,17 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         return methods;
     }
 
-    public JmmMethod getMethod(String name, List<Type> params, Type returnType) throws NoSuchMethod {
+    public JmmMethod getMethod(String name) throws NoSuchMethod {
+        for (JmmMethod method : methods) {
+            if (method.getName().equals(name)) {
+                return method;
+            }
+        }
+
+        throw new NoSuchMethod(name);
+    }
+
+    public JmmMethod getMethod(String name, List<Type> params, Type returnType) throws NoSuchMethod {//To support overloading
         for (JmmMethod method : methods) {
             if (method.getName().equals(name) && returnType.equals(method.getReturnType()) && params.size() == method.getParameters().size()) {
                 if (JmmMethod.matchParameters(params, method.getParameterTypes())) {
@@ -98,6 +108,14 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         }
 
         throw new NoSuchMethod(name);
+    }
+
+    public Map.Entry<Symbol, Boolean> getField(String name) {
+        for (Map.Entry<Symbol, Boolean> field : this.fields.entrySet()) {
+            if (field.getKey().getName().equals(name))
+                return field;
+        }
+        return null;
     }
 
     @Override
