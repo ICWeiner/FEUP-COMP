@@ -9,6 +9,7 @@ import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -78,31 +79,42 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     private Boolean dealWithAssignment(JmmNode node, Boolean data){
         System.out.println("Assignment: " + node + " " + node.getChildren());
 
-        Type varType = table.getLocalVariableType(node.get("name"),currentMethod);
-        if(varType == null) {
+        Type nodeType = table.getLocalVariableType(node.get("name"),currentMethod);
+        if(nodeType == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assignment variable type is null"));
             return false;
         }
         //TODO tratar de imports
         JmmNode child = node.getChildren().get(0);
-        System.out.println("bbbbb " + varType.getName() + " " + child.getKind());
+        //System.out.println("bbbbb " + nodeType.getName() + " " + child.getKind());
         if(!child.getKind().equals("Identifier")) {
-            if (!(varType.isArray() && varType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration"))
-                    && !(!varType.isArray() && varType.getName().equals("int") && child.getKind().equals("Integer"))
-                    && !(varType.getName().equals("boolean") && child.getKind().equals("Boolean"))
-                    && !(child.getKind().equals("GeneralDeclaration") && varType.getName().equals(child.get("name")))) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + varType.getName() + " to " + child.getKind()));
+            if (!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration"))
+                    && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
+                    && !(nodeType.getName().equals("boolean") && child.getKind().equals("Boolean"))
+                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
+                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + nodeType.getName() + " to " + child.getKind()));
                 return false;
             }
         }
         else {
-            Type childType = table.getLocalVariableType(node.get("name"),currentMethod);
+            Type childType = table.getLocalVariableType(child.get("value"),currentMethod);
             if(childType == null) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign is null"));
                 return false;
             }
-            if(childType.getName().equals(child.getKind())) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + varType.getName() + " to " + child.getKind()));
+
+            System.out.println("imports: " + table.getImports() + " childType: " + childType.getName() + " nodeType: " + nodeType.getName());
+
+            for (String test: table.getImports()) {
+                System.out.println(test);
+                System.out.println(test.contains(nodeType.getName()));
+                System.out.println(test.contains(childType.getName()));
+            }
+            System.out.println("childType: " + childType.getName());
+            System.out.println("contains childType: " + (table.getImports().contains(childType.getName())) + " contains node: " + table.getImports().contains(nodeType.getName()));
+            if(!childType.getName().equals(nodeType.getName()) && !table.getImports().contains(childType.getName()) && !table.getImports().contains(nodeType.getName())) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Class not imported, assign " + nodeType.getName() + " to " + childType.getName()));
                 return false;
             }
         }
