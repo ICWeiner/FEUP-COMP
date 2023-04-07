@@ -31,6 +31,10 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         this.addVisit("VarDeclaration", this::dealWithVarDeclaration);
         this.addVisit("Assignment", this::dealWithAssignment);
+        this.addVisit("Integer", this::dealWithPrimitive);
+        //this.addVisit("Boolean", this::dealWithPrimitive); TODO:can probably reuse above function=
+
+
 
         // setDefaultVisit(this::defaultVisit);
     }
@@ -65,8 +69,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             String ollirChild = (String) visit(child, Collections.singletonList("CLASS")).get(0);
             System.out.println(ollirChild);
             if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT")) {
-                System.out.println("in cycle");
-                System.out.println(child.getKind());
                 if (child.getKind().equals("VarDeclaration")) {
                     fields.add(ollirChild);
                 } else {
@@ -127,7 +129,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         List<String> body = new ArrayList<>();
 
         for (JmmNode child : node.getChildren()) {
-            if (child.getIndexOfSelf() == 0) continue;
+            if (child.getKind().equals("Type")) continue;
             String ollirChild = (String) visit(child, Collections.singletonList("METHOD")).get(0);
             if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT"))
                 if (ollirChild.equals("")) continue;
@@ -277,6 +279,32 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         }
 
         return Collections.singletonList(ollir.toString());
+    }
+
+    private List<Object> dealWithPrimitive(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        visited.add(node);
+
+        String value;
+        String type;
+
+        if (node.getKind().equals("Integer")){
+            value = node.get("value") + ".i32";
+            type = ".i32";
+        }else{
+            value = "";
+            type = "";
+        }
+
+
+        if (data.get(0).equals("RETURN")) {
+            String temp = "temporary" + temp_sequence++ + type;
+            value = String.format("%s :=%s %s;\n%s", temp, type, value, temp);
+        } else if (data.get(0).equals("CONDITION") && type.equals(".bool")) {
+            value = String.format("%s ==.bool 1.bool\n", value);
+        }
+
+        return Collections.singletonList(value);
     }
 
 }
