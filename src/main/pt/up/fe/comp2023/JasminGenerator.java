@@ -121,8 +121,65 @@ public class JasminGenerator {
                     BuilderOfStrings.append(dealWithCondBranchInstruction((CondBranchInstruction) instruction, varTable)).toString();
             case GOTO ->
                     BuilderOfStrings.append(dealWithGotoInstrutcion((GotoInstruction) instruction, varTable)).toString();
+            case PUTFIELD ->
+                    BuilderOfStrings.append(dealWithPutFieldInstruction((PutFieldInstruction) instruction, varTable)).toString();
+            case GETFIELD ->
+                    BuilderOfStrings.append(dealWithGetFieldInstruction((GetFieldInstruction) instruction, varTable)).toString();
+            case RETURN ->
+                    BuilderOfStrings.append(dealWithReturnInstruction((ReturnInstruction) instruction, varTable)).toString();
             default -> "Error in Instructions";
         };
+    }
+
+    private String dealWithReturnInstruction(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
+        if(!instruction.hasReturnValue()) return "return";
+        String returnString = "";
+        switch (instruction.getOperand().getType().getTypeOfElement()) {
+            case VOID:
+                returnString = "return";
+                break;
+            case INT32:
+            case BOOLEAN:
+                returnString = loadElement(instruction.getOperand(), varTable);
+
+                // value →
+                this.decrementStackCounter(1);
+                returnString += "ireturn";
+                break;
+            case ARRAYREF:
+            case OBJECTREF:
+                returnString = loadElement(instruction.getOperand(), varTable);
+                // objectref →
+                this.decrementStackCounter(1);
+                returnString  += "areturn";
+                break;
+            default:
+                break;
+        }
+        return returnString;
+    }
+
+    private String dealWithGetFieldInstruction(GetFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String jasminCode = "";
+        Operand obj = (Operand)instruction.getFirstOperand();
+        Operand var = (Operand)instruction.getSecondOperand();
+        jasminCode += this.loadElement(obj, varTable); //push object (Class ref) onto the stack
+        // ..., objectref →
+        // ..., value
+        // No need to change stack
+        return jasminCode + "getfield " + classUnit.getClassName() + "/" + var.getName() + " " + convertType(var.getType()) +  "\n";
+    }
+
+    private String dealWithPutFieldInstruction(PutFieldInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String BuilderOfStrings = "";
+        Operand obj = (Operand)instruction.getFirstOperand();
+        Operand var = (Operand)instruction.getSecondOperand();
+        Element value = instruction.getThirdOperand();
+        BuilderOfStrings += this.loadElement(obj, varTable); //push object (Class ref) onto the stack
+        BuilderOfStrings += this.loadElement(value, varTable); //store const element on stack
+        // ..., objectref, value →
+        this.decrementStackCounter(2);
+        return BuilderOfStrings + "putfield " + classUnit.getClassName() + "/" + var.getName() + " " + convertType(var.getType()) + "\n";
     }
 
     private String dealWithGotoInstrutcion(GotoInstruction instruction, HashMap<String, Descriptor> varTable){
