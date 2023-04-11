@@ -115,8 +115,114 @@ public class JasminGenerator {
             case BINARYOPER ->
                     BuilderOfStrings.append(dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable)).toString();
             case UNARYOPER -> "Deal with '!' in correct form";
+            case CALL -> 
+                    BuilderOfStrings.append(dealWithCallInstruction((CallInstruction) instruction, varTable)).toString();
+            case BRANCH -> 
+                    BuilderOfStrings.append(dealWithCondBranchInstruction((CondBranchInstruction) instruction, varTable)).toString();
+            case GOTO ->
+                    BuilderOfStrings.append(dealWithGotoInstrutcion((GotoInstruction) instruction, varTable)).toString();
             default -> "Error in Instructions";
         };
+    }
+
+    private String dealWithGotoInstrutcion(GotoInstruction instruction, HashMap<String, Descriptor> varTable){
+        return String.format("goto %s\n", instruction.getLabel());
+    }
+
+    private String dealWithCondBranchInstruction(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
+        StringBuilder stringBuilder = new StringBuilder();
+        switch (instruction.getCondOperation().getOpType()) {
+            case NOTB:
+                stringBuilder.append(this.loadElement(instruction.getLeftOperand(), varTable))
+                        .append("ifeq ")
+                        .append(instruction.getLabel())
+                        .append("\n");
+
+                // ..., value →
+                // ...
+                this.decrementStackCounter(1);
+                break;
+            default:
+                return "Error in CondBranchInstruction";
+        }
+        return stringBuilder.toString();
+    }
+
+    private String dealWithCallInstruction(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
+        String BuilderofStrings = "";
+        CallType callType = instruction.getInvocationType();
+        switch (callType) {
+            case invokespecial ->
+                    BuilderofStrings += this.dealWithInvoke(instruction, varTable, callType, ((ClassType) instruction.getFirstArg().getType()).getName());
+            case invokestatic ->
+                    BuilderofStrings += this.dealWithInvoke(instruction, varTable, callType, ((Operand) instruction.getFirstArg()).getName());
+            case invokevirtual ->
+                    BuilderofStrings += this.dealWithInvoke(instruction, varTable, callType, ((ClassType) instruction.getFirstArg().getType()).getName());
+            case arraylength -> {
+                BuilderofStrings += this.loadElement(instruction.getFirstArg(), varTable);
+                // ..., arrayref →
+                // ..., length
+                // No need to change stack
+                BuilderofStrings += "arraylength\n";
+            }
+            case NEW -> BuilderofStrings += this.dealWithNewObject(instruction, varTable);
+            default -> {
+                return "Erro in CallInstruction";
+            }
+        }
+        return BuilderofStrings;
+    }
+
+    private String dealWithNewObject(CallInstruction instruction, HashMap<String, Descriptor> varTable){
+        Element e = instruction.getFirstArg();
+        String BuilderofStrings = "";
+        if (e.getType().getTypeOfElement().equals(ElementType.ARRAYREF)) {
+            BuilderofStrings += this.loadElement(instruction.getListOfOperands().get(0), varTable);
+            // ..., count →
+            // ..., arrayref
+            // No need to change stack
+            BuilderofStrings += "newarray int\n";
+        }
+        else if (e.getType().getTypeOfElement().equals(ElementType.OBJECTREF)){
+            // NEW:
+            // ... →
+            // ..., objectref
+            // DUP:
+            // ..., value →
+            // ..., value, value
+            this.incrementStackCounter(2);
+            BuilderofStrings += "new " + this.getOjectClassName(((Operand)e).getName()) + "\ndup\n";
+        }
+        return BuilderofStrings;
+    }
+
+    private String dealWithInvoke(CallInstruction instruction, HashMap<String, Descriptor> varTable, CallType callType, String name){
+        String BuilderofString = ""; //TODO deal with invokes
+        String functionLiteral = ((LiteralElement) instruction.getSecondArg()).getLiteral();
+        String parameters = "";
+        if (!functionLiteral.equals("\"<init>\"")) {  //does not load element because its a new object, its already done in dealWithNewObject with new and dup
+            BuilderofString += this.loadElement(instruction.getFirstArg(), varTable);
+        }
+        int num_params = 0;
+        for (Element element : instruction.getListOfOperands()) {
+            BuilderofString += this.loadElement(element, varTable);
+            parameters += this.convertType(element.getType());
+            num_params++;
+        }
+        // ..., objectref (if not static), [arg1, [arg2 ...]] →
+        // ..., value (if not void)
+        if (!instruction.getInvocationType().equals(CallType.invokestatic)) {
+            num_params += 1;
+        }
+        this.decrementStackCounter(num_params);
+        if (instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
+            this.incrementStackCounter(1);
+        }
+        BuilderofString += callType.name() + " " + this.getOjectClassName(name) + "." + functionLiteral.replace("\"","") + "(" + parameters + ")" + this.convertType(instruction.getReturnType()) + "\n";
+        if (functionLiteral.equals("\"<init>\"") && !name.equals("this")) {
+            BuilderofString += this.storeElement((Operand) instruction.getFirstArg(), varTable);
+        }
+        return BuilderofString;
     }
 
     private String dealWithAssignment(AssignInstruction instruction, HashMap<String, Descriptor> varTable) {
@@ -124,20 +230,16 @@ public class JasminGenerator {
         Operand operand = (Operand) instruction.getDest();
         if (operand instanceof ArrayOperand) {
             ArrayOperand aoperand = (ArrayOperand) operand;
-
             // Load array
             BuilderOfString += String.format("aload%s\n", this.getVirtualReg(aoperand.getName(), varTable));
             this.incrementStackCounter(1);
-
             // Load index
             BuilderOfString += loadElement(aoperand.getIndexOperands().get(0), varTable);
         }
-
         BuilderOfString += dealWithInstruction(instruction.getRhs(), varTable, new HashMap<String, Instruction>());
         if(!(operand.getType().getTypeOfElement().equals(ElementType.OBJECTREF) && instruction.getRhs() instanceof CallInstruction)) { //if its a new object call does not store yet
             BuilderOfString += this.storeElement(operand, varTable);
         }
-
         return BuilderOfString;
     }
 
@@ -334,21 +436,28 @@ public class JasminGenerator {
         }
 
         switch (elementType) {
-            case INT32:
+            case INT32 -> {
                 return stringBuilder + "I";
-            case BOOLEAN:
+            }
+            case BOOLEAN -> {
                 return stringBuilder + "Z";
-            case STRING:
+            }
+            case STRING -> {
                 return stringBuilder + "Ljava/lang/String;";
-            case OBJECTREF:
+            }
+            case OBJECTREF -> {
                 String className = ((ClassType) fieldType).getName();
                 return stringBuilder + "L" + this.getOjectClassName(className) + ";";
-            case CLASS:
+            }
+            case CLASS -> {
                 return "CLASS";
-            case VOID:
+            }
+            case VOID -> {
                 return "V";
-            default:
+            }
+            default -> {
                 return "Error converting ElementType";
+            }
         }
     }
 
