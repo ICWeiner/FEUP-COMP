@@ -1,5 +1,6 @@
 package pt.up.fe.comp2023.ast;
 
+import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
@@ -59,7 +60,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithCustomMethod(JmmNode node, Boolean data){
-        System.out.println("CustomMethod: " + node.getChildren());
+        System.out.println("CustomMethod: " + node + node.getChildren());
         List<String> methods = table.getMethods();
 
         if(methods.contains(node.getJmmChild(0).get("name"))) {
@@ -73,7 +74,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithMethodCall(JmmNode node, Boolean data){
-        System.out.println("MethodCall: " + node + node.getChildren());
+        System.out.println("MethodCall: " + node.getChildren());
 
         JmmNode leftChild = node.getJmmChild(0);
         Type leftChildType = table.getLocalVariableType(leftChild.get("value"),currentMethod);
@@ -98,9 +99,21 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        if(methods.contains(node.get("value")) && !table.getReturnType(currentMethod).equals(table.getReturnType(node.get("value")))) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible return"));
-            return false;
+        if(methods.contains(node.get("value"))) {
+            if(!table.getReturnType(currentMethod).equals(table.getReturnType(node.get("value")))) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible return"));
+                return false;
+            }
+            List<Symbol> parameters = table.getParameters(node.get("value"));
+            if(!parameters.isEmpty()) {
+                for(Symbol parameter : parameters) {
+                    if(parameter.getType().getName().equals(leftChildType.getName())) //só funciona para funções com apenas um argumento
+                        return true;
+                }
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible arguments"));
+                return false;
+            }
+
         }
 
         return true;
