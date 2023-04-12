@@ -1,17 +1,12 @@
 package pt.up.fe.comp2023.ast;
 
-import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.ast.AJmmVisitor;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.comp.jmm.analysis.table.Type;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     private final SymbolTable table;
@@ -36,7 +31,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         this.addVisit("ArrayAccess", this::dealWithArrayAccess);
         this.addVisit("Assignment", this::dealWithAssignment);
         this.addVisit("MethodCall", this::dealWithMethodCall);
-
+        //this.addVisit("ExprStmt", this::dealWithExprStmt);
     }
 
     private Boolean dealWithDefault(JmmNode node, Boolean data) {
@@ -79,9 +74,19 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithMethodCall(JmmNode node, Boolean data){
-        System.out.println("MethodCall: " + node);
+        System.out.println("MethodCall: " + node + node.getChildren());
 
-
+        JmmNode leftChild = node.getJmmChild(0);
+        Type leftChildType = table.getLocalVariableType(leftChild.get("value"),currentMethod);
+        if(leftChildType == null) {
+            List<String> imports = table.getImports();
+            if(!table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Class not imported"));
+                return false;
+            }
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Variable not declared"));
+            return false;
+        }
 
         return true;
     }
@@ -95,7 +100,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        JmmNode child = node.getChildren().get(0);
+        JmmNode child = node.getJmmChild(0);
 
         if(!child.getKind().equals("Identifier")) {
             if (!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration"))
@@ -133,7 +138,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     private Boolean dealWithConditionalStmt(JmmNode node, Boolean data){
         System.out.println("ConditionalStmt: " + node.getChildren());
 
-        JmmNode child = node.getChildren().get(0);
+        JmmNode child = node.getJmmChild(0);
 
         if (child.getKind().equals("Identifier")) {
             Type childType = table.getLocalVariableType(child.get("value"),currentMethod);
@@ -151,8 +156,8 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
         }
         else if(child.getKind().equals("BinaryOp") && (child.get("op").equals("<") || child.get("op").equals("&&"))) {
-            JmmNode left = node.getChildren().get(0).getChildren().get(0);
-            JmmNode right = node.getChildren().get(0).getChildren().get(1);
+            JmmNode left = node.getJmmChild(0).getJmmChild(0);
+            JmmNode right = node.getJmmChild(0).getJmmChild(1);
 
             Type leftType = table.getLocalVariableType(left.get("value"),currentMethod);
             Type rightType = table.getLocalVariableType(right.get("value"),currentMethod);
@@ -221,14 +226,13 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Wrong number of operands"));
             return false;
         }
-        JmmNode left = node.getChildren().get(0);
-        JmmNode right = node.getChildren().get(1);
+        JmmNode left = node.getJmmChild(0);
+        JmmNode right = node.getJmmChild(1);
 
         Type leftType = table.getLocalVariableType(left.get("value"),currentMethod);
         Type rightType = table.getLocalVariableType(right.get("value"),currentMethod);
 
         //TODO é preciso ver se uma variavel foi inicializada duas vezes??
-        System.out.println("plusObject:");
         if (!left.getKind().equals("Identifier")){
             leftType = new Type(left.getKind(),false);
         }
