@@ -30,6 +30,95 @@ public class OllirTest {
     }
 
     @Test
+    public void compileFields(){
+        testJmmCompilation("pt/up/fe/comp/cp2/ollir/Fields.jmm", this::compileFields);
+    }
+    @Test
+    public void compileFieldsandMain(){
+        testJmmCompilation("pt/up/fe/comp/cp2/ollir/FieldsAndMain.jmm", this::compileFieldsandMain);
+    }
+
+    @Test
+    public void compileNormalMethodONLYDECLARATION(){
+        testJmmCompilation("pt/up/fe/comp/cp2/ollir/Method.jmm", this::compileNormalMethodONLYDECLARATION);
+    }
+    public void compileFields(ClassUnit classUnit){
+        //System.out.println(classUnit.getImports());
+        // Test name of the class and super
+        assertEquals("Class name not what was expected", "CompileBasic", classUnit.getClassName());
+        assertEquals("Super class name not what was expected", "Quicksort", classUnit.getSuperClass());
+
+        // Test fields
+        assertEquals("Class should have two fields", 2, classUnit.getNumFields());
+        var fieldNames = new HashSet<>(Arrays.asList("intField", "boolField"));
+        assertThat(fieldNames, hasItem(classUnit.getField(0).getFieldName()));
+        assertThat(fieldNames, hasItem(classUnit.getField(1).getFieldName()));
+    }
+
+    public void compileFieldsandMain(ClassUnit classUnit){
+
+        //System.out.println(classUnit.getImports());
+        // Test name of the class and super
+        assertEquals("Class name not what was expected", "CompileBasic", classUnit.getClassName());
+        assertEquals("Super class name not what was expected", "Quicksort", classUnit.getSuperClass());
+
+        // Test fields
+        assertEquals("Class should have two fields", 2, classUnit.getNumFields());
+        var fieldNames = new HashSet<>(Arrays.asList("intField", "boolField"));
+        assertThat(fieldNames, hasItem(classUnit.getField(0).getFieldName()));
+        assertThat(fieldNames, hasItem(classUnit.getField(1).getFieldName()));
+
+        // Test main
+        System.out.println("METHODS");
+
+        System.out.println(classUnit.getMethods());
+        Method main = classUnit.getMethods().stream()
+                .filter(method -> method.getMethodName().equals("main"))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull("Could not find main", main);
+    }
+
+    public void compileNormalMethodONLYDECLARATION(ClassUnit classUnit){
+        //System.out.println(classUnit.getImports());
+        // Test name of the class and super
+        assertEquals("Class name not what was expected", "CompileBasic", classUnit.getClassName());
+        assertEquals("Super class name not what was expected", "Quicksort", classUnit.getSuperClass());
+
+        // Test fields
+        assertEquals("Class should have two fields", 2, classUnit.getNumFields());
+        var fieldNames = new HashSet<>(Arrays.asList("intField", "boolField"));
+        assertThat(fieldNames, hasItem(classUnit.getField(0).getFieldName()));
+        assertThat(fieldNames, hasItem(classUnit.getField(1).getFieldName()));
+
+        // Test main
+        Method main = classUnit.getMethods().stream()
+                .filter(method -> method.getMethodName().equals("main"))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull("Could not find main", main);
+
+
+        // Test method 1
+        Method method1 = classUnit.getMethods().stream()
+                .filter(method -> method.getMethodName().equals("method1"))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull("Could not find method1", method1);
+
+        // Test method 2
+        Method method2 = classUnit.getMethods().stream()
+                .filter(method -> method.getMethodName().equals("method2"))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull("Could not find method2'", method2);
+    }
+
+    @Test
     public void compileBasic() {
         testJmmCompilation("pt/up/fe/comp/cp2/ollir/CompileBasic.jmm", this::compileBasic);
     }
