@@ -68,6 +68,23 @@ public class OllirTemplates {
         return ollir.toString();
     }
 
+    public static String assignmentType(String operator) {
+        switch (operator) {
+            case "+":
+            case "-":
+            case "/":
+            case "*":
+                return ".i32";
+            case "&&":
+            case "<":
+            case "!":
+            case ">=":
+                return ".bool";
+            default:
+                return ".error";
+        }
+    }
+
     private static Symbol escapeVariable(Symbol variable) {
         if (variable.getName().charAt(0) == '$') {
             return new Symbol(variable.getType(), "dollar_" + variable.getName().substring(1));

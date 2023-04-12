@@ -7,6 +7,8 @@ import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
     private final SymbolTable table;
@@ -32,7 +34,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         this.addVisit("VarDeclaration", this::dealWithVarDeclaration);
         this.addVisit("Assignment", this::dealWithAssignment);
         this.addVisit("Integer", this::dealWithPrimitive);
-        //this.addVisit("Boolean", this::dealWithPrimitive); TODO:can probably reuse above function
+        this.addVisit("Boolean", this::dealWithPrimitive);
 
         //this.addVisit("Identifier",this::dealWithIdentifier);
 
@@ -131,11 +133,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         for (JmmNode child : node.getChildren()) {
             if (child.getKind().equals("Type")) continue;
-            if(node.getNumChildren() - 1  == child.getIndexOfSelf()){
-                System.out.println("on last child");
-                child.removeParent();
-                child.setParent(new JmmNode);
-            }
             String ollirChild = (String) visit(child, Collections.singletonList("METHOD")).get(0);
             if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT"))
                 if (ollirChild.equals("")) continue;
@@ -148,7 +145,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         return Collections.singletonList(builder.toString());
     }
-/*
+
     private List<Object> dealWithVarDeclaration(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
@@ -160,13 +157,10 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if ("CLASS".equals(data.get(0))) {
             Map.Entry<Symbol, Boolean> variable = table.getField(node.getJmmChild(0).get("name"));
             return Arrays.asList(OllirTemplates.field(variable.getKey()));
-        }else if("METHOD".equals(data.get(0)) && currentMethod != null){
-            Map.Entry<Symbol, Boolean> variable = currentMethod.getField(node.getJmmChild(0).get("name"));
-            return Arrays.asList(OllirTemplates.putfield(OllirTemplates.variable(variable.getKey()),node.getJmmChild(0).get("name")));
         }
 
         return Arrays.asList("DEFAULT_VISIT");
-    }*/
+    }
 
     private List<Object> dealWithAssignment(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
@@ -305,6 +299,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (node.getKind().equals("Integer")){
             value = node.get("value") + ".i32";
             type = ".i32";
+        }else if(node.getKind().equals("BooleanLiteral")){
+            value = (node.get("value").equals("true") ? "1" : "0") + ".bool";
+            type = ".bool";
         }else{
             value = "";
             type = "";
@@ -321,7 +318,44 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         return Collections.singletonList(value);
     }
 
-    private List<Object> dealWithVarDeclaration(JmmNode node, List<Object> data) {
+
+    private List<Object> dealWithBinaryOperation(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        visited.add(node);
+
+        JmmNode left = node.getChildren().get(0);
+        JmmNode right = node.getChildren().get(1);
+
+        String leftReturn = (String) visit(left, Collections.singletonList("BINARY")).get(0);
+        String rightReturn = (String) visit(right, Collections.singletonList("BINARY")).get(0);
+
+        String[] leftStmts = leftReturn.split("\n");
+        String[] rightStmts = rightReturn.split("\n");
+
+        StringBuilder ollir = new StringBuilder();
+
+        String leftSide;
+        String rightSide;
+
+        leftSide = binaryOperations(leftStmts, ollir, new Type("int", false));
+        rightSide = binaryOperations(rightStmts, ollir, new Type("int", false));
+
+        if (data == null) {
+            return Arrays.asList("DEFAULT_VISIT");
+        }
+        if (data.get(0).equals("RETURN") || data.get(0).equals("FIELD")) {
+            Symbol variable = new Symbol(new Type("int", false), "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=.i32 %s %s.i32 %s;\n", OllirTemplates.variable(variable), leftSide, node.get("operation"), rightSide));
+            ollir.append(OllirTemplates.variable(variable));
+        } else {
+            ollir.append(String.format("%s %s.i32 %s", leftSide, node.get("operation"), rightSide));
+        }
+
+        return Collections.singletonList(ollir.toString());
+    }
+
+    /*
+    private List<Object> dealWithVariable(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
@@ -393,6 +427,38 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
 
         return Arrays.asList("ACCESS", node.get("name"));
-    }
+    }*/
 
+    private String binaryOperations(String[] statements, StringBuilder ollir, Type type) {
+        String finalStmt;
+        if (statements.length > 1) {
+            for (int i = 0; i < statements.length - 1; i++) {
+                ollir.append(statements[i]).append("\n");
+            }
+            String last = statements[statements.length - 1];
+            if (last.split("(/|\\+|-|\\*|&&|<|!|>=)(\\.i32|\\.bool)").length == 2) {
+                Pattern p = Pattern.compile("(/|\\+|-|\\*|&&|<|!|>=)(\\.i32|\\.bool)");
+                Matcher m = p.matcher(last);
+
+                m.find();
+
+                ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(new Symbol(type, String.format("temporary%d", temp_sequence))), OllirTemplates.assignmentType(m.group(1)), last));
+                finalStmt = OllirTemplates.variable(new Symbol(type, String.format("temporary%d", temp_sequence++)));
+            } else {
+                finalStmt = last;
+            }
+        } else {
+            if (statements[0].split("(/|\\+|-|\\*|&&|<|!|>=)(\\.i32|\\.bool)").length == 2) {
+                Pattern p = Pattern.compile("(/|\\+|-|\\*|&&|<|!|>=)(\\.i32|\\.bool)");
+                Matcher m = p.matcher(statements[0]);
+                m.find();
+
+                ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(new Symbol(type, String.format("temporary%d", temp_sequence))), OllirTemplates.assignmentType(m.group(1)), statements[0]));
+                finalStmt = OllirTemplates.variable(new Symbol(type, String.format("temporary%d", temp_sequence++)));
+            } else {
+                finalStmt = statements[0];
+            }
+        }
+        return finalStmt;
+    }
 }
