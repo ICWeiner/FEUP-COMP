@@ -59,14 +59,13 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithCustomMethod(JmmNode node, Boolean data){
-        System.out.println("CustomMethod: " + node);
+        System.out.println("CustomMethod: " + node.getChildren());
         List<String> methods = table.getMethods();
-        for (String method : methods) {
-            if(node.getJmmChild(0).get("name").equals(method)) {
-                currentMethod = method;
-                break;
-            }
+
+        if(methods.contains(node.getJmmChild(0).get("name"))) {
+            currentMethod = node.getJmmChild(0).get("name");
         }
+
         for (JmmNode child : node.getChildren()) {
             visit(child);
         }
@@ -89,9 +88,13 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        String superClassName = table.getSuper();
-        if((table.getClassName().equals(leftChildType.getName()) && superClassName == null)
-            || (!table.getClassName().equals(leftChildType.getName()) && !imports.contains(leftChildType.getName()))) {
+        List<String> methods = table.getMethods();
+        String className = table.getClassName();
+        System.out.println("method: " + methods.contains(node.get("value")));
+
+        if(!(className.equals(leftChildType.getName()) && table.getSuper() != null)
+            && !(!className.equals(leftChildType.getName()) && imports.contains(leftChildType.getName()))
+            && !methods.contains(node.get("value"))) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Call to undeclared method"));
             return false;
         }
