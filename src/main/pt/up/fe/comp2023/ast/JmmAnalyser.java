@@ -47,7 +47,6 @@ public class JmmAnalyser implements JmmAnalysis {
 
         SemanticAnalysisVisitor semanticVisitor = new SemanticAnalysisVisitor(table, reports);
         semanticVisitor.visit(node);
-        reports.addAll(semanticVisitor.getReports());
 
         System.out.println("Semantic Analysis Done!");
         //if(!reports.isEmpty())
