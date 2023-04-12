@@ -13,8 +13,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     private final SymbolTable table;
     private final List<Report> reports;
 
-    private String currentMethod;
-
     public SemanticAnalysisVisitor(SymbolTable table, List<Report> reports) {
         this.table = table;
         this.reports = reports;
@@ -24,8 +22,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     protected void buildVisitor() {
         this.setDefaultVisit(this::dealWithDefault);
         this.addVisit("Program", this::dealWithProgram);
-        this.addVisit("MainMethod", this::dealWithMainMethod);
-        this.addVisit("CustomMethod", this::dealWithCustomMethod);
         this.addVisit("BinaryOp", this::dealWithBinaryOp);
         this.addVisit("IfElseStmt", this::dealWithConditionalStmt);
         this.addVisit("WhileStmt", this::dealWithConditionalStmt);
@@ -50,34 +46,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         return true;
     }
 
-    private Boolean dealWithMainMethod(JmmNode node, Boolean data){
-        System.out.println("MainMethod: " + node);
-        currentMethod = "main";
-        for (JmmNode child : node.getChildren()) {
-            visit(child);
-        }
-        return true;
-    }
-
-    private Boolean dealWithCustomMethod(JmmNode node, Boolean data){
-        System.out.println("CustomMethod: " + node + node.getChildren());
-        List<String> methods = table.getMethods();
-
-        if(methods.contains(node.getJmmChild(0).get("name"))) {
-            currentMethod = node.getJmmChild(0).get("name");
-        }
-
-        for (JmmNode child : node.getChildren()) {
-            visit(child);
-        }
-        return true;
-    }
-
     private Boolean dealWithMethodCall(JmmNode node, Boolean data){
         System.out.println("MethodCall: " + node.getChildren());
 
         JmmNode leftChild = node.getJmmChild(0);
-        Type leftChildType = table.getLocalVariableType(leftChild.get("value"),currentMethod);
+        Type leftChildType = table.getLocalVariableType(leftChild.get("value"),table.getCurrentMethod().getName());
         List<String> imports = table.getImports();
 
         if(leftChildType == null) {
@@ -100,7 +73,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
 
         if(methods.contains(node.get("value"))) {
-            if(!table.getReturnType(currentMethod).equals(table.getReturnType(node.get("value")))) {
+            if(!table.getReturnType(table.getCurrentMethod().getName()).equals(table.getReturnType(node.get("value")))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible return"));
                 return false;
             }
@@ -121,7 +94,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
     private Boolean dealWithIdentifier(JmmNode node, Boolean data) {
         System.out.println("Identifier: " + node);
-        Type nodeType = table.getLocalVariableType(node.get("value"),currentMethod);
+        Type nodeType = table.getLocalVariableType(node.get("value"),table.getCurrentMethod().getName());
         if(nodeType == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Variable not declared"));
             return false;
@@ -132,7 +105,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     private Boolean dealWithAssignment(JmmNode node, Boolean data){
         System.out.println("Assignment: " + node + " " + node.getChildren());
 
-        Type nodeType = table.getLocalVariableType(node.get("name"),currentMethod);
+        Type nodeType = table.getLocalVariableType(node.get("name"),table.getCurrentMethod().getName());
         if(nodeType == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assignment variable type is null"));
             return false;
@@ -151,7 +124,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
         }
         else {
-            Type childType = table.getLocalVariableType(child.get("value"),currentMethod);
+            Type childType = table.getLocalVariableType(child.get("value"),table.getCurrentMethod().getName());
             if(childType == null) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign is null"));
                 return false;
@@ -179,7 +152,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         JmmNode child = node.getJmmChild(0);
 
         if (child.getKind().equals("Identifier")) {
-            Type childType = table.getLocalVariableType(child.get("value"),currentMethod);
+            Type childType = table.getLocalVariableType(child.get("value"),table.getCurrentMethod().getName());
             if (childType == null) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement is null"));
                 return false;
@@ -197,8 +170,8 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             JmmNode left = node.getJmmChild(0).getJmmChild(0);
             JmmNode right = node.getJmmChild(0).getJmmChild(1);
 
-            Type leftType = table.getLocalVariableType(left.get("value"),currentMethod);
-            Type rightType = table.getLocalVariableType(right.get("value"),currentMethod);
+            Type leftType = table.getLocalVariableType(left.get("value"),table.getCurrentMethod().getName());
+            Type rightType = table.getLocalVariableType(right.get("value"),table.getCurrentMethod().getName());
 
             if (leftType == null || rightType == null) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement is null"));
@@ -223,7 +196,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         JmmNode array = node.getJmmChild(0);
 
         if(array.getKind().equals("Identifier")) {
-            Type arrayType = table.getLocalVariableType(array.get("value"),currentMethod);
+            Type arrayType = table.getLocalVariableType(array.get("value"),table.getCurrentMethod().getName());
             if (arrayType == null) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array type is null"));
                 return false;
@@ -239,7 +212,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
 
         JmmNode index = node.getJmmChild(1);
-        Type indexType = table.getLocalVariableType(index.get("value"),currentMethod);
+        Type indexType = table.getLocalVariableType(index.get("value"),table.getCurrentMethod().getName());
 
         if (!index.getKind().equals("Identifier")) {
             indexType = new Type(index.getKind(),false);
@@ -267,8 +240,8 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         JmmNode left = node.getJmmChild(0);
         JmmNode right = node.getJmmChild(1);
 
-        Type leftType = table.getLocalVariableType(left.get("value"),currentMethod);
-        Type rightType = table.getLocalVariableType(right.get("value"),currentMethod);
+        Type leftType = table.getLocalVariableType(left.get("value"),table.getCurrentMethod().getName());
+        Type rightType = table.getLocalVariableType(right.get("value"),table.getCurrentMethod().getName());
 
         if (!left.getKind().equals("Identifier")){
             leftType = new Type(left.getKind(),false);

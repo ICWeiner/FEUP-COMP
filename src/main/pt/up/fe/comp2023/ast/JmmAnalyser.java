@@ -49,7 +49,7 @@ public class JmmAnalyser implements JmmAnalysis {
         semanticVisitor.visit(node);
 
         System.out.println("Semantic Analysis Done!");
-        //if(!reports.isEmpty())
+        if(!reports.isEmpty())
             System.out.println(reports);
 
         return new JmmSemanticsResult(jmmParserResult, table, reports);
