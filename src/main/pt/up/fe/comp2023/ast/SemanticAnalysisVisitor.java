@@ -78,13 +78,21 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
         JmmNode leftChild = node.getJmmChild(0);
         Type leftChildType = table.getLocalVariableType(leftChild.get("value"),currentMethod);
+        List<String> imports = table.getImports();
+
         if(leftChildType == null) {
-            List<String> imports = table.getImports();
             if(!table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Class not imported"));
                 return false;
             }
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Variable not declared"));
+            return false;
+        }
+
+        String superClassName = table.getSuper();
+        if((table.getClassName().equals(leftChildType.getName()) && superClassName == null)
+            || (!table.getClassName().equals(leftChildType.getName()) && !imports.contains(leftChildType.getName()))) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Call to undeclared method"));
             return false;
         }
 
