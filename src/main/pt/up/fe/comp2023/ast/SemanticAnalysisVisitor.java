@@ -31,7 +31,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         this.addVisit("ArrayAccess", this::dealWithArrayAccess);
         this.addVisit("Assignment", this::dealWithAssignment);
         this.addVisit("MethodCall", this::dealWithMethodCall);
-        //this.addVisit("ExprStmt", this::dealWithExprStmt);
+        this.addVisit("Identifier", this::dealWithIdentifier);
     }
 
     private Boolean dealWithDefault(JmmNode node, Boolean data) {
@@ -90,7 +90,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
         List<String> methods = table.getMethods();
         String className = table.getClassName();
-        System.out.println("method: " + methods.contains(node.get("value")));
 
         if(!(className.equals(leftChildType.getName()) && table.getSuper() != null)
             && !(!className.equals(leftChildType.getName()) && imports.contains(leftChildType.getName()))
@@ -99,6 +98,16 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
+        return true;
+    }
+
+    private Boolean dealWithIdentifier(JmmNode node, Boolean data) {
+        System.out.println("Identifier: " + node);
+        Type nodeType = table.getLocalVariableType(node.get("value"),currentMethod);
+        if(nodeType == null) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Variable not declared"));
+            return false;
+        }
         return true;
     }
 
@@ -279,11 +288,9 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 return false;
             }
         }
-        else {
-            if ((!leftType.getName().equals("boolean") && !rightType.getName().equals("boolean")) || (!leftType.getName().equals("Boolean") && !rightType.getName().equals("Boolean"))) {
+        else if ((!leftType.getName().equalsIgnoreCase("boolean") && !rightType.getName().equalsIgnoreCase("boolean"))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible types in " + node.get("op") + " operation: " + leftType.getName() + " and " + rightType.getName()));
                 return false;
-            }
         }
 
         return true;
