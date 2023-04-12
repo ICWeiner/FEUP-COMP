@@ -17,6 +17,19 @@ public class OllirTest {
 
 
     @Test
+    public void compileSuperBasic(){
+        testJmmCompilation("pt/up/fe/comp/cp2/ollir/BasicImportAndClass.jmm", this::compileSuperBasic);
+    }
+
+    public void compileSuperBasic(ClassUnit classUnit){
+
+        //System.out.println(classUnit.getImports());
+        // Test name of the class and super
+        assertEquals("Class name not what was expected", "CompileBasic", classUnit.getClassName());
+        assertEquals("Super class name not what was expected", "Quicksort", classUnit.getSuperClass());
+    }
+
+    @Test
     public void compileBasic() {
         testJmmCompilation("pt/up/fe/comp/cp2/ollir/CompileBasic.jmm", this::compileBasic);
     }
