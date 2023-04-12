@@ -16,7 +16,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
     public SemanticAnalysisVisitor(SymbolTable table, List<Report> reports) {
         this.table = table;
-        this.reports = reports; //TODO: os reports estão a aparecer duplicados
+        this.reports = reports;
     }
 
     @Override
@@ -95,6 +95,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             && !(!className.equals(leftChildType.getName()) && imports.contains(leftChildType.getName()))
             && !methods.contains(node.get("value"))) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Call to undeclared method"));
+            return false;
+        }
+
+        if(methods.contains(node.get("value")) && !table.getReturnType(currentMethod).equals(table.getReturnType(node.get("value")))) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible return"));
             return false;
         }
 
@@ -252,7 +257,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         Type leftType = table.getLocalVariableType(left.get("value"),currentMethod);
         Type rightType = table.getLocalVariableType(right.get("value"),currentMethod);
 
-        //TODO é preciso ver se uma variavel foi inicializada duas vezes??
         if (!left.getKind().equals("Identifier")){
             leftType = new Type(left.getKind(),false);
         }
@@ -296,7 +300,4 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         return true;
     }
 
-    public List<Report> getReports() {
-        return reports;
-    }
 }
