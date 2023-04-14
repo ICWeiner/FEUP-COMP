@@ -89,7 +89,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: 'this' invoked in main method"));
                 return false;
             }
-            else if(!leftChild.getKind().equals("This") && !table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
+            else if(!table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Class not imported"));
                 return false;
             }
@@ -146,17 +146,17 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        if(!node.getJmmChild(0).getKind().equals("Integer")) { //TODO tratar melhor do index
+        if(!node.getJmmChild(0).getKind().equals("Integer")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index not an integer"));
             return false;
         }
 
         JmmNode child = node.getJmmChild(1);
 
-         if(!child.getKind().equals("Integer")) {
+        if(!child.getKind().equals("Integer")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array assignment is not an integer"));
             return false;
-         }
+        }
 
         return true;
     }
@@ -174,19 +174,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         String superClassName = table.getSuper();
         String className = table.getClassName();
         if(!child.getKind().equals("Identifier")) {
-            if(child.getKind().equals("BinaryOp") && !dealWithBinaryOp(child,true)) { //posso fazer isto?
-                return false;
-            }
-            if (!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration") && child.getJmmChild(0).getKind().equals("Integer"))) { //TODO tratar melhor do index
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assignment: Array index is not an integer"));
-                return false;
-            }
-            if(!(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
+            if (!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration"))
+                    && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(nodeType.getName().equals("boolean") && child.getKind().equals("Boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
-                    && !(child.getKind().equals("BinaryOp") && dealWithBinaryOp(child,true))
-                    //&& !(child.getKind().equals("MethodCall") && dealWithMethodCall(child,true))
-                    //&& !(child.getKind().equals("LengthOp") && nodeType.isArray())
+                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
                     && !(child.getKind().equals("This") && !currentMethod.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethod + " method"));
                 return false;
@@ -387,8 +379,8 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
         }
         else if (!leftType.getName().equalsIgnoreCase("boolean") || !rightType.getName().equalsIgnoreCase("boolean")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible types in " + node.get("op") + " operation: " + leftType.getName() + " and " + rightType.getName()));
-                return false;
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible types in " + node.get("op") + " operation: " + leftType.getName() + " and " + rightType.getName()));
+            return false;
         }
 
         return true;
