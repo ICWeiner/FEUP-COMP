@@ -12,7 +12,7 @@ import java.util.List;
 public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     private final SymbolTable table;
     private final List<Report> reports;
-    String currentMethod; //TODO: isto é mesmo necessário?? Pq table.getCurrentMethod().getName() não dá?
+    String currentMethod; //TODO: isto é necessário?? Pq table.getCurrentMethod().getName() não dá?
 
     public SemanticAnalysisVisitor(SymbolTable table, List<Report> reports) {
         this.table = table;
@@ -28,6 +28,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         this.addVisit("WhileStmt", this::dealWithConditionalStmt);
         this.addVisit("ArrayAccess", this::dealWithArrayAccess);
         this.addVisit("Assignment", this::dealWithAssignment);
+        this.addVisit("ArrayAssignment", this::dealWithArrayAssignment);
         this.addVisit("MethodCall", this::dealWithMethodCall);
         this.addVisit("Identifier", this::dealWithIdentifier);
         this.addVisit("MainMethod", this::dealWithMainMethod);
@@ -136,6 +137,30 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         return true;
     }
 
+    private Boolean dealWithArrayAssignment(JmmNode node, Boolean data){
+        System.out.println("ArrayAssignment: " + node + " " + node.getChildren());
+
+        Type nodeType = table.getLocalVariableType(node.get("name"),currentMethod);
+        if(nodeType == null && node.getKind().equals("Identifier")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array assignment is null"));
+            return false;
+        }
+
+        if(!node.getJmmChild(0).getKind().equals("Integer")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index not an integer"));
+            return false;
+        }
+
+        JmmNode child = node.getJmmChild(1);
+
+         if(!child.getKind().equals("Integer")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array assignment is not an integer"));
+            return false;
+         }
+
+        return true;
+    }
+
     private Boolean dealWithAssignment(JmmNode node, Boolean data){
         System.out.println("Assignment: " + node + " " + node.getChildren());
 
@@ -208,7 +233,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(!left.getKind().equals("ArrayAccess")) {
                 leftType = table.getLocalVariableType(left.get("value"), currentMethod);
             }
-            else if(!dealWithArrayAccess(left,true)) {
+            else if(!dealWithArrayAccess(left,true)) { //posso fazer isto??
                 return false;
             }
             if(!right.getKind().equals("ArrayAccess")) {
@@ -277,12 +302,12 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 return false;
             }
             if(!arrayType.isArray()) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is done over an array"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is not done over an array"));
                 return false;
             }
         }
         else {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is done over an array"));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is not done over an array"));
             return false;
         }
 
