@@ -76,11 +76,19 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         System.out.println("MethodCall: " + node.getChildren());
 
         JmmNode leftChild = node.getJmmChild(0);
-        Type leftChildType = table.getLocalVariableType(leftChild.get("value"),currentMethod);
+        Type leftChildType = null;
+
+        if(!leftChild.getKind().equals("This")) {
+            leftChildType = table.getLocalVariableType(leftChild.get("value"),currentMethod);
+        }
+
         List<String> imports = table.getImports();
-        System.out.println("aaaa" + leftChild);
         if(leftChildType == null) {
-            if(!table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
+            if(leftChild.getKind().equals("This") && currentMethod.equals("main")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: 'this' invoked in main method"));
+                return false;
+            }
+            else if(!table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Class not imported"));
                 return false;
             }
@@ -106,7 +114,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             List<Symbol> parameters = table.getParameters(node.get("value"));
             if(!parameters.isEmpty()) {
                 for(Symbol parameter : parameters) {
-                    if(parameter.getType().getName().equals(leftChildType.getName())) //só funciona para funções com apenas um argumento
+                    if(parameter.getType().getName().equals(leftChildType.getName())) //acho que só funciona para funções com apenas um argumento
                         return true;
                 }
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible arguments"));
@@ -146,7 +154,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(nodeType.getName().equals("boolean") && child.getKind().equals("Boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
-                    && !(child.getKind().equals("This") && !currentMethod.equals("main") && (superClassName != null && superClassName.equals(nodeType.getName()) || className.equals(nodeType.getName())))) {
+                    && !(child.getKind().equals("This") && !currentMethod.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethod + " method"));
                 return false;
             }
