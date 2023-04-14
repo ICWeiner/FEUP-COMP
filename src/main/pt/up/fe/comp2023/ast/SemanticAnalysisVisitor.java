@@ -113,15 +113,15 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
         JmmNode child = node.getJmmChild(0);
         String superClassName = table.getSuper();
-
+        String className = table.getClassName();
         if(!child.getKind().equals("Identifier")) {
             if (!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration"))
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(nodeType.getName().equals("boolean") && child.getKind().equals("Boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
-                    && !(child.getKind().equals("This") && (superClassName != null && superClassName.equals(nodeType.getName()) || table.getClassName().equals(nodeType.getName())))) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + nodeType.getName() + " to " + child.getKind()));
+                    && !(child.getKind().equals("This") && !table.getCurrentMethod().getName().equals("main") && (superClassName != null && superClassName.equals(nodeType.getName()) || className.equals(nodeType.getName())))) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + table.getCurrentMethod().getName() + " method"));
                 return false;
             }
         }
@@ -133,7 +133,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
 
             if (!childType.getName().equals(nodeType.getName())) {
-                String className = table.getClassName();
                 List<String> imports = table.getImports();
                 if (!((className.equals(childType.getName()) && superClassName != null && superClassName.equals(nodeType.getName()) && imports.contains(nodeType.getName()))
                         || (className.equals(nodeType.getName()) && superClassName != null && superClassName.equals(childType.getName()) && imports.contains(childType.getName()))
