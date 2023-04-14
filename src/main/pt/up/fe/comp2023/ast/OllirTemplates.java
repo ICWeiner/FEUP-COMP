@@ -50,6 +50,10 @@ public class OllirTemplates {
         return ollir.toString();
     }
 
+    public static String ret(Type ret, String exp) {
+        return String.format("ret%s %s;", OllirTemplates.type(ret), exp);
+    }
+
     public static String type(Type type) {
         StringBuilder ollir = new StringBuilder();
 
@@ -113,6 +117,13 @@ public class OllirTemplates {
 
     public static String field(Symbol variable) {
         return String.format(".field public %s;", variable(variable));
+    }
+
+    public static String localfield(Symbol variable) {
+        return String.format("%s :=%s ;",
+                OllirTemplates.variable(variable),
+                OllirTemplates.type(variable.getType()));
+
     }
 
     public static String getfield(Symbol variable) {
