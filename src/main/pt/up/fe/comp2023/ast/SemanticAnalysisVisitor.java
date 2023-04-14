@@ -200,8 +200,14 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(!left.getKind().equals("ArrayAccess")) {
                 leftType = table.getLocalVariableType(left.get("value"), currentMethod);
             }
+            else if(!dealWithArrayAccess(left,true)) {
+                return false;
+            }
             if(!right.getKind().equals("ArrayAccess")) {
                 rightType = table.getLocalVariableType(right.get("value"), currentMethod);
+            }
+            else if(!dealWithArrayAccess(right,true)) {
+                return false;
             }
 
             if (!left.getKind().equals("Identifier")) {
