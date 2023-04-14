@@ -63,11 +63,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
 
         List<String> methods = table.getMethods();
-        String className = table.getClassName();
+        String superClassName = table.getSuper();
 
-        if(!(className.equals(leftChildType.getName()) && table.getSuper() != null)
-            && !(!className.equals(leftChildType.getName()) && imports.contains(leftChildType.getName()))
-            && !methods.contains(node.get("value"))) {
+        if(!(superClassName != null && imports.contains(superClassName))
+                && !imports.contains(leftChildType.getName())
+                && !methods.contains(node.get("value"))) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Call to undeclared method"));
             return false;
         }
