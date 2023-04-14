@@ -169,18 +169,54 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         else if(child.getKind().equals("BinaryOp") && (child.get("op").equals("<") || child.get("op").equals("&&"))) {
             JmmNode left = node.getJmmChild(0).getJmmChild(0);
             JmmNode right = node.getJmmChild(0).getJmmChild(1);
+            Type leftType = null;
+            Type rightType = null;
 
-            Type leftType = table.getLocalVariableType(left.get("value"),table.getCurrentMethod().getName());
-            Type rightType = table.getLocalVariableType(right.get("value"),table.getCurrentMethod().getName());
+            if(!left.getKind().equals("ArrayAccess")) {
+                leftType = table.getLocalVariableType(left.get("value"), table.getCurrentMethod().getName());
+            }
+            if(!right.getKind().equals("ArrayAccess")) {
+                rightType = table.getLocalVariableType(right.get("value"), table.getCurrentMethod().getName());
+            }
 
-            if (leftType == null || rightType == null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement is null"));
+            if (!left.getKind().equals("Identifier")) {
+                if(child.get("op").equals("<") && !left.getKind().equals("Integer") && !left.getKind().equals("ArrayAccess")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement: left type is not an integer"));
+                    return false;
+                }
+                else if(child.get("op").equals("&&") && !left.getKind().equals("Boolean")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement: left type not boolean"));
+                    return false;
+                }
+            }
+            else if(leftType == null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement: left type is null"));
                 return false;
             }
-            if (leftType.isArray() || rightType.isArray()) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement is an array"));
+            else if (leftType.isArray()) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement left type is an array"));
                 return false;
             }
+
+            if (!right.getKind().equals("Identifier")) {
+                if(child.get("op").equals("<") && !right.getKind().equals("Integer") && !right.getKind().equals("ArrayAccess")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement: right type is not an integer"));
+                    return false;
+                }
+                else if(child.get("op").equals("&&") && !right.getKind().equals("Boolean")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement: right type not boolean"));
+                    return false;
+                }
+            }
+            else if(rightType == null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement: right type is null"));
+                return false;
+            }
+            else if (rightType.isArray()) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement right type is an array"));
+                return false;
+            }
+
         }
         else if (!child.getKind().equals("Boolean")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Conditional statement not boolean"));
