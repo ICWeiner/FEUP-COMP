@@ -63,11 +63,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
 
         List<String> methods = table.getMethods();
-        String className = table.getClassName();
+        String superClassName = table.getSuper();
 
-        if(!(className.equals(leftChildType.getName()) && table.getSuper() != null)
-            && !(!className.equals(leftChildType.getName()) && imports.contains(leftChildType.getName()))
-            && !methods.contains(node.get("value"))) {
+        if(!(superClassName != null && imports.contains(superClassName))
+                && !imports.contains(leftChildType.getName())
+                && !methods.contains(node.get("value"))) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Call to undeclared method"));
             return false;
         }
@@ -112,13 +112,15 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
 
         JmmNode child = node.getJmmChild(0);
+        String superClassName = table.getSuper();
 
         if(!child.getKind().equals("Identifier")) {
             if (!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration"))
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(nodeType.getName().equals("boolean") && child.getKind().equals("Boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
-                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))) {
+                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
+                    && !(child.getKind().equals("This") && (superClassName != null && superClassName.equals(nodeType.getName()) || table.getClassName().equals(nodeType.getName())))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + nodeType.getName() + " to " + child.getKind()));
                 return false;
             }
@@ -132,7 +134,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
             if (!childType.getName().equals(nodeType.getName())) {
                 String className = table.getClassName();
-                String superClassName = table.getSuper();
                 List<String> imports = table.getImports();
                 if (!((className.equals(childType.getName()) && superClassName != null && superClassName.equals(nodeType.getName()) && imports.contains(nodeType.getName()))
                         || (className.equals(nodeType.getName()) && superClassName != null && superClassName.equals(childType.getName()) && imports.contains(childType.getName()))
