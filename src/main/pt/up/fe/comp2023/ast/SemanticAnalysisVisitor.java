@@ -12,7 +12,7 @@ import java.util.List;
 public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     private final SymbolTable table;
     private final List<Report> reports;
-    String currentMethod; //TODO: isto é mesmo necessário?? Pq table.getCurrentMethod().getName() não dá?
+    String currentMethod; //TODO: isto é necessário?? Pq table.getCurrentMethod().getName() não dá?
 
     public SemanticAnalysisVisitor(SymbolTable table, List<Report> reports) {
         this.table = table;
@@ -28,6 +28,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         this.addVisit("WhileStmt", this::dealWithConditionalStmt);
         this.addVisit("ArrayAccess", this::dealWithArrayAccess);
         this.addVisit("Assignment", this::dealWithAssignment);
+        this.addVisit("ArrayAssignment", this::dealWithArrayAssignment);
         this.addVisit("MethodCall", this::dealWithMethodCall);
         this.addVisit("Identifier", this::dealWithIdentifier);
         this.addVisit("MainMethod", this::dealWithMainMethod);
@@ -76,16 +77,24 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         System.out.println("MethodCall: " + node.getChildren());
 
         JmmNode leftChild = node.getJmmChild(0);
-        Type leftChildType = table.getLocalVariableType(leftChild.get("value"),currentMethod);
-        List<String> imports = table.getImports();
+        Type leftChildType = null;
 
+        if(!leftChild.getKind().equals("This")) {
+            leftChildType = table.getLocalVariableType(leftChild.get("value"),currentMethod);
+        }
+
+        List<String> imports = table.getImports();
         if(leftChildType == null) {
-            if(!table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
+            if(leftChild.getKind().equals("This") && currentMethod.equals("main")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: 'this' invoked in main method"));
+                return false;
+            }
+            else if(!table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Class not imported"));
                 return false;
             }
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Variable not declared"));
-            return false;
+            //reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Variable not declared"));
+            return true;
         }
 
         List<String> methods = table.getMethods();
@@ -106,7 +115,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             List<Symbol> parameters = table.getParameters(node.get("value"));
             if(!parameters.isEmpty()) {
                 for(Symbol parameter : parameters) {
-                    if(parameter.getType().getName().equals(leftChildType.getName())) //só funciona para funções com apenas um argumento
+                    if(parameter.getType().getName().equals(leftChildType.getName())) //acho que só funciona para funções com apenas um argumento
                         return true;
                 }
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible arguments"));
@@ -128,6 +137,30 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         return true;
     }
 
+    private Boolean dealWithArrayAssignment(JmmNode node, Boolean data){
+        System.out.println("ArrayAssignment: " + node + " " + node.getChildren());
+
+        Type nodeType = table.getLocalVariableType(node.get("name"),currentMethod);
+        if(nodeType == null && node.getKind().equals("Identifier")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array assignment is null"));
+            return false;
+        }
+
+        if(!node.getJmmChild(0).getKind().equals("Integer")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index not an integer"));
+            return false;
+        }
+
+        JmmNode child = node.getJmmChild(1);
+
+         if(!child.getKind().equals("Integer")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array assignment is not an integer"));
+            return false;
+         }
+
+        return true;
+    }
+
     private Boolean dealWithAssignment(JmmNode node, Boolean data){
         System.out.println("Assignment: " + node + " " + node.getChildren());
 
@@ -146,7 +179,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(nodeType.getName().equals("boolean") && child.getKind().equals("Boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
-                    && !(child.getKind().equals("This") && !currentMethod.equals("main") && (superClassName != null && superClassName.equals(nodeType.getName()) || className.equals(nodeType.getName())))) {
+                    && !(child.getKind().equals("This") && !currentMethod.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethod + " method"));
                 return false;
             }
@@ -200,8 +233,14 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(!left.getKind().equals("ArrayAccess")) {
                 leftType = table.getLocalVariableType(left.get("value"), currentMethod);
             }
+            else if(!dealWithArrayAccess(left,true)) { //posso fazer isto??
+                return false;
+            }
             if(!right.getKind().equals("ArrayAccess")) {
                 rightType = table.getLocalVariableType(right.get("value"), currentMethod);
+            }
+            else if(!dealWithArrayAccess(right,true)) {
+                return false;
             }
 
             if (!left.getKind().equals("Identifier")) {
@@ -263,12 +302,12 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 return false;
             }
             if(!arrayType.isArray()) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is done over an array"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is not done over an array"));
                 return false;
             }
         }
         else {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is done over an array"));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array access is not done over an array"));
             return false;
         }
 
