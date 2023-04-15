@@ -50,6 +50,12 @@ public class OllirTemplates {
         return ollir.toString();
     }
 
+    public static String invokestatic(String target, String method, Type returnType, String parameters) {
+        if (parameters.equals(""))
+            return String.format("invokestatic(%s, \"%s\")%s", target, method, type(returnType));
+        return String.format("invokestatic(%s, \"%s\", %s)%s", target, method, parameters, type(returnType));
+    }
+
     public static String ret(Type ret, String exp) {
         return String.format("ret%s %s;", OllirTemplates.type(ret), exp);
     }
