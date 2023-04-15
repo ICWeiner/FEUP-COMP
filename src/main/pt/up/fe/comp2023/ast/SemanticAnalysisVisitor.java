@@ -327,21 +327,26 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
 
         JmmNode index = node.getJmmChild(1);
-        Type indexType = table.getLocalVariableType(index.get("value"),currentMethod);
-
-        if (!index.getKind().equals("Identifier")) {
-            indexType = new Type(index.getKind(),false);
-        }
-        else if (indexType == null) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is null"));
+        System.out.println("aaaaa" + index.getKind());
+        if(index.getKind().equals("BinaryOp") && (index.get("op").equals("<") || index.get("op").equals("&&") || !dealWithBinaryOp(index,true))) { //TODO
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is not an integer"));
             return false;
         }
+        else if(!index.getKind().equals("BinaryOp")) {
+            Type indexType = table.getLocalVariableType(index.get("value"), currentMethod);
 
-        if(indexType.isArray() || (!indexType.getName().equals("int") && !indexType.getName().equals("Integer"))) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is not an int"));
-            return false;
+            if (!index.getKind().equals("Identifier")) {
+                indexType = new Type(index.getKind(), false);
+            } else if (indexType == null) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is null"));
+                return false;
+            }
+
+            if (indexType.isArray() || (!indexType.getName().equals("int") && !indexType.getName().equals("Integer"))) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is not an int"));
+                return false;
+            }
         }
-
         return true;
     }
 
