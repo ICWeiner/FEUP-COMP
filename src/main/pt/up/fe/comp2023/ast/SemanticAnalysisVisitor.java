@@ -93,7 +93,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Class not imported"));
                 return false;
             }
-            //reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Variable not declared"));
             return true;
         }
 
@@ -113,7 +112,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 return false;
             }
 
-            //TODO: 💀
             List<Symbol> parameters = table.getParameters(node.get("value"));
             for(JmmNode child : node.getChildren()) {
                 Type childType = table.getLocalVariableType(child.get("value"),currentMethod);
@@ -156,7 +154,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        if(!node.getJmmChild(0).getKind().equals("Integer")) { //TODO tratar melhor do index
+        if(node.getJmmChild(0).getKind().equals("BinaryOp") && !dealWithBinaryOp(node,true)) { //TODO
+            return false;
+        }
+        else if(!node.getJmmChild(0).getKind().equals("Integer")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is not an integer"));
             return false;
         }
@@ -184,18 +185,14 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         String superClassName = table.getSuper();
         String className = table.getClassName();
         if(!child.getKind().equals("Identifier")) {
-            if(child.getKind().equals("BinaryOp") && !dealWithBinaryOp(child,true)) { //posso fazer isto?
-                return false;
-            }
-            if(child.getKind().equals("ArrayAccess") && !dealWithArrayAccess(child,true)) { //posso fazer isto?
-                return false;
-            }
+            //TODO é provavel que estas condições não estejam bem 💀
             if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration") && child.getJmmChild(0).getKind().equals("Integer"))
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(nodeType.getName().equals("boolean") && child.getKind().equals("Boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
-                    && !(child.getKind().equals("BinaryOp") && dealWithBinaryOp(child,true)) //TODO isto dá dois reports
-                    //&& !(child.getKind().equals("MethodCall") && dealWithMethodCall(child,true))
+                    && !(child.getKind().equals("BinaryOp") && dealWithBinaryOp(child,true)) //TODO isto dá dois reports?
+                    && !(child.getKind().equals("MethodCall") && dealWithMethodCall(child,true)) //TODO isto dá dois reports?
+                    && !(child.getKind().equals("ArrayAccess") && dealWithArrayAccess(child,true)) //TODO isto dá dois reports?
                     //&& !(child.getKind().equals("LengthOp") && nodeType.isArray())
                     && !(child.getKind().equals("This") && !currentMethod.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethod + " method"));
@@ -251,7 +248,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(!left.getKind().equals("ArrayAccess")) {
                 leftType = table.getLocalVariableType(left.get("value"), currentMethod);
             }
-            else if(!dealWithArrayAccess(left,true)) { //posso fazer isto??
+            else if(!dealWithArrayAccess(left,true)) { //TODO
                 return false;
             }
             if(!right.getKind().equals("ArrayAccess")) {
