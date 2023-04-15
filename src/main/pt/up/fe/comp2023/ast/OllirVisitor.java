@@ -32,6 +32,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         this.addVisit("MethodDeclaration", this::dealWithMethodDeclaration);
         this.addVisit("ReturnDeclaration", this::dealWithReturn);
 
+        this.addVisit("ExprStmt",this::dealWithExpression);
+
         this.addVisit("VarDeclaration", this::dealWithVarDeclaration);
         this.addVisit("Identifier", this::dealWithVariable);
         this.addVisit("Assignment", this::dealWithAssignment);
@@ -438,6 +440,18 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         return Collections.singletonList(ollir.toString());
     }
+
+    private  List<Object> dealWithExpression(JmmNode node, List<Object> data){
+        StringBuilder ollir = new StringBuilder();
+        for (JmmNode child : node.getChildren()){
+            //if (child.getKind().equals("ImportDeclaration") ) continue;
+            String ollirChild = (String) visit(child, Collections.singletonList("EXPRESSION")).get(0);
+            ollir.append(ollirChild);
+        }
+        return Collections.singletonList(ollir.toString());
+    }
+
+    
 
     private String binaryOperations(String[] statements, StringBuilder ollir, Type type) {
         String finalStmt;
