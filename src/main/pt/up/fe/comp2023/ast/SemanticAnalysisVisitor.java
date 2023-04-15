@@ -89,7 +89,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: 'this' invoked in main method"));
                 return false;
             }
-            else if(!table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
+            else if(!leftChild.getKind().equals("This") && !table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Method Call: Class not imported"));
                 return false;
             }
@@ -112,16 +112,26 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible return"));
                 return false;
             }
-            List<Symbol> parameters = table.getParameters(node.get("value"));
-            if(!parameters.isEmpty()) {
-                for(Symbol parameter : parameters) {
-                    if(parameter.getType().getName().equals(leftChildType.getName())) //acho que só funciona para funções com apenas um argumento
-                        return true;
-                }
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible arguments"));
-                return false;
-            }
 
+            //TODO: 💀
+            List<Symbol> parameters = table.getParameters(node.get("value"));
+            for(JmmNode child : node.getChildren()) {
+                Type childType = table.getLocalVariableType(child.get("value"),currentMethod);
+                if(!childType.getName().equals(leftChildType.getName())) {
+                    if(!parameters.isEmpty()) {
+                        for(Symbol parameter : parameters) {
+                            if(!parameter.getType().getName().equals(childType.getName())) {
+                                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible arguments"));
+                                return false;
+                            }
+                        }
+                    }
+                    else {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible arguments"));
+                        return false;
+                    }
+                }
+            }
         }
 
         return true;
@@ -146,8 +156,8 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        if(!node.getJmmChild(0).getKind().equals("Integer")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index not an integer"));
+        if(!node.getJmmChild(0).getKind().equals("Integer")) { //TODO tratar melhor do index
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is not an integer"));
             return false;
         }
 
@@ -174,11 +184,19 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         String superClassName = table.getSuper();
         String className = table.getClassName();
         if(!child.getKind().equals("Identifier")) {
-            if (!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration"))
+            if(child.getKind().equals("BinaryOp") && !dealWithBinaryOp(child,true)) { //posso fazer isto?
+                return false;
+            }
+            if(child.getKind().equals("ArrayAccess") && !dealWithArrayAccess(child,true)) { //posso fazer isto?
+                return false;
+            }
+            if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration") && child.getJmmChild(0).getKind().equals("Integer"))
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(nodeType.getName().equals("boolean") && child.getKind().equals("Boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
-                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
+                    && !(child.getKind().equals("BinaryOp") && dealWithBinaryOp(child,true)) //TODO isto dá dois reports
+                    //&& !(child.getKind().equals("MethodCall") && dealWithMethodCall(child,true))
+                    //&& !(child.getKind().equals("LengthOp") && nodeType.isArray())
                     && !(child.getKind().equals("This") && !currentMethod.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethod + " method"));
                 return false;
