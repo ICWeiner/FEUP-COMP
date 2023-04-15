@@ -156,7 +156,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        if(!node.getJmmChild(0).getKind().equals("Integer")) { //TODO tratar melhor do index
+        if(node.getJmmChild(0).getKind().equals("BinaryOp") && !dealWithBinaryOp(node,true)) { //isto está bem?
+            return false;
+        }
+        else if(!node.getJmmChild(0).getKind().equals("Integer")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is not an integer"));
             return false;
         }
