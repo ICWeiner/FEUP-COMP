@@ -30,12 +30,9 @@ varDeclaration
     ;
 
 methodDeclaration
-    : ('public')? type '(' (type (',' type )* )? ')' '{' (varDeclaration)* (statement)* returnDeclaration '}' #CustomMethod
+    : ('public')? type '(' (type (',' type )* )? ')' '{' (varDeclaration)* (statement)* 'return' expression ';' '}' #CustomMethod
     | ('public')? 'static' 'void' name='main' '(' value+=ID '[' ']' value+=ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
     ;
-
-returnDeclaration
-    : 'return' expression ';';
 
 type locals [boolean isArray = false]
     : typeName='int' ('[' ']'{$isArray = true;})? name=ID //#IntType
