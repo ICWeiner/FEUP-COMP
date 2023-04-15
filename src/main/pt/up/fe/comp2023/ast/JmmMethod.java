@@ -91,49 +91,6 @@ public class JmmMethod {
         return params;
     }
 
-    public static List<Type> parseParameters(String params) {
-        if (params.equals("")) return new ArrayList<>();
-
-        String[] typesString = params.split(",");
-
-        List<Type> types = new ArrayList<>();
-
-        for (String s : typesString) {
-            String[] aux = s.split(" ");
-            types.add(new Type(aux[0], aux.length == 2));
-        }
-
-        return types;
-    }
-
-    public static boolean matchParameters(List<Type> types1, List<Type> types2) {
-        for (int i = 0; i < types1.size(); i++) {
-            if (!types1.get(i).equals(types2.get(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public String isParameter(Symbol symbol) {
-        for (int i = 1; i < this.parameters.size() + 1; i++) {
-            if (parameters.get(i - 1).getKey() == symbol) {
-                return "$" + i;
-            }
-        }
-        return null;
-    }
-
-    public List<String> parametersToOllir() {
-        List<String> ollir = new ArrayList<>();
-
-        for (Map.Entry<Symbol, String> parameter : this.parameters) {
-            ollir.add(OllirTemplates.variable(parameter.getKey()));
-        }
-
-        return ollir;
-    }
-
     public List<Symbol> getLocalVariables() {
         return new ArrayList<>(this.localVars.keySet());
     }

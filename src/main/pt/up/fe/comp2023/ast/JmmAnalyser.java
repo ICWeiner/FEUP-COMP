@@ -42,7 +42,6 @@ public class JmmAnalyser implements JmmAnalysis {
         System.out.println("Symbol Table Filled!");
 
         System.out.println(table);
-        /*
 
         System.out.println("Visitor - Semantic Analysis...");
 
@@ -52,8 +51,6 @@ public class JmmAnalyser implements JmmAnalysis {
         System.out.println("Semantic Analysis Done!");
         if(!reports.isEmpty())
             System.out.println(reports);
-
-         */
 
         return new JmmSemanticsResult(jmmParserResult, table, reports);
     }
