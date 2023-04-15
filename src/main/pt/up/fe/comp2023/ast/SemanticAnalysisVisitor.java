@@ -112,16 +112,26 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible return"));
                 return false;
             }
-            List<Symbol> parameters = table.getParameters(node.get("value"));
-            if(!parameters.isEmpty()) {
-                for(Symbol parameter : parameters) {
-                    if(parameter.getType().getName().equals(leftChildType.getName())) //acho que só funciona para funções com apenas um argumento
-                        return true;
-                }
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible arguments"));
-                return false;
-            }
 
+            //TODO: 💀
+            List<Symbol> parameters = table.getParameters(node.get("value"));
+            for(JmmNode child : node.getChildren()) {
+                Type childType = table.getLocalVariableType(child.get("value"),currentMethod);
+                if(!childType.getName().equals(leftChildType.getName())) {
+                    if(!parameters.isEmpty()) {
+                        for(Symbol parameter : parameters) {
+                            if(!parameter.getType().getName().equals(childType.getName())) {
+                                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible arguments"));
+                                return false;
+                            }
+                        }
+                    }
+                    else {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Incompatible arguments"));
+                        return false;
+                    }
+                }
+            }
         }
 
         return true;
@@ -184,7 +194,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(nodeType.getName().equals("boolean") && child.getKind().equals("Boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
-                    && !(child.getKind().equals("BinaryOp") && dealWithBinaryOp(child,true))
+                    && !(child.getKind().equals("BinaryOp") && dealWithBinaryOp(child,true)) //TODO isto dá dois reports
                     //&& !(child.getKind().equals("MethodCall") && dealWithMethodCall(child,true))
                     //&& !(child.getKind().equals("LengthOp") && nodeType.isArray())
                     && !(child.getKind().equals("This") && !currentMethod.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
