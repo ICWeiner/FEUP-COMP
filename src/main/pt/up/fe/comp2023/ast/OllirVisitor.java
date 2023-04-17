@@ -484,11 +484,56 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
                 }
             } else {
-                // Declared method called on "this"
-                JmmMethod called = (JmmMethod) methodReturn.get(1);
-                ollirExpression = OllirTemplates.invokevirtual(called.getName(), called.getReturnType(), (String) methodReturn.get(2));
-                expectedType = called.getReturnType();
+                // imported method called on "this"
+                if (methodReturn.get(0).equals("method")) {//TODO:INVOKE SPECIAL
 
+                } else {
+                    // Declared method called on "this"
+                    JmmMethod called = (JmmMethod) methodReturn.get(1);
+                    ollirExpression = OllirTemplates.invokevirtual(called.getName(), called.getReturnType(), (String) methodReturn.get(2));
+                    expectedType = called.getReturnType();
+                }
+            }
+        } else if (method.getKind().equals("ArrayAccess")) {
+            // ARRAY ACCESS
+            Symbol array = (Symbol) targetReturn.get(1);
+            String index = (String) methodReturn.get(0);
+
+            String[] parts = index.split("\n");
+            if (parts.length > 1) {
+                for (int i = 0; i < parts.length - 1; i++) {
+                    ollir.append(parts[i]).append("\n");
+                }
+            }
+
+            ollirExpression = OllirTemplates.arrayaccess(array, (String) targetReturn.get(2), parts[parts.length - 1]);
+            expectedType = new Type(array.getType().getName(), false);
+        } else {
+            if (targetReturn.get(1).equals("OBJECT_INIT")) {
+                Type type = new Type((String) targetReturn.get(2), false);
+                Symbol auxiliary = new Symbol(type, "temporary" + temp_sequence++);
+                ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(auxiliary), OllirTemplates.type(type), targetReturn.get(0)));
+                ollir.append(OllirTemplates.objectinstance(auxiliary)).append("\n");
+
+                if (methodReturn.get(0).equals("method")) {
+                    if (assignment != null) {//TODO:INVOKESPECIAL
+                    }
+                } else {
+                    // Declared method called on "this"
+                    JmmMethod called = (JmmMethod) methodReturn.get(1);
+                    ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(auxiliary), called.getName(), called.getReturnType(), (String) methodReturn.get(2));
+                    expectedType = called.getReturnType();
+                }
+            } else {
+                if (methodReturn.get(0).equals("method")) {
+                    System.out.println(targetReturn);
+                } else if (!methodReturn.get(0).equals("length")) {
+                    Symbol targetVariable = (Symbol) targetReturn.get(1);
+
+                    JmmMethod called = (JmmMethod) methodReturn.get(1);
+                    ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), called.getName(), called.getReturnType(), (String) methodReturn.get(2));
+                    expectedType = called.getReturnType();
+                }
             }
         }
 
