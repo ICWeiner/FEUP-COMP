@@ -1,0 +1,10 @@
+import io;
+import Quicksort;
+
+class CompileBasic extends Quicksort {
+    int intField;
+    boolean boolField;
+    public static void main(String[] args) {
+
+    }
+}

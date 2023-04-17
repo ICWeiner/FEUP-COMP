@@ -6,6 +6,7 @@ import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
+import pt.up.fe.comp2023.ast.exceptions.NoSuchMethod;
 
 
 import java.util.*;
@@ -75,6 +76,28 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         }
 
         return methods;
+    }
+
+    public JmmMethod getMethod(String name) throws NoSuchMethod {
+        for (JmmMethod method : methods) {
+            if (method.getName().equals(name)) {
+                return method;
+            }
+        }
+
+        throw new NoSuchMethod(name);
+    }
+
+    public JmmMethod getMethod(String name, List<Type> params, Type returnType) throws NoSuchMethod {//To support overloading
+        for (JmmMethod method : methods) {
+            if (method.getName().equals(name) && returnType.equals(method.getReturnType()) && params.size() == method.getParameters().size()) {
+                if (JmmMethod.matchParameters(params, method.getParameterTypes())) {
+                    return method;
+                }
+            }
+        }
+
+        throw new NoSuchMethod(name);
     }
 
     @Override
@@ -147,7 +170,7 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         return null;
     }
 
-    public Type getVariableType(String s, String method) { //TODO
+    public Type getVariableType(String s, String method) {
         Type t = getLocalVariableType(s,method);
         if(t == null) {
             List<Symbol> fields = getFields();
@@ -185,6 +208,14 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
 
     public void addField(Symbol field) {
         fields.put(field, false);
+    }
+
+    public Map.Entry<Symbol, Boolean> getField(String name) {
+        for (Map.Entry<Symbol, Boolean> field : this.fields.entrySet()) {
+            if (field.getKey().getName().equals(name))
+                return field;
+        }
+        return null;
     }
 
     @Override
