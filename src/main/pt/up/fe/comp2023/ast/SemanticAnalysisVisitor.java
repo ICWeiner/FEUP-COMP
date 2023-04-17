@@ -33,6 +33,8 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         this.addVisit("Identifier", this::dealWithIdentifier);
         this.addVisit("MainMethod", this::dealWithMainMethod);
         this.addVisit("CustomMethod", this::dealWithCustomMethod);
+        //this.addVisit("varDeclaration", this::dealWithVarDeclaration);
+        //this.addVisit("LengthOp", this::dealWithLenghtOp);
     }
 
     private Boolean dealWithDefault(JmmNode node, Boolean data) {
@@ -153,7 +155,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array assignment is null"));
             return false;
         }
-
         if(node.getJmmChild(0).getKind().equals("BinaryOp") && !dealWithBinaryOp(node,true)) { //TODO
             return false;
         }
@@ -188,12 +189,12 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             //TODO é provavel que estas condições não estejam bem 💀
             if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration") && child.getJmmChild(0).getKind().equals("Integer"))
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
-                    && !(nodeType.getName().equals("boolean") && child.getKind().equals("Boolean"))
-                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name")))
-                    && !(child.getKind().equals("BinaryOp") && dealWithBinaryOp(child,true)) //TODO isto dá dois reports?
-                    && !(child.getKind().equals("MethodCall") && dealWithMethodCall(child,true)) //TODO isto dá dois reports?
-                    && !(child.getKind().equals("ArrayAccess") && dealWithArrayAccess(child,true)) //TODO isto dá dois reports?
-                    //&& !(child.getKind().equals("LengthOp") && nodeType.isArray())
+                    && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
+                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO acho que isto não está bem
+                    && !(child.getKind().equals("BinaryOp") && dealWithBinaryOp(child,true)) //TODO isto dá dois reports
+                    && !(child.getKind().equals("MethodCall") && dealWithMethodCall(child,true)) //TODO isto dá dois reports
+                    && !(child.getKind().equals("ArrayAccess") && dealWithArrayAccess(child,true)) //TODO isto dá dois reports
+                    && !(child.getKind().equals("LengthOp") && nodeType.isArray()) //TODO
                     && !(child.getKind().equals("This") && !currentMethod.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethod + " method"));
                 return false;
@@ -254,7 +255,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(!right.getKind().equals("ArrayAccess")) {
                 rightType = table.getLocalVariableType(right.get("value"), currentMethod);
             }
-            else if(!dealWithArrayAccess(right,true)) {
+            else if(!dealWithArrayAccess(right,true)) { //TODO
                 return false;
             }
 
@@ -327,7 +328,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
 
         JmmNode index = node.getJmmChild(1);
-        System.out.println("aaaaa" + index.getKind());
+
         if(index.getKind().equals("BinaryOp") && (index.get("op").equals("<") || index.get("op").equals("&&") || !dealWithBinaryOp(index,true))) { //TODO
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Error: Array index is not an integer"));
             return false;
