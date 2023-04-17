@@ -56,6 +56,16 @@ public class OllirTemplates {
         return String.format("invokestatic(%s, \"%s\", %s)%s", target, method, parameters, type(returnType));
     }
 
+    public static String invokevirtual(String var, String method, Type returnType, String parameters) {
+        if (parameters.equals(""))
+            return String.format("invokevirtual(%s, \"%s\")%s", var != null ? var : "this", method, type(returnType));
+        return String.format("invokevirtual(%s, \"%s\", %s)%s", var != null ? var : "this", method, parameters, type(returnType));
+    }
+
+    public static String invokevirtual(String method, Type returnType, String parameters) {
+        return invokevirtual(null, method, returnType, parameters);
+    }
+
     public static String ret(Type ret, String exp) {
         return String.format("ret%s %s;", OllirTemplates.type(ret), exp);
     }

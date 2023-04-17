@@ -466,12 +466,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         String ollirExpression = null;
         Type expectedType = (data.get(0).equals("BINARY") || (data.size() > 2 && data.get(2).equals("ARRAY_ACCESS"))) ? new Type("int", false) : null;
 
-        System.out.println("targetReturn.get(0) is " + targetReturn.get(0));
-        System.out.println("targetReturn.get(1) is " + targetReturn.get(1));
-        System.out.println("methodReturn.get(0) is " + methodReturn.get(0));
-        System.out.println("methodReturn.get(1) is " + methodReturn.get(1));
-        System.out.println("data.get(0) is " + data.get(0));
-
 
         if (targetReturn.get(0).equals("ACCESS")) {
             // Static Imported Methods
@@ -489,6 +483,12 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
                     ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
                 }
+            } else {
+                // Declared method called on "this"
+                JmmMethod called = (JmmMethod) methodReturn.get(1);
+                ollirExpression = OllirTemplates.invokevirtual(called.getName(), called.getReturnType(), (String) methodReturn.get(2));
+                expectedType = called.getReturnType();
+
             }
         }
 
