@@ -199,7 +199,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO acho que isto não está bem
-                    && !(child.getKind().equals("BinaryOp") && dealWithBinaryOp(child,true)) //TODO isto dá dois reports
+                    && !((child.getKind().equals("BinaryOp") && (child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") || (!child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("int"))) && dealWithBinaryOp(child,true))) //TODO isto dá dois reports
                     && !(child.getKind().equals("MethodCall") && dealWithMethodCall(child,true)) //TODO isto dá dois reports
                     && !(child.getKind().equals("ArrayAccess") && dealWithArrayAccess(child,true)) //TODO isto dá dois reports
                     && !(child.getKind().equals("LengthOp") && nodeType.isArray())
