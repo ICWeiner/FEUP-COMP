@@ -83,6 +83,34 @@ public class JmmMethod {
         return false;
     }
 
+    public static boolean matchParameters(List<Type> types1, List<Type> types2) {
+        for (int i = 0; i < types1.size(); i++) {
+            if (!types1.get(i).equals(types2.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public String isParameter(Symbol symbol) {
+        for (int i = 1; i < this.parameters.size() + 1; i++) {
+            if (parameters.get(i - 1).getKey() == symbol) {
+                return "$" + i;
+            }
+        }
+        return null;
+    }
+
+    public List<String> parametersToOllir() {
+        List<String> ollir = new ArrayList<>();
+
+        for (Map.Entry<Symbol, String> parameter : this.parameters) {
+            ollir.add(OllirTemplates.variable(parameter.getKey()));
+        }
+
+        return ollir;
+    }
+
     public List<Symbol> getParameters() {
         List<Symbol> params = new ArrayList<>();
         for (Map.Entry<Symbol, String> param : this.parameters) {
