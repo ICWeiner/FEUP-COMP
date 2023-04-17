@@ -34,7 +34,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         this.addVisit("MainMethod", this::dealWithMainMethod);
         this.addVisit("CustomMethod", this::dealWithCustomMethod);
         //this.addVisit("varDeclaration", this::dealWithVarDeclaration);
-        //this.addVisit("LengthOp", this::dealWithLenghtOp);
+        //this.addVisit("LengthOp", this::dealWithLenghtOp); fsafjsjsfifjs
     }
 
     private Boolean dealWithDefault(JmmNode node, Boolean data) {
