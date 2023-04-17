@@ -218,7 +218,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if (!childType.getName().equals(nodeType.getName())) {
                 List<String> imports = table.getImports();
                 if (!((className.equals(childType.getName()) && superClassName != null && superClassName.equals(nodeType.getName()) && imports.contains(nodeType.getName()))
-                        || (className.equals(nodeType.getName()) && superClassName != null && superClassName.equals(childType.getName()) && imports.contains(childType.getName()))
+                        || (className.equals(nodeType.getName()) && imports.contains(childType.getName()))
                         || (imports.contains(nodeType.getName()) && imports.contains(childType.getName())))) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, -1, "Assign " + nodeType.getName() + " to " + childType.getName()));
                     return false;
