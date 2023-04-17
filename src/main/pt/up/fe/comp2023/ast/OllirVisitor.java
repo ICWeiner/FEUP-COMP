@@ -41,7 +41,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         this.addVisit("Boolean", this::dealWithPrimitive);
 
         this.addVisit("BinaryOp", this::dealWithBinaryOperation);
-        this.addVisit("MethodCall", this::dealWithMethodCall);
+        this.addVisit("MethodCall", this::dealWithMethodCall);//why doesnt merge work?????
 
         //this.addVisit("Identifier",this::dealWithIdentifier);
 
