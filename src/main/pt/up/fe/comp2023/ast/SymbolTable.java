@@ -4,6 +4,8 @@ import pt.up.fe.comp.jmm.analysis.table.Symbol;
 import pt.up.fe.comp.jmm.analysis.table.Type;
 import pt.up.fe.comp.jmm.ast.JmmNode;
 import pt.up.fe.comp.jmm.report.Report;
+import pt.up.fe.comp.jmm.report.ReportType;
+import pt.up.fe.comp.jmm.report.Stage;
 
 
 import java.util.*;
@@ -129,7 +131,7 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         return null;
     }
 
-    public Type getLocalVariableType(String s, String method) {
+    public Type getLocalVariableType(String s, String method) { //TODO ainda preciso deste método?
         List<Symbol> localVariables = getLocalVariables(method);
         for (Symbol localVariable : localVariables) {
             if (localVariable.getName().equals(s)) {
@@ -143,6 +145,19 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
             }
         }
         return null;
+    }
+
+    public Type getVariableType(String s, String method) { //TODO
+        Type t = getLocalVariableType(s,method);
+        if(t == null) {
+            List<Symbol> fields = getFields();
+            for (Symbol field : fields) {
+                if (field.getName().equals(s)) {
+                    return field.getType();
+                }
+            }
+        }
+        return t;
     }
 
     public JmmMethod getCurrentMethod() {
