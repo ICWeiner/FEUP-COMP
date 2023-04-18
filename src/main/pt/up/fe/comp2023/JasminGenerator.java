@@ -115,9 +115,9 @@ public class JasminGenerator {
             case BINARYOPER ->
                     BuilderOfStrings.append(dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable)).toString();
             case UNARYOPER -> "Deal with '!' in correct form";
-            case CALL -> 
+            case CALL ->
                     BuilderOfStrings.append(dealWithCallInstruction((CallInstruction) instruction, varTable)).toString();
-            case BRANCH -> 
+            case BRANCH ->
                     BuilderOfStrings.append(dealWithCondBranchInstruction((CondBranchInstruction) instruction, varTable)).toString();
             case GOTO ->
                     BuilderOfStrings.append(dealWithGotoInstrutcion((GotoInstruction) instruction, varTable)).toString();
@@ -188,7 +188,7 @@ public class JasminGenerator {
 
     private String dealWithCondBranchInstruction(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
         StringBuilder stringBuilder = new StringBuilder();
-        switch (instruction.getCondOperation().getOpType()) {
+        switch (instruction.getCondition().getInstType()) {
             case NOTB:
                 stringBuilder.append(this.loadElement(instruction.getLeftOperand(), varTable))
                         .append("ifeq ")
