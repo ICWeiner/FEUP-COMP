@@ -321,7 +321,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (node.getKind().equals("Integer")){
             value = node.get("value") + ".i32";
             type = ".i32";
-        }else if(node.getKind().equals("BooleanLiteral")){
+        }else if(node.getKind().equals("Boolean")){
             value = (node.get("value").equals("true") ? "1" : "0") + ".bool";
             type = ".bool";
         }else{
