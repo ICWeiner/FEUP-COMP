@@ -30,8 +30,8 @@ varDeclaration
     ;
 
 methodDeclaration
-    : ('public')? type '(' (type (',' type )* )? ')' '{' (varDeclaration)* (statement)* returnDeclaration '}' #CustomMethod
-    | ('public')? 'static' 'void' name='main' '(' value+=ID '[' ']' value+=ID ')' '{' (varDeclaration)* (statement)* '}' #MainMethod
+    : ('public')? type '(' (type (',' type )* )? ')' '{' (varDeclaration | statement)* returnDeclaration '}' #CustomMethod
+    | ('public')? 'static' 'void' name='main' '(' value+=ID '[' ']' value+=ID ')' '{' (varDeclaration | statement)* '}' #MainMethod
     ;
 
 returnDeclaration
