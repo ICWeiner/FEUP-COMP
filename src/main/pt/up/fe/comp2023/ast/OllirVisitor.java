@@ -37,8 +37,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         this.addVisit("VarDeclaration", this::dealWithVarDeclaration);
         this.addVisit("Identifier", this::dealWithVariable);
         this.addVisit("Assignment", this::dealWithAssignment);
-        this.addVisit("Integer", this::dealWithPrimitive);
-        this.addVisit("Boolean", this::dealWithPrimitive);
+        this.addVisit("Integer", this::dealWithType);
+        this.addVisit("Boolean", this::dealWithType);
+        this.addVisit("GeneralDeclaration", this::dealWithType);
 
         this.addVisit("BinaryOp", this::dealWithBinaryOperation);
         this.addVisit("MethodCall", this::dealWithMethodCall);//why doesnt merge work?????
@@ -298,9 +299,17 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         return Collections.singletonList(ollir.toString());
     }
 
-    private List<Object> dealWithPrimitive(JmmNode node, List<Object> data) {
+    private List<Object> dealWithType(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 6");
         visited.add(node);
+
+        if(node.getKind().equals("GeneralDeclaration")) {
+            String toReturn = OllirTemplates.objectinit(node.get("name"));
+            if (data.get(0).equals("METHOD")) {
+                toReturn += ";";
+            }
+            return Arrays.asList(toReturn, "OBJECT_INIT", node.get("name"));
+        }
 
         String value;
         String type;
@@ -308,7 +317,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (node.getKind().equals("Integer")){
             value = node.get("value") + ".i32";
             type = ".i32";
-        }else if(node.getKind().equals("Boolean")){
+        }else if(node.getKind().equals("BooleanLiteral")){
             value = (node.get("value").equals("true") ? "1" : "0") + ".bool";
             type = ".bool";
         }else{

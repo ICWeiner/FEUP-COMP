@@ -66,6 +66,10 @@ public class OllirTemplates {
         return invokevirtual(null, method, returnType, parameters);
     }
 
+    public static String objectinit(String objectClass) {
+        return String.format("new(%s).%s", objectClass, objectClass);
+    }
+
     public static String ret(Type ret, String exp) {
         return String.format("ret%s %s;", OllirTemplates.type(ret), exp);
     }
