@@ -39,7 +39,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         this.addVisit("Assignment", this::dealWithAssignment);
         this.addVisit("Integer", this::dealWithType);
         this.addVisit("Boolean", this::dealWithType);
-        this.addVisit("GeneralDeclaration", this::dealWithType);
+        this.addVisit("GeneralDeclaration", this::dealWithObjectInit);
 
         this.addVisit("BinaryOp", this::dealWithBinaryOperation);
         this.addVisit("MethodCall", this::dealWithMethodCall);//why doesnt merge work?????
@@ -299,17 +299,21 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         return Collections.singletonList(ollir.toString());
     }
 
-    private List<Object> dealWithType(JmmNode node, List<Object> data) {
+    private List<Object> dealWithObjectInit(JmmNode node, List<Object> data){
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 6");
         visited.add(node);
 
-        if(node.getKind().equals("GeneralDeclaration")) {
-            String toReturn = OllirTemplates.objectinit(node.get("name"));
-            if (data.get(0).equals("METHOD")) {
-                toReturn += ";";
-            }
-            return Arrays.asList(toReturn, "OBJECT_INIT", node.get("name"));
+        String toReturn = OllirTemplates.objectinit(node.get("name"));
+        if (data.get(0).equals("METHOD")) {
+            toReturn += ";";
         }
+        return Arrays.asList(toReturn, "OBJECT_INIT", node.get("name"));
+
+    }
+
+    private List<Object> dealWithType(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 6");
+        visited.add(node);
 
         String value;
         String type;
