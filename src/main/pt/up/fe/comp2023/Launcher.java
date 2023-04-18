@@ -54,7 +54,11 @@ public class Launcher {
 
         jmmAnalyser.semanticAnalysis(parserResult);
 
+        var semanticResults = jmmAnalyser.semanticAnalysis(parserResult);
 
+        JmmOptimizer jmmOptimizer = new JmmOptimizer();
+
+        jmmOptimizer.toOllir(semanticResults);
         // ... add remaining stages
     }
 
