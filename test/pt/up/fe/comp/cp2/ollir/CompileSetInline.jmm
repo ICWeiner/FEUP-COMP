@@ -1,0 +1,28 @@
+import superCustomClass;
+import io;
+
+class customClass extends superCustomClass{
+    int digit;
+
+    public boolean customMethod(){
+
+        customClass customObject;
+        customObject = new customClass();
+
+        return true;
+    }
+
+    public static void main(string[] args){
+        int digit;
+
+        customClass a;
+        a = new customClass();
+        customClass b;
+        b = new customClass();
+        a=b;
+        //customClass customObject;
+        //customObject = new CustomClass();
+
+        io.println(a);
+    }
+}

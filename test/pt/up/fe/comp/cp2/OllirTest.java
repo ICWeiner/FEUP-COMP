@@ -42,6 +42,11 @@ public class OllirTest {
     public void compileNormalMethodONLYDECLARATION(){
         testJmmCompilation("pt/up/fe/comp/cp2/ollir/Method.jmm", this::compileNormalMethodONLYDECLARATION);
     }
+    @Test
+    public void compileSetInline() {//NOT FINISHED
+        testJmmCompilation("pt/up/fe/comp/cp2/ollir/CompileSetInline.jmm", this::compileSetInline);
+    }
+
     public void compileFields(ClassUnit classUnit){
         //System.out.println(classUnit.getImports());
         // Test name of the class and super
@@ -118,6 +123,37 @@ public class OllirTest {
         assertNotNull("Could not find method2'", method2);
     }
 
+    public void compileSetInline(ClassUnit classUnit){
+        //System.out.println(classUnit.getImports());
+        // Test name of the class and super
+        assertEquals("Class name not what was expected", "customClass", classUnit.getClassName());
+        assertEquals("Super class name not what was expected", "superCustomClass", classUnit.getSuperClass());
+
+        // Test fields
+        assertEquals("Class should have one fields", 1, classUnit.getNumFields());
+        var fieldNames = new HashSet<>(Arrays.asList("digit"));
+        assertThat(fieldNames, hasItem(classUnit.getField(0).getFieldName()));
+
+
+        // Test main
+        Method main = classUnit.getMethods().stream()
+                .filter(method -> method.getMethodName().equals("main"))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull("Could not find main", main);
+
+
+        // Test method 1
+        Method method1 = classUnit.getMethods().stream()
+                .filter(method -> method.getMethodName().equals("customMethod"))
+                .findFirst()
+                .orElse(null);
+
+        assertNotNull("Could not find customMethod", method1);
+
+    }
+
     @Test
     public void compileBasic() {
         testJmmCompilation("pt/up/fe/comp/cp2/ollir/CompileBasic.jmm", this::compileBasic);
@@ -138,6 +174,7 @@ public class OllirTest {
     public void compileAssignment() {
         testJmmCompilation("pt/up/fe/comp/cp2/ollir/CompileAssignment.jmm", this::compileAssignment);
     }
+
 
     public static void testJmmCompilation(String resource, Consumer<ClassUnit> ollirTester, String executionOutput) {
 
