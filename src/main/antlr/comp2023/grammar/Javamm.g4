@@ -49,6 +49,7 @@ statement
     | 'while' '(' expression ')' statement #WhileStmt
     | expression ';' #ExprStmt
     | name=ID '=' expression ';' #Assignment
+    | expression '.' value=ID  '='  expression ';' #VarCallAssignment
     | name=ID '[' expression ']' '=' expression ';' #ArrayAssignment
     ;
 
@@ -56,6 +57,7 @@ expression
     : '(' expression ')' #Parenthesis
     | expression '[' expression ']' #ArrayAccess
     | expression '.' value=ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
+    | expression '.' value=ID #VarCall
     | expression op='.' 'length' #LenghtOp //#AccessOp
     | op='!' expression #UnaryOp
     | expression op=('*' | '/') expression #BinaryOp
