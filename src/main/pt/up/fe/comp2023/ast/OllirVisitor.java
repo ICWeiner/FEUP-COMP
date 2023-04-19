@@ -36,6 +36,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         this.addVisit("VarDeclaration", this::dealWithVarDeclaration);
         this.addVisit("Identifier", this::dealWithVariable);
+        this.addVisit("This", this::dealWithVariable);
         this.addVisit("Assignment", this::dealWithAssignment);
         this.addVisit("Integer", this::dealWithType);
         this.addVisit("Boolean", this::dealWithType);
@@ -43,9 +44,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         this.addVisit("BinaryOp", this::dealWithBinaryOperation);
         this.addVisit("MethodCall", this::dealWithMethodCall);//why doesnt merge work?????
-
-        //this.addVisit("Identifier",this::dealWithIdentifier);
-
 
 
         setDefaultVisit(this::defaultVisit);
@@ -83,7 +81,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         for(JmmNode child : node.getChildren()){
             String ollirChild = (String) visit(child, Collections.singletonList("CLASS")).get(0);
-            System.out.println(ollirChild);
+            System.out.println(ollirChild); //TODO:this prints the code, find another way to do it?
+
             if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT")) {
                 if (child.getKind().equals("VarDeclaration")) {
                     fields.add(ollirChild);
@@ -254,14 +253,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 }
             }
         } else {
-            System.out.println("Trying to solve 'this' problem");
-            System.out.println(variable);
-            System.out.println(node.getKind());
-            System.out.println(node.getChildren());
-
             visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
-
-
 
             String result = (String) visitResult.get(0);
             String[] parts = result.split("\n");
@@ -388,6 +380,10 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
+        if(node.getKind().equals("This")){
+            return Arrays.asList("ACCESS", "this");
+        }
+
         Map.Entry<Symbol, Boolean> field = null;
 
 
@@ -463,18 +459,21 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         return Collections.singletonList(ollir.toString());
     }
 
+    private List<Object> dealWithThis(JmmNode node, List<Object> data){
+        /*if (targetReturn.get(0).equals("ACCESS")) {
+            // Static Imported Methods
+            if (!targetReturn.get(1).equals("this")) {*/
+        return null;
+    }
+
     private  List<Object> dealWithExpression(JmmNode node, List<Object> data){
 
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
-        System.out.println("came from " + data.get(0) );
 
         JmmNode target = node.getChildren().get(0).getChildren().get(0);//TODO, ISTO TEM DE SER UMA LISTA DE FILHOS? maybe not?
         JmmNode method = node.getChildren().get(0);
-
-        System.out.println("Target node is of kind " + target.getKind());
-        System.out.println("Method node is of kind " + method.getKind());
 
         StringBuilder ollir = new StringBuilder();
 
@@ -529,7 +528,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             ollirExpression = OllirTemplates.arrayaccess(array, (String) targetReturn.get(2), parts[parts.length - 1]);
             expectedType = new Type(array.getType().getName(), false);
         } else {
-            System.out.println(targetReturn.get(0));
             if (targetReturn.get(1).equals("OBJECT_INIT")) {
                 Type type = new Type((String) targetReturn.get(2), false);
                 Symbol auxiliary = new Symbol(type, "temporary" + temp_sequence++);
@@ -547,7 +545,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 }
             } else {
                 if (methodReturn.get(0).equals("method")) {
-                    System.out.println(targetReturn);
                 } else if (!methodReturn.get(0).equals("length")) {
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
 
