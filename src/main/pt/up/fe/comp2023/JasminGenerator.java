@@ -112,8 +112,8 @@ public class JasminGenerator {
                     BuilderOfStrings.append(dealWithAssignment((AssignInstruction) instruction, varTable)).toString();
             case NOPER ->
                     BuilderOfStrings.append(dealWithSingleOpInstruction((SingleOpInstruction) instruction, varTable)).toString();
-            case BINARYOPER ->
-                    BuilderOfStrings.append(dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable)).toString();
+            //case BINARYOPER ->
+                    //BuilderOfStrings.append(dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable)).toString();
             case UNARYOPER -> "Deal with '!' in correct form";
             case CALL ->
                     BuilderOfStrings.append(dealWithCallInstruction((CallInstruction) instruction, varTable)).toString();
@@ -300,7 +300,7 @@ public class JasminGenerator {
         return BuilderOfString;
     }
 
-    private String dealWithBinaryOpInstruction(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+    /*private String dealWithBinaryOpInstruction(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         switch (instruction.getUnaryOperation().getOpType()) {
             case ADD:
             case SUB:
@@ -372,7 +372,7 @@ public class JasminGenerator {
         }
         this.ConditionInt++;
         return BuilderOfStrings.toString();
-    }
+    }*/
 
     private String dealWithRelationalOperation(OperationType ot, String trueLabel) {
         return switch (ot) {
@@ -382,7 +382,7 @@ public class JasminGenerator {
         };
     }
 
-    private String dealWithIntOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
+    /*private String dealWithIntOperation(BinaryOpInstruction instruction, HashMap<String, Descriptor> varTable) {
         String leftOperand = loadElement(instruction.getLeftOperand(), varTable);
         String rightOperand = loadElement(instruction.getRightOperand(), varTable);
         String operation;
@@ -399,7 +399,7 @@ public class JasminGenerator {
         }
         this.decrementStackCounter(1);
         return leftOperand + rightOperand + operation;
-    }
+    }*/
 
 
     private String dealWithSingleOpInstruction(SingleOpInstruction instruction, HashMap<String, Descriptor> varTable) {
