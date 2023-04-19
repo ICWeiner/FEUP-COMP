@@ -253,7 +253,13 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 }
             }
         } else {
-            visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
+
+            if(node.getChildren().get(0).getKind().equals("MethodCall")){
+                visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", ollir));
+            }else{
+                visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
+            }
+
 
             String result = (String) visitResult.get(0);
             String[] parts = result.split("\n");
@@ -579,16 +585,19 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
-        /*
-        StringBuilder ollir
 
-        if(data.get(1).getClass() == Symbol.class){
-            ollir = (StringBuilder) data.get(1)
+        System.out.println("Came from:");
+        System.out.println(node.getJmmParent().getKind());
+        System.out.println("data.get(1) is:");
+        //System.out.println(data.get(1));
+
+        StringBuilder ollir;
+
+        if(node.getJmmParent().getKind().equals("ExprStmt")){
+            ollir = (StringBuilder) data.get(1);
         }else{
-
-        }*/
-
-        StringBuilder ollir = (StringBuilder) data.get(1);
+            ollir = (StringBuilder) data.get(1);
+        }
 
         List<JmmNode> children = node.getChildren();
         children.remove(0);//remove first node as it isnt a parameter TODO:modify grammar?
@@ -605,7 +614,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         try {
             JmmMethod method = table.getMethod(node.get("value"), params.getKey(), returnType);
-            return Arrays.asList("class_method", method, params.getValue());
+            System.out.println("method:" + method);
+            System.out.println("params:" +params.getValue());
+            return Arrays.asList("class_method", method, params.getValue());//TODO: FIX HERE WHEN SON OF SOMETHING (ASSIGNMENT)
         } catch (Exception e) {
             return Arrays.asList("method", node.get("value"), params.getValue());
         }
