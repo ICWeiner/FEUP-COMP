@@ -194,6 +194,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             */
 
             List<Symbol> parameters = table.getParameters(node.get("value"));
+            if(node.getChildren().size()-1 != parameters.size()) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
+                return false;
+            }
             Type childType;
             for(JmmNode child : node.getChildren()) {
                 if(child.getIndexOfSelf() != 0) {
