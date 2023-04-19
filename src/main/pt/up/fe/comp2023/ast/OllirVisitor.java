@@ -254,7 +254,14 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 }
             }
         } else {
+            System.out.println("Trying to solve 'this' problem");
+            System.out.println(variable);
+            System.out.println(node.getKind());
+            System.out.println(node.getChildren());
+
             visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
+
+
 
             String result = (String) visitResult.get(0);
             String[] parts = result.split("\n");
@@ -463,7 +470,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         System.out.println("came from " + data.get(0) );
 
-        JmmNode target = node.getChildren().get(0).getChildren().get(0);//TODO, ISTO TEM DE SER UMA LISTA DE FILHOS
+        JmmNode target = node.getChildren().get(0).getChildren().get(0);//TODO, ISTO TEM DE SER UMA LISTA DE FILHOS? maybe not?
         JmmNode method = node.getChildren().get(0);
 
         System.out.println("Target node is of kind " + target.getKind());
@@ -498,7 +505,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 }
             } else {
                 // imported method called on "this"
-                if (methodReturn.get(0).equals("method")) {//TODO:INVOKE SPECIAL
+                if (methodReturn.get(0).equals("method")) {
 
                 } else {
                     // Declared method called on "this"
@@ -522,6 +529,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             ollirExpression = OllirTemplates.arrayaccess(array, (String) targetReturn.get(2), parts[parts.length - 1]);
             expectedType = new Type(array.getType().getName(), false);
         } else {
+            System.out.println(targetReturn.get(0));
             if (targetReturn.get(1).equals("OBJECT_INIT")) {
                 Type type = new Type((String) targetReturn.get(2), false);
                 Symbol auxiliary = new Symbol(type, "temporary" + temp_sequence++);
@@ -574,6 +582,14 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
+        /*
+        StringBuilder ollir
+
+        if(data.get(1).getClass() == Symbol.class){
+            ollir = (StringBuilder) data.get(1)
+        }else{
+
+        }*/
 
         StringBuilder ollir = (StringBuilder) data.get(1);
 
