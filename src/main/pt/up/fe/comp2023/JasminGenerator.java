@@ -117,8 +117,6 @@ public class JasminGenerator {
             case UNARYOPER -> "Deal with '!' in correct form";
             case CALL ->
                     BuilderOfStrings.append(dealWithCallInstruction((CallInstruction) instruction, varTable)).toString();
-            //case BRANCH ->
-                    //BuilderOfStrings.append(dealWithCondBranchInstruction((CondBranchInstruction) instruction, varTable)).toString();
             case GOTO ->
                     BuilderOfStrings.append(dealWithGotoInstrutcion((GotoInstruction) instruction, varTable)).toString();
             case PUTFIELD ->
@@ -185,25 +183,6 @@ public class JasminGenerator {
     private String dealWithGotoInstrutcion(GotoInstruction instruction, HashMap<String, Descriptor> varTable){
         return String.format("goto %s\n", instruction.getLabel());
     }
-
-    /*private String dealWithCondBranchInstruction(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
-        StringBuilder stringBuilder = new StringBuilder();
-        switch (instruction.getCondition().getInstType()) {
-            case NOTB:
-                stringBuilder.append(this.loadElement(instruction.getLeftOperand(), varTable))
-                        .append("ifeq ")
-                        .append(instruction.getLabel())
-                        .append("\n");
-
-                // ..., value →
-                // ...
-                this.decrementStackCounter(1);
-                break;
-            default:
-                return "Error in CondBranchInstruction";
-        }
-        return stringBuilder.toString();
-    }*/
 
     private String dealWithCallInstruction(CallInstruction instruction, HashMap<String, Descriptor> varTable) {
         String BuilderofStrings = "";
