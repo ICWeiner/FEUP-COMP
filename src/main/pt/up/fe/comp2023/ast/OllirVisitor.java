@@ -463,7 +463,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         System.out.println("came from " + data.get(0) );
 
-        JmmNode target = node.getChildren().get(0).getChildren().get(0);
+        JmmNode target = node.getChildren().get(0).getChildren().get(0);//TODO, ISTO TEM DE SER UMA LISTA DE FILHOS
         JmmNode method = node.getChildren().get(0);
 
         System.out.println("Target node is of kind " + target.getKind());
