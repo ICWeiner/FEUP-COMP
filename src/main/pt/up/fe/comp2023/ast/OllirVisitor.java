@@ -36,6 +36,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         this.addVisit("VarDeclaration", this::dealWithVarDeclaration);
         this.addVisit("Identifier", this::dealWithVariable);
+        this.addVisit("This", this::dealWithVariable);
         this.addVisit("Assignment", this::dealWithAssignment);
         this.addVisit("Integer", this::dealWithType);
         this.addVisit("Boolean", this::dealWithType);
@@ -43,9 +44,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         this.addVisit("BinaryOp", this::dealWithBinaryOperation);
         this.addVisit("MethodCall", this::dealWithMethodCall);//why doesnt merge work?????
-
-        //this.addVisit("Identifier",this::dealWithIdentifier);
-
 
 
         setDefaultVisit(this::defaultVisit);
@@ -83,7 +81,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         for(JmmNode child : node.getChildren()){
             String ollirChild = (String) visit(child, Collections.singletonList("CLASS")).get(0);
-            System.out.println(ollirChild);
+            System.out.println(ollirChild); //TODO:this prints the code, find another way to do it?
+
             if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT")) {
                 if (child.getKind().equals("VarDeclaration")) {
                     fields.add(ollirChild);
@@ -254,7 +253,13 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 }
             }
         } else {
-            visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
+
+            if(node.getChildren().get(0).getKind().equals("MethodCall")){
+                visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", ollir));
+            }else{
+                visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
+            }
+
 
             String result = (String) visitResult.get(0);
             String[] parts = result.split("\n");
@@ -381,6 +386,10 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
+        if(node.getKind().equals("This")){
+            return Arrays.asList("ACCESS", "this");
+        }
+
         Map.Entry<Symbol, Boolean> field = null;
 
 
@@ -456,18 +465,21 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         return Collections.singletonList(ollir.toString());
     }
 
+    private List<Object> dealWithThis(JmmNode node, List<Object> data){
+        /*if (targetReturn.get(0).equals("ACCESS")) {
+            // Static Imported Methods
+            if (!targetReturn.get(1).equals("this")) {*/
+        return null;
+    }
+
     private  List<Object> dealWithExpression(JmmNode node, List<Object> data){
 
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
-        System.out.println("came from " + data.get(0) );
 
-        JmmNode target = node.getChildren().get(0).getChildren().get(0);
+        JmmNode target = node.getChildren().get(0).getChildren().get(0);//TODO, ISTO TEM DE SER UMA LISTA DE FILHOS? maybe not?
         JmmNode method = node.getChildren().get(0);
-
-        System.out.println("Target node is of kind " + target.getKind());
-        System.out.println("Method node is of kind " + method.getKind());
 
         StringBuilder ollir = new StringBuilder();
 
@@ -498,7 +510,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 }
             } else {
                 // imported method called on "this"
-                if (methodReturn.get(0).equals("method")) {//TODO:INVOKE SPECIAL
+                if (methodReturn.get(0).equals("method")) {
 
                 } else {
                     // Declared method called on "this"
@@ -539,7 +551,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 }
             } else {
                 if (methodReturn.get(0).equals("method")) {
-                    System.out.println(targetReturn);
                 } else if (!methodReturn.get(0).equals("length")) {
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
 
@@ -575,7 +586,18 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         visited.add(node);
 
 
-        StringBuilder ollir = (StringBuilder) data.get(1);
+        System.out.println("Came from:");
+        System.out.println(node.getJmmParent().getKind());
+        System.out.println("data.get(1) is:");
+        //System.out.println(data.get(1));
+
+        StringBuilder ollir;
+
+        if(node.getJmmParent().getKind().equals("ExprStmt")){
+            ollir = (StringBuilder) data.get(1);
+        }else{
+            ollir = (StringBuilder) data.get(1);
+        }
 
         List<JmmNode> children = node.getChildren();
         children.remove(0);//remove first node as it isnt a parameter TODO:modify grammar?
@@ -592,7 +614,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         try {
             JmmMethod method = table.getMethod(node.get("value"), params.getKey(), returnType);
-            return Arrays.asList("class_method", method, params.getValue());
+            System.out.println("method:" + method);
+            System.out.println("params:" +params.getValue());
+            return Arrays.asList("class_method", method, params.getValue());//TODO: FIX HERE WHEN SON OF SOMETHING (ASSIGNMENT)
         } catch (Exception e) {
             return Arrays.asList("method", node.get("value"), params.getValue());
         }
