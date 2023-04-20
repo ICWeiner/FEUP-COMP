@@ -19,7 +19,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
     public SemanticAnalysisVisitor(SymbolTable table, List<Report> reports) {
         this.table = table;
-        this.reports = reports;
+        this.reports = null;
     }
 
     @Override
