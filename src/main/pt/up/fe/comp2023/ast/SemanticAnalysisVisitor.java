@@ -92,7 +92,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         List<String> imports = table.getImports();
         if(!child.getKind().equals("Identifier")) {
             //TODO é provavel que estas condições não estejam bem 💀
-            if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration") && child.getJmmChild(0).getKind().equals("Integer"))
+            if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration")
+                    && (child.getJmmChild(0).getKind().equals("Integer")
+                    || (table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName) != null && table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName).getName().equals("int"))))
+
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO acho que isto não está bem
@@ -271,8 +274,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         String className = table.getClassName();
         if(!child.getKind().equals("Identifier")) {
             //TODO é provavel que estas condições não estejam bem 💀
-            if(//!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration") && child.getJmmChild(0).getKind().equals("Integer"))
-                    !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
+            if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration")
+                    && (child.getJmmChild(0).getKind().equals("Integer")
+                    || (table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName) != null && table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName).getName().equals("int"))))
+
+                    && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO acho que isto não está bem
                     && !((child.getKind().equals("BinaryOp") && (child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") || (!child.get("op").equals("&&") && nodeType.getName().equals("int"))) && visit(child,true))) //TODO isto dá dois reports
