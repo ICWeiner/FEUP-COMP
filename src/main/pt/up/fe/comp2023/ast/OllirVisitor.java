@@ -254,7 +254,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             }
         } else {
 
-            if(node.getChildren().get(0).getKind().equals("MethodCall")){
+            if(node.getChildren().get(0).getKind().equals("MethodCall")){//TODO: handle method call
                 visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", ollir));
             }else{
                 visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
