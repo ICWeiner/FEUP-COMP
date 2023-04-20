@@ -56,7 +56,7 @@ expression
     : '(' expression ')' #Parenthesis
     | expression '[' expression ']' #ArrayAccess
     | expression '.' value=ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
-    | expression op='.' 'length' #LenghtOp //#AccessOp
+    | expression op='.' 'length' #LengthOp //#AccessOp
     | op='!' expression #UnaryOp
     | expression op=('*' | '/') expression #BinaryOp
     | expression op=('+' | '-') expression #BinaryOp
