@@ -105,7 +105,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(child.getKind().equals("ArrayAccess") && visit(child,true) && table.getReturnType(currentMethodName).getName().equals("int")) //TODO isto dá dois reports
                     && !(child.getKind().equals("This") && !table.getReturnType(currentMethodName).getName().equals("int") && table.getReturnType(currentMethodName).getName().equals("boolean")) //TODO
                     && !(child.getKind().equals("LenghtOp") && nodeType.isArray() && table.getReturnType(currentMethodName).getName().equals("int"))) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible return in " + currentMethodName + " method: " + child.getKind() + " and " + nodeType.getName()));
+                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible return in " + currentMethodName + " method: " + child.getKind() + " and " + nodeType.getName()));
                 return false;
             }
         }
@@ -280,7 +280,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(child.getKind().equals("ArrayAccess") && visit(child,true)) //TODO isto dá dois reports
                     && !(child.getKind().equals("LenghtOp") && nodeType.isArray())
                     && !(child.getKind().equals("This") && !currentMethodName.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethodName + " method"));
+                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethodName + " method"));
                 return false;
             }
         }
