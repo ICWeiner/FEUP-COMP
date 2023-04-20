@@ -254,7 +254,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             }
         } else {
 
-            if(node.getChildren().get(0).getKind().equals("MethodCall")){
+            if(node.getChildren().get(0).getKind().equals("MethodCall")){//TODO: handle method call
                 visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", ollir));
             }else{
                 visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
@@ -390,6 +390,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             return Arrays.asList("ACCESS", "this");
         }
 
+
+
         Map.Entry<Symbol, Boolean> field = null;
 
 
@@ -421,7 +423,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                             OllirTemplates.type(variable.getType()),
                             OllirTemplates.getfield(field.getKey())));
                     ollir.append(String.format("%s ==.bool 1.bool", OllirTemplates.variable(variable)));
-
+                    System.out.println("RETURN ON 1");
                     return Arrays.asList(ollir.toString(), variable, name);
                 } else {
                     Objects.requireNonNullElse(superiorOllir, ollir).append(String.format("%s :=%s %s;\n",
@@ -430,16 +432,19 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                             OllirTemplates.getfield(field.getKey())));
 
                     ollir.append(OllirTemplates.variable(variable));
+                    System.out.println("RETURN ON 2");
                     return Arrays.asList(ollir.toString(), variable, name);
                 }
             } else {
                 if (data.get(0).equals("CONDITION")) {
+                    System.out.println("RETURN ON 3");
                     return Arrays.asList(String.format("%s ==.bool 1.bool", OllirTemplates.variable(field.getKey(), name)), field.getKey(), name);
                 }
-
+                System.out.println("RETURN ON 4");
                 return Arrays.asList(OllirTemplates.variable(field.getKey(), name), field.getKey(), name);
             }
         }
+        System.out.println("RETURN ON 5");
         return Arrays.asList("ACCESS", node.get("value"));
     }
 
@@ -511,7 +516,13 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             } else {
                 // imported method called on "this"
                 if (methodReturn.get(0).equals("method")) {
-
+                    if (assignment != null) {
+                        ollirExpression = OllirTemplates.invokespecial((String) methodReturn.get(1), assignment.getType(), (String) methodReturn.get(2));
+                        expectedType = assignment.getType();
+                    } else {
+                        expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
+                        ollirExpression = OllirTemplates.invokespecial((String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
+                    }
                 } else {
                     // Declared method called on "this"
                     JmmMethod called = (JmmMethod) methodReturn.get(1);
@@ -541,8 +552,24 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 ollir.append(OllirTemplates.objectinstance(auxiliary)).append("\n");
 
                 if (methodReturn.get(0).equals("method")) {
-                    if (assignment != null) {//TODO:INVOKESPECIAL
+                    if (assignment != null) {
+                        ollirExpression = OllirTemplates.invokespecial(
+                                OllirTemplates.variable(auxiliary),
+                                (String) methodReturn.get(1),
+                                assignment.getType(),
+                                (String) methodReturn.get(2)
+                        );
+                        expectedType = assignment.getType();
+                    } else {
+                        expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
+                        ollirExpression = OllirTemplates.invokespecial(
+                                OllirTemplates.variable(auxiliary),
+                                (String) methodReturn.get(1),
+                                expectedType,
+                                (String) methodReturn.get(2)
+                        );
                     }
+
                 } else {
                     // Declared method called on "this"
                     JmmMethod called = (JmmMethod) methodReturn.get(1);
@@ -551,6 +578,13 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 }
             } else {
                 if (methodReturn.get(0).equals("method")) {
+                    if (assignment != null) {
+                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) methodReturn.get(1), assignment.getType(), (String) methodReturn.get(2));
+                        expectedType = assignment.getType();
+                    } else {
+                        expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
+                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
+                    }
                 } else if (!methodReturn.get(0).equals("length")) {
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
 
@@ -581,7 +615,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         return Arrays.asList(ollir.toString(), expectedType);
     }
 
-    private List<Object> dealWithMethodCall(JmmNode node, List<Object> data) {
+    private List<Object> dealWithMethodCall(JmmNode node, List<Object> data) {//TODO: fix when son of binary op or "="
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
