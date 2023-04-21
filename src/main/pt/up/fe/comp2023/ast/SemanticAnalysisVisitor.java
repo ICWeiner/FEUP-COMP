@@ -297,7 +297,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 return false;
             }
 
-            if(!(nodeType.isArray() && childType.isArray())) {
+            if((nodeType.isArray() && !childType.isArray()) || (!nodeType.isArray() && childType.isArray())) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array assignment"));
                 return false;
             }
@@ -426,7 +426,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
         JmmNode index = node.getJmmChild(1);
         if(index.getKind().equals("BinaryOp") && (index.get("op").equals("<") || index.get("op").equals("&&") || !visit(index,true))) { //TODO
-            if(reports.isEmpty())  reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
+            if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
             return false;
         }
         else if(index.getKind().equals("MethodCall") && !table.getReturnType(currentMethodName).getName().equals("int") && !visit(index,true)) { //TODO
