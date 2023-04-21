@@ -253,13 +253,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 }
             }
         } else {
-
-            if(node.getChildren().get(0).getKind().equals("MethodCall")){//TODO: handle method call
-                visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", ollir));
-            }else{
-                visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
-            }
-
+            visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
 
             String result = (String) visitResult.get(0);
             String[] parts = result.split("\n");
@@ -495,16 +489,17 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         String methodClass;
 
-        JmmNode targetNode = node.getChildren().get(0);//TODO, ISTO TEM DE SER UMA LISTA DE FILHOS? maybe not?
+        JmmNode targetNode = node.getChildren().get(0);
         JmmNode methodNode = node;
 
         StringBuilder ollir = new StringBuilder();
+
 
         List<Object> targetReturn = visit(targetNode, Arrays.asList("ACCESS", ollir));
         //List<Object> methodReturn = visit(methodNode, Arrays.asList("ACCESS", ollir));
 
         //###########################################################
-        //StringBuilder ollir = (StringBuilder) data.get(1); TODO: ver qual era a necessidade disto
+        //StringBuilder ollir = (StringBuilder) data.get(1); TODO: ver qual era a necessidade disto - nenhuma aparentemente
 
 
         List<JmmNode> children = node.getChildren();
@@ -522,11 +517,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         try {
             method = table.getMethod(node.get("value"), params.getKey(), returnType);
             methodClass = "class_method";
-            //return Arrays.asList("class_method", method, params.getValue());//TODO: FIX HERE WHEN SON OF SOMETHING (ASSIGNMENT)
         } catch (Exception e) {
             method = null;
             methodClass = "method";
-            //return Arrays.asList("method", node.get("value"), params.getValue());
         }
         //###########################################################
 
@@ -551,21 +544,21 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     }*/
                 } else {
                     expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
-                    ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) node.get("value"), expectedType, (String) params.getValue());
+                    ollirExpression = OllirTemplates.invokestatic(targetVariable,  node.get("value"), expectedType,  params.getValue());
                 }
             } else {
                 // imported method called on "this"
                 if (methodClass.equals("method")) {
                     if (assignment != null) {
-                        ollirExpression = OllirTemplates.invokespecial((String) node.get("value"), assignment.getType(), (String) params.getValue());
+                        ollirExpression = OllirTemplates.invokespecial( node.get("value"), assignment.getType(),  params.getValue());
                         expectedType = assignment.getType();
                     } else {
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
-                        ollirExpression = OllirTemplates.invokespecial((String) node.get("value"), expectedType, (String) params.getValue());
+                        ollirExpression = OllirTemplates.invokespecial( node.get("value"), expectedType,  params.getValue());
                     }
                 } else {
                     // Declared method called on "this
-                    ollirExpression = OllirTemplates.invokevirtual(method.getName(), method.getReturnType(), (String) params.getValue());
+                    ollirExpression = OllirTemplates.invokevirtual(method.getName(), method.getReturnType(),  params.getValue());
                     expectedType = method.getReturnType();
                 }
             }
@@ -594,43 +587,42 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     if (assignment != null) {
                         ollirExpression = OllirTemplates.invokespecial(
                                 OllirTemplates.variable(auxiliary),
-                                (String) methodNode.get("Value"),
+                                methodNode.get("Value"),
                                 assignment.getType(),
-                                (String) params.getValue()
+                                params.getValue()
                         );
                         expectedType = assignment.getType();
                     } else {
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
                         ollirExpression = OllirTemplates.invokespecial(
                                 OllirTemplates.variable(auxiliary),
-                                (String) methodNode.get("Value"),
+                                methodNode.get("Value"),
                                 expectedType,
-                                (String) params.getValue()
+                                params.getValue()
                         );
                     }
 
                 } else {
                     // Declared method called on "this"
-                    JmmMethod called = method;
-                    ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(auxiliary), called.getName(), called.getReturnType(), (String) params.getValue());
-                    expectedType = called.getReturnType();
+                    ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(auxiliary), method.getName(), method.getReturnType(), params.getValue());
+                    expectedType = method.getReturnType();
                 }
             } else {
                 if (methodClass.equals("method")) {
                     if (assignment != null) {
-                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) methodNode.get("value"), assignment.getType(), (String) params.getValue());
+                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)),  methodNode.get("value"), assignment.getType(), params.getValue());
                         expectedType = assignment.getType();
                     } else {
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
-                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) params.getValue(), expectedType, (String) params.getValue());
+                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), params.getValue(), expectedType,  params.getValue());
                     }
-                } /*else if (!methodReturn.get(0).equals("length")) {
+                } else if (!methodClass.equals("length")) {
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
 
-                    JmmMethod called = (JmmMethod) methodReturn.get(1);
-                    ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), called.getName(), called.getReturnType(), (String) methodReturn.get(2));
-                    expectedType = called.getReturnType();
-                }*/
+
+                    ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), method.getName(), method.getReturnType(), params.getValue());
+                    expectedType = method.getReturnType();
+                }
             }
         }
 
@@ -648,7 +640,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
 
         if (data.get(0).equals("EXPR_STMT")||data.get(0).equals("METHOD") || data.get(0).equals("IF") || data.get(0).equals("ELSE") || data.get(0).equals("WHILE")) {
-            ollir.append("dsadss;");
+            ollir.append(";");
         }
 
         return Arrays.asList(ollir.toString(), expectedType);
