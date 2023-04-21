@@ -196,7 +196,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
             Type childType;
             for(JmmNode child : node.getChildren()) {
-                System.out.println("aaaa " + child);
                 if(child.getIndexOfSelf() != 0) {
                     if(child.getKind().equals("Identifier")) {
                         childType = table.getVariableType(child.get("value"), currentMethodName);
@@ -205,11 +204,15 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                         childType = new Type("int",false);
                     }
                     else {
-                        System.out.println();
                         childType = new Type(child.getKind(),false);
                     }
+                    if(childType == null) {
+                        reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Variable not declared"));
+                        return false;
+                    }
                     if(!parameters.isEmpty()) {
-                        if(!parameters.get(child.getIndexOfSelf()-1).getType().getName().equalsIgnoreCase(childType.getName())) {
+                        Type parameterType = parameters.get(child.getIndexOfSelf()-1).getType();
+                        if(!parameterType.getName().equalsIgnoreCase(childType.getName()) || !(parameterType.isArray() == childType.isArray())) {
                             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
                             return false;
                         }
