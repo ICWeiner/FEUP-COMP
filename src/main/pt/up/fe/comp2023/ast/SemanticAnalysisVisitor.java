@@ -99,16 +99,16 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO acho que isto não está bem
-                    && !((child.getKind().equals("BinaryOp") && ((child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") && table.getReturnType(currentMethodName).getName().equals("boolean")) || (!child.get("op").equals("&&") && nodeType.getName().equals("int") && table.getReturnType(currentMethodName).getName().equals("int"))) && visit(child,true))) ////TODO AAAA TODO isto dá dois reports
+                    && !((child.getKind().equals("BinaryOp") && ((child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") && table.getReturnType(currentMethodName).getName().equals("boolean")) || (!child.get("op").equals("&&") && nodeType.getName().equals("int") && table.getReturnType(currentMethodName).getName().equals("int"))) && visit(child,true))) ////TODO AAAA
 
-                    && !(child.getKind().equals("MethodCall") && visit(child,true) //TODO isto dá dois reports
+                    && !(child.getKind().equals("MethodCall") && visit(child,true)
                     && ((table.getReturnType(child.get("value")) == null && !imports.isEmpty()) //TODO falta verificar mais coisas para alem dos imports?
-                    || (table.getReturnType(child.get("value")) != null && table.getReturnType(currentMethodName).getName().equals(table.getReturnType(child.get("value")).getName())))) //TODO isto dá dois reports
+                    || (table.getReturnType(child.get("value")) != null && table.getReturnType(currentMethodName).getName().equals(table.getReturnType(child.get("value")).getName()))))
 
-                    && !(child.getKind().equals("ArrayAccess") && visit(child,true) && table.getReturnType(currentMethodName).getName().equals("int")) //TODO isto dá dois reports
+                    && !(child.getKind().equals("ArrayAccess") && visit(child,true) && table.getReturnType(currentMethodName).getName().equals("int"))
                     && !(child.getKind().equals("This") && !table.getReturnType(currentMethodName).getName().equals("int") && table.getReturnType(currentMethodName).getName().equals("boolean")) //TODO
                     && !(child.getKind().equals("LengthOp") && nodeType.isArray() && table.getReturnType(currentMethodName).getName().equals("int"))) {
-                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible return in " + currentMethodName + " method: " + child.getKind() + " and " + nodeType.getName()));
+                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible return in " + currentMethodName + " method: " + child.getKind() + " and " + nodeType.getName()));  //TODO as mensagens dos reports não estão muito bem
                 return false;
             }
         }
@@ -281,12 +281,12 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO acho que isto não está bem
-                    && !((child.getKind().equals("BinaryOp") && (child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") || (!child.get("op").equals("&&") && nodeType.getName().equals("int"))) && visit(child,true))) //TODO isto dá dois reports
-                    && !(child.getKind().equals("MethodCall") && visit(child,true)) //TODO isto dá dois reports
-                    && !(child.getKind().equals("ArrayAccess") && visit(child,true)) //TODO isto dá dois reports
+                    && !((child.getKind().equals("BinaryOp") && (child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") || (!child.get("op").equals("&&") && nodeType.getName().equals("int"))) && visit(child,true)))
+                    && !(child.getKind().equals("MethodCall") && visit(child,true))
+                    && !(!nodeType.isArray() && child.getKind().equals("ArrayAccess") && visit(child,true))
                     && !(child.getKind().equals("LengthOp") && nodeType.isArray())
                     && !(child.getKind().equals("This") && !currentMethodName.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
-                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethodName + " method"));
+                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethodName + " method")); //TODO as mensagens dos reports não estão muito bem
                 return false;
             }
         }
@@ -298,7 +298,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
 
             if(!(nodeType.isArray() && childType.isArray())) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assignment"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array assignment"));
                 return false;
             }
 
@@ -426,15 +426,14 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
         JmmNode index = node.getJmmChild(1);
         if(index.getKind().equals("BinaryOp") && (index.get("op").equals("<") || index.get("op").equals("&&") || !visit(index,true))) { //TODO
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
+            if(reports.isEmpty())  reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
             return false;
         }
         else if(index.getKind().equals("MethodCall") && !table.getReturnType(currentMethodName).getName().equals("int") && !visit(index,true)) { //TODO
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
+            if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
             return false;
         }
         else if(index.getKind().equals("ArrayAccess") && !visit(index,true)) { //TODO
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
             return false;
         }
         else if(index.getKind().equals("LengthOp") && !table.getVariableType(index.getJmmChild(0).get("value"), currentMethodName).isArray()) { //TODO
