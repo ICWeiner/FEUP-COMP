@@ -252,10 +252,9 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
             return false;
         }
-        else if(leftChild.getKind().equals("MethodCall")  && !table.getReturnType(currentMethodName).getName().equals("int") && !visit(leftChild,true)) { //TODO
-            //if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
-            //return false;
-            return  true;
+        else if(leftChild.getKind().equals("MethodCall") && !table.getImports().contains(leftChild.getJmmChild(0).get("value")) && !table.getReturnType(currentMethodName).getName().equals("int") && !visit(leftChild,true)) { //TODO
+            if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
+            return false;
         }
         else if(leftChild.getKind().equals("ArrayAccess") && !visit(leftChild,true)) { //TODO
             return false;
@@ -290,10 +289,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         String superClassName = table.getSuper();
         String className = table.getClassName();
         if(!child.getKind().equals("Identifier")) {
-            if(currentMethodName.equals("main") && table.getFields().contains(new Symbol(nodeType,node.get("name")))) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Field in static"));
-                return false;
-            }
             //TODO é provavel que estas condições não estejam bem 💀
             if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration")
                     && (child.getJmmChild(0).getKind().equals("Integer")
