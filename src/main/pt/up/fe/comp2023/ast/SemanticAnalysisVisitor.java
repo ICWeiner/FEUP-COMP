@@ -196,21 +196,22 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
             Type childType;
             for(JmmNode child : node.getChildren()) {
+                System.out.println("aaaa " + child);
                 if(child.getIndexOfSelf() != 0) {
-                    if(child.getKind().equals("Identifier"))
-                        childType = table.getVariableType(child.get("value"),currentMethodName);
-                    else if (child.getKind().equals("Integer")){
+                    if(child.getKind().equals("Identifier")) {
+                        childType = table.getVariableType(child.get("value"), currentMethodName);
+                    }
+                    else if (child.getKind().equals("Integer")) {
                         childType = new Type("int",false);
                     }
                     else {
+                        System.out.println();
                         childType = new Type(child.getKind(),false);
                     }
                     if(!parameters.isEmpty()) {
-                        for(Symbol parameter : parameters) {
-                            if(!parameter.getType().getName().equalsIgnoreCase(childType.getName())) {
-                                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
-                                return false;
-                            }
+                        if(!parameters.get(child.getIndexOfSelf()-1).getType().getName().equalsIgnoreCase(childType.getName())) {
+                            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
+                            return false;
                         }
                     }
                     else {
