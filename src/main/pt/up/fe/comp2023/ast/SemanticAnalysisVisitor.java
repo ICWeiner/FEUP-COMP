@@ -252,9 +252,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
             return false;
         }
-        else if(leftChild.getKind().equals("MethodCall") && !table.getImports().contains(leftChild.getJmmChild(0).get("value")) && !table.getReturnType(currentMethodName).getName().equals("int") && !visit(leftChild,true)) { //TODO
-            if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
-            return false;
+        else if(leftChild.getKind().equals("MethodCall")  && !table.getReturnType(currentMethodName).getName().equals("int") && !visit(leftChild,true)) { //TODO
+            //if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
+            //return false;
+            return  true;
         }
         else if(leftChild.getKind().equals("ArrayAccess") && !visit(leftChild,true)) { //TODO
             return false;
