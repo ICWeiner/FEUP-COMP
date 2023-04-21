@@ -255,8 +255,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
 
         JmmNode child = node.getJmmChild(1);
-
-        if(!child.getKind().equals("Integer")) {
+        if(child.getKind().equals("BinaryOp") && (child.get("op").equals("&&") || !visit(child,true))) {
+            return false;
+        }
+        else if(!child.getKind().equals("BinaryOp") && !child.getKind().equals("Integer")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array assignment is not an integer"));
             return false;
         }
@@ -350,14 +352,14 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             Type leftType = null;
             Type rightType = null;
 
-            if(!left.getKind().equals("ArrayAccess")) {
+            if(!left.getKind().equals("LengthOp") && !left.getKind().equals("ArrayAccess")) {
                 leftType = table.getVariableType(left.get("value"), currentMethodName);
             }
             else if(!visit(left,true)) { //TODO
                 return false;
             }
 
-            if(!right.getKind().equals("ArrayAccess")) {
+            if(!right.getKind().equals("LengthOp") && !right.getKind().equals("ArrayAccess")) {
                 rightType = table.getVariableType(right.get("value"), currentMethodName);
             }
             else if(!visit(right,true)) { //TODO
@@ -365,7 +367,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
 
             if (!left.getKind().equals("Identifier")) {
-                if(child.get("op").equals("<") && !left.getKind().equals("Integer") && !left.getKind().equals("ArrayAccess")) {
+                if(child.get("op").equals("<") && !left.getKind().equals("Integer") && !left.getKind().equals("LengthOp") && !left.getKind().equals("ArrayAccess")) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement: left type is not an integer"));
                     return false;
                 }
@@ -384,7 +386,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
 
             if (!right.getKind().equals("Identifier")) {
-                if(child.get("op").equals("<") && !right.getKind().equals("Integer") && !right.getKind().equals("ArrayAccess")) {
+                if(child.get("op").equals("<") && !right.getKind().equals("Integer") && !right.getKind().equals("LengthOp") && !right.getKind().equals("ArrayAccess")) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement: right type is not an integer"));
                     return false;
                 }
