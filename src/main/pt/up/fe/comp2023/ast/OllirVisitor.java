@@ -255,6 +255,10 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         } else {
             visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
 
+            System.out.println("visitResult is: " + visitResult);
+            System.out.println("Node is of kind: " + node.getKind());
+            System.out.println("Targer node is of kind: " + node.getChildren().get(0).getKind());
+
             String result = (String) visitResult.get(0);
             String[] parts = result.split("\n");
 
@@ -533,15 +537,16 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (targetReturn.get(0).equals("ACCESS")) {
             // Static Imported Methods
             if (!targetReturn.get(1).equals("this")) {
+                System.out.println("TargetReturn on dealwithmethodcall is:" + targetReturn);
                 String targetVariable = (String) targetReturn.get(1);
                 if (assignment != null) {
-                    /*if (data.get(2).equals("ARRAY_ACCESS")) { TODO: Fix since changes
+                    if (data.get(2).equals("ARRAY_ACCESS")) { /*TODO: Fix since changes
                         ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), new Type(assignment.getType().getName(), false), (String) params.getValue());
-                        expectedType = new Type(assignment.getType().getName(), false);
+                        expectedType = new Type(assignment.getType().getName(), false);*/
                     } else {
-                        ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), assignment.getType(), (String) params.getValue());
+                        ollirExpression = OllirTemplates.invokestatic(targetVariable,  methodNode.get("value"), assignment.getType(),  params.getValue());
                         expectedType = assignment.getType();
-                    }*/
+                    }
                 } else {
                     expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
                     ollirExpression = OllirTemplates.invokestatic(targetVariable,  node.get("value"), expectedType,  params.getValue());
