@@ -140,37 +140,37 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         System.out.println("MethodCall: " + node + " " + node.getChildren());
 
         if(node.getChildren().size() > 1) {
-            visit(node.getJmmChild(1),true);
+            if(!visit(node.getJmmChild(1),true)) {
+                return false;
+            }
         }
 
         JmmNode leftChild = node.getJmmChild(0);
         Type leftChildType = null;
 
         if(!leftChild.getKind().equals("This") && !leftChild.getKind().equals("GeneralDeclaration")) {
-            leftChildType = table.getLocalVariableType(leftChild.get("value"),currentMethodName);
+            leftChildType = table.getVariableType(leftChild.get("value"),currentMethodName);
         }
 
         List<String> imports = table.getImports();
         if(leftChildType == null) {
-            if (leftChild.getKind().equals("This") && currentMethodName.equals("main")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: 'this' invoked in main method"));
-                return false;
+            if (leftChild.getKind().equals("This")) {
+                if(currentMethodName.equals("main")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: 'this' invoked in main method"));
+                    return false;
+                }
+                leftChildType = new Type("this", false);
             }
-            if (leftChild.getKind().equals("GeneralDeclaration")) {
+            else if (leftChild.getKind().equals("GeneralDeclaration")) {
                 if (!(table.getClassName().contains(leftChild.get("name")) || table.getImports().contains(leftChild.get("name")) || (table.getSuper() != null && table.getSuper().contains(leftChild.get("name"))))) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Undeclared class " + leftChild.get("name")));
                     return false;
                 }
-            }
-            else if (!leftChild.getKind().equals("This") && !leftChild.getKind().equals("GeneralDeclaration") && !table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Method Call: Class not imported"));
-                return false;
-            }
-            if (leftChild.getKind().equals("GeneralDeclaration")) {
                 leftChildType = new Type(leftChild.get("name"), false);
             }
-            else if (leftChild.getKind().equals("This")) {
-                leftChildType = new Type("this", false);
+            else if (!table.getClassName().equals(leftChild.get("value")) && !imports.contains(leftChild.get("value"))) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Method Call: Class not imported"));
+                return false;
             }
             else {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Method Call: Left type is null"));
@@ -191,7 +191,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         if(!imports.contains(leftChildType.getName()) && methods.contains(node.get("value"))) {
             List<Symbol> parameters = table.getParameters(node.get("value"));
             if((node.getChildren().size()-1 != parameters.size())) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Wrong number of parameters"));
                 return false;
             }
             Type childType;
@@ -298,6 +298,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             Type childType = table.getVariableType(child.get("value"),currentMethodName);
             if(childType == null) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign is null"));
+                return false;
+            }
+            else if(table.getFields().contains(new Symbol(childType,child.get("value"))) && currentMethodName.equals("main")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Field in static"));
                 return false;
             }
 
