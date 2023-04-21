@@ -61,6 +61,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             if (child.getKind().equals("ImportDeclaration") ) continue;
             String ollirChild = (String) visit(child, Collections.singletonList("PROGRAM")).get(0);
             ollir.append(ollirChild);
+            System.out.println(ollirChild); //TODO:this prints the code, find another way to do it?
         }
         return Collections.singletonList(ollir.toString());
     }
@@ -81,7 +82,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         for(JmmNode child : node.getChildren()){
             String ollirChild = (String) visit(child, Collections.singletonList("CLASS")).get(0);
-            System.out.println(ollirChild); //TODO:this prints the code, find another way to do it?
 
             if (ollirChild != null && !ollirChild.equals("DEFAULT_VISIT")) {
                 if (child.getKind().equals("VarDeclaration")) {
@@ -478,18 +478,28 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
     }
 
     private  List<Object> dealWithExpression(JmmNode node, List<Object> data){
-
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
+        StringBuilder ollir = new StringBuilder();
+        for (JmmNode child : node.getChildren()){
+            String ollirChild = (String) visit(child, Collections.singletonList("EXPR_STMT")).get(0);
+            ollir.append(ollirChild);
+        }
+        return Collections.singletonList(ollir.toString());
+    }
 
-        JmmNode target = node.getChildren().get(0).getChildren().get(0);//TODO, ISTO TEM DE SER UMA LISTA DE FILHOS? maybe not?
-        JmmNode method = node.getChildren().get(0);
+    private List<Object> dealWithMethodCall(JmmNode node, List<Object> data) {//TODO: fix when son of binary op or "="
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        visited.add(node);
+
+        JmmNode targetNode = node.getChildren().get(0);//TODO, ISTO TEM DE SER UMA LISTA DE FILHOS? maybe not?
+        JmmNode methodNode = node;
 
         StringBuilder ollir = new StringBuilder();
 
-        List<Object> targetReturn = visit(target, Arrays.asList("ACCESS", ollir));
-        List<Object> methodReturn = visit(method, Arrays.asList("ACCESS", ollir));
+        List<Object> targetReturn = visit(targetNode, Arrays.asList("ACCESS", ollir));
+        List<Object> methodReturn = visit(methodNode, Arrays.asList("ACCESS", ollir));
 
         Symbol assignment = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
 
@@ -525,12 +535,14 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     }
                 } else {
                     // Declared method called on "this"
+                    System.out.println(" methodNode kind is: " +  methodNode.getKind());
+                    System.out.println(" methodReturn.get(1) is: " +  methodReturn.get(0));
                     JmmMethod called = (JmmMethod) methodReturn.get(1);
                     ollirExpression = OllirTemplates.invokevirtual(called.getName(), called.getReturnType(), (String) methodReturn.get(2));
                     expectedType = called.getReturnType();
                 }
             }
-        } else if (method.getKind().equals("ArrayAccess")) {
+        } else if (methodNode.getKind().equals("ArrayAccess")) {
             // ARRAY ACCESS
             Symbol array = (Symbol) targetReturn.get(1);
             String index = (String) methodReturn.get(0);
@@ -612,26 +624,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         }
 
 
-        return Arrays.asList(ollir.toString(), expectedType);
-    }
+        //StringBuilder ollir = (StringBuilder) data.get(1);
 
-    private List<Object> dealWithMethodCall(JmmNode node, List<Object> data) {//TODO: fix when son of binary op or "="
-        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
-        visited.add(node);
-
-
-        System.out.println("Came from:");
-        System.out.println(node.getJmmParent().getKind());
-        System.out.println("data.get(1) is:");
-        //System.out.println(data.get(1));
-
-        StringBuilder ollir;
-
-        if(node.getJmmParent().getKind().equals("ExprStmt")){
-            ollir = (StringBuilder) data.get(1);
-        }else{
-            ollir = (StringBuilder) data.get(1);
-        }
 
         List<JmmNode> children = node.getChildren();
         children.remove(0);//remove first node as it isnt a parameter TODO:modify grammar?
@@ -643,13 +637,10 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 methodString += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
             }
         }
-
         Type returnType = table.getReturnType(methodString);
 
         try {
             JmmMethod method = table.getMethod(node.get("value"), params.getKey(), returnType);
-            System.out.println("method:" + method);
-            System.out.println("params:" +params.getValue());
             return Arrays.asList("class_method", method, params.getValue());//TODO: FIX HERE WHEN SON OF SOMETHING (ASSIGNMENT)
         } catch (Exception e) {
             return Arrays.asList("method", node.get("value"), params.getValue());
