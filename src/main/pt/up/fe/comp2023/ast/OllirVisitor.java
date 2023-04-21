@@ -493,13 +493,43 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
+        String methodClass;
+
         JmmNode targetNode = node.getChildren().get(0);//TODO, ISTO TEM DE SER UMA LISTA DE FILHOS? maybe not?
         JmmNode methodNode = node;
 
         StringBuilder ollir = new StringBuilder();
 
         List<Object> targetReturn = visit(targetNode, Arrays.asList("ACCESS", ollir));
-        List<Object> methodReturn = visit(methodNode, Arrays.asList("ACCESS", ollir));
+        //List<Object> methodReturn = visit(methodNode, Arrays.asList("ACCESS", ollir));
+
+        //###########################################################
+        //StringBuilder ollir = (StringBuilder) data.get(1); TODO: ver qual era a necessidade disto
+
+
+        List<JmmNode> children = node.getChildren();
+        children.remove(0);//remove first node as it isnt a parameter TODO:modify grammar?
+        Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
+
+        String methodString = node.get("value");
+        if (params.getKey().size() > 0) {
+            for (Type param : params.getKey()) {
+                methodString += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
+            }
+        }
+        Type returnType = table.getReturnType(methodString);
+        JmmMethod method;
+        try {
+            method = table.getMethod(node.get("value"), params.getKey(), returnType);
+            methodClass = "class_method";
+            //return Arrays.asList("class_method", method, params.getValue());//TODO: FIX HERE WHEN SON OF SOMETHING (ASSIGNMENT)
+        } catch (Exception e) {
+            method = null;
+            methodClass = "method";
+            //return Arrays.asList("method", node.get("value"), params.getValue());
+        }
+        //###########################################################
+
 
         Symbol assignment = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
 
@@ -512,39 +542,36 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             if (!targetReturn.get(1).equals("this")) {
                 String targetVariable = (String) targetReturn.get(1);
                 if (assignment != null) {
-                    if (data.get(2).equals("ARRAY_ACCESS")) {
-                        ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), new Type(assignment.getType().getName(), false), (String) methodReturn.get(2));
+                    /*if (data.get(2).equals("ARRAY_ACCESS")) { TODO: Fix since changes
+                        ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), new Type(assignment.getType().getName(), false), (String) params.getValue());
                         expectedType = new Type(assignment.getType().getName(), false);
                     } else {
-                        ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), assignment.getType(), (String) methodReturn.get(2));
+                        ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), assignment.getType(), (String) params.getValue());
                         expectedType = assignment.getType();
-                    }
+                    }*/
                 } else {
                     expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
-                    ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
+                    ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) node.get("value"), expectedType, (String) params.getValue());
                 }
             } else {
                 // imported method called on "this"
-                if (methodReturn.get(0).equals("method")) {
+                if (methodClass.equals("method")) {
                     if (assignment != null) {
-                        ollirExpression = OllirTemplates.invokespecial((String) methodReturn.get(1), assignment.getType(), (String) methodReturn.get(2));
+                        ollirExpression = OllirTemplates.invokespecial((String) node.get("value"), assignment.getType(), (String) params.getValue());
                         expectedType = assignment.getType();
                     } else {
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
-                        ollirExpression = OllirTemplates.invokespecial((String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
+                        ollirExpression = OllirTemplates.invokespecial((String) node.get("value"), expectedType, (String) params.getValue());
                     }
                 } else {
-                    // Declared method called on "this"
-                    System.out.println(" methodNode kind is: " +  methodNode.getKind());
-                    System.out.println(" methodReturn.get(1) is: " +  methodReturn.get(0));
-                    JmmMethod called = (JmmMethod) methodReturn.get(1);
-                    ollirExpression = OllirTemplates.invokevirtual(called.getName(), called.getReturnType(), (String) methodReturn.get(2));
-                    expectedType = called.getReturnType();
+                    // Declared method called on "this
+                    ollirExpression = OllirTemplates.invokevirtual(method.getName(), method.getReturnType(), (String) params.getValue());
+                    expectedType = method.getReturnType();
                 }
             }
         } else if (methodNode.getKind().equals("ArrayAccess")) {
-            // ARRAY ACCESS
-            Symbol array = (Symbol) targetReturn.get(1);
+            // ARRAY ACCESS TODO:ADAPT SINCE MAJOR CHANGES
+            /*Symbol array = (Symbol) targetReturn.get(1);
             String index = (String) methodReturn.get(0);
 
             String[] parts = index.split("\n");
@@ -555,7 +582,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             }
 
             ollirExpression = OllirTemplates.arrayaccess(array, (String) targetReturn.get(2), parts[parts.length - 1]);
-            expectedType = new Type(array.getType().getName(), false);
+            expectedType = new Type(array.getType().getName(), false);*/
         } else {
             if (targetReturn.get(1).equals("OBJECT_INIT")) {
                 Type type = new Type((String) targetReturn.get(2), false);
@@ -563,47 +590,47 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(auxiliary), OllirTemplates.type(type), targetReturn.get(0)));
                 ollir.append(OllirTemplates.objectinstance(auxiliary)).append("\n");
 
-                if (methodReturn.get(0).equals("method")) {
+                if (methodClass.equals("method")) {
                     if (assignment != null) {
                         ollirExpression = OllirTemplates.invokespecial(
                                 OllirTemplates.variable(auxiliary),
-                                (String) methodReturn.get(1),
+                                (String) methodNode.get("Value"),
                                 assignment.getType(),
-                                (String) methodReturn.get(2)
+                                (String) params.getValue()
                         );
                         expectedType = assignment.getType();
                     } else {
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
                         ollirExpression = OllirTemplates.invokespecial(
                                 OllirTemplates.variable(auxiliary),
-                                (String) methodReturn.get(1),
+                                (String) methodNode.get("Value"),
                                 expectedType,
-                                (String) methodReturn.get(2)
+                                (String) params.getValue()
                         );
                     }
 
                 } else {
                     // Declared method called on "this"
-                    JmmMethod called = (JmmMethod) methodReturn.get(1);
-                    ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(auxiliary), called.getName(), called.getReturnType(), (String) methodReturn.get(2));
+                    JmmMethod called = method;
+                    ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(auxiliary), called.getName(), called.getReturnType(), (String) params.getValue());
                     expectedType = called.getReturnType();
                 }
             } else {
-                if (methodReturn.get(0).equals("method")) {
+                if (methodClass.equals("method")) {
                     if (assignment != null) {
-                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) methodReturn.get(1), assignment.getType(), (String) methodReturn.get(2));
+                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) methodNode.get("value"), assignment.getType(), (String) params.getValue());
                         expectedType = assignment.getType();
                     } else {
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
-                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) methodReturn.get(1), expectedType, (String) methodReturn.get(2));
+                        ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), (String) params.getValue(), expectedType, (String) params.getValue());
                     }
-                } else if (!methodReturn.get(0).equals("length")) {
+                } /*else if (!methodReturn.get(0).equals("length")) {
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
 
                     JmmMethod called = (JmmMethod) methodReturn.get(1);
                     ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), called.getName(), called.getReturnType(), (String) methodReturn.get(2));
                     expectedType = called.getReturnType();
-                }
+                }*/
             }
         }
 
@@ -619,32 +646,12 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             ollir.append(ollirExpression);
         }
 
-        if (data.get(0).equals("METHOD") || data.get(0).equals("IF") || data.get(0).equals("ELSE") || data.get(0).equals("WHILE")) {
-            ollir.append(";");
+
+        if (data.get(0).equals("EXPR_STMT")||data.get(0).equals("METHOD") || data.get(0).equals("IF") || data.get(0).equals("ELSE") || data.get(0).equals("WHILE")) {
+            ollir.append("dsadss;");
         }
 
-
-        //StringBuilder ollir = (StringBuilder) data.get(1);
-
-
-        List<JmmNode> children = node.getChildren();
-        children.remove(0);//remove first node as it isnt a parameter TODO:modify grammar?
-        Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
-
-        String methodString = node.get("value");
-        if (params.getKey().size() > 0) {
-            for (Type param : params.getKey()) {
-                methodString += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
-            }
-        }
-        Type returnType = table.getReturnType(methodString);
-
-        try {
-            JmmMethod method = table.getMethod(node.get("value"), params.getKey(), returnType);
-            return Arrays.asList("class_method", method, params.getValue());//TODO: FIX HERE WHEN SON OF SOMETHING (ASSIGNMENT)
-        } catch (Exception e) {
-            return Arrays.asList("method", node.get("value"), params.getValue());
-        }
+        return Arrays.asList(ollir.toString(), expectedType);
     }
 
     private Map.Entry<List<Type>, String> getParametersList(List<JmmNode> children, StringBuilder ollir) {
