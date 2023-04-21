@@ -289,6 +289,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         String superClassName = table.getSuper();
         String className = table.getClassName();
         if(!child.getKind().equals("Identifier")) {
+            if(currentMethodName.equals("main") && table.getFields().contains(new Symbol(nodeType,node.get("name")))) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Field in static"));
+                return false;
+            }
             //TODO é provavel que estas condições não estejam bem 💀
             if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration")
                     && (child.getJmmChild(0).getKind().equals("Integer")
