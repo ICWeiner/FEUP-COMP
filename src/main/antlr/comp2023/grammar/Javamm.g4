@@ -40,6 +40,7 @@ returnDeclaration
 type locals [boolean isArray = false]
     : typeName='int' ('[' ']'{$isArray = true;})? name=ID //#IntType
     | typeName='boolean' name=ID //#BooleanType
+    | typeName='void' name=ID
     | typeName=ID name=ID //#CustomType
     ;
 
