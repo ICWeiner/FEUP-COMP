@@ -493,6 +493,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         String methodClass;
 
+        System.out.println("Visiting method call with name: " + node.get("value"));
+
         JmmNode targetNode = node.getChildren().get(0);
         JmmNode methodNode = node;
 
@@ -519,8 +521,28 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         Type returnType = table.getReturnType(methodString);
         JmmMethod method;
         try {
-            method = table.getMethod(node.get("value"), params.getKey(), returnType);
+            method = table.getMethod(methodNode.get("value"), params.getKey(), returnType);
             methodClass = "class_method";
+            System.out.println("methodClass is: " + methodClass);
+
+            var identifierType = currentMethod.getField(targetNode.get("value")).getKey().getType().getName();
+            for( var importName : table.getImports() ){
+
+                if (!targetNode.get("value").equals(importName) && !identifierType.equals(importName)){
+                    System.out.println("importname is:" + importName);
+                    System.out.println("targetNode is:" + targetNode.get("value"));
+                    System.out.println("identifierType is:" + identifierType);
+                    continue;
+                }
+                methodClass = "method";
+            }
+
+
+
+            System.out.println("methodClass is: " + methodClass);
+
+
+
         } catch (Exception e) {
             method = null;
             methodClass = "method";
@@ -529,6 +551,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
 
         Symbol assignment = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
+
+        System.out.println("assignment is: " + assignment );
 
         String ollirExpression = null;
         Type expectedType = (data.get(0).equals("BINARY") || (data.size() > 2 && data.get(2).equals("ARRAY_ACCESS"))) ? new Type("int", false) : null;
@@ -554,6 +578,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             } else {
                 // imported method called on "this"
                 if (methodClass.equals("method")) {
+
                     if (assignment != null) {
                         ollirExpression = OllirTemplates.invokespecial( node.get("value"), assignment.getType(),  params.getValue());
                         expectedType = assignment.getType();
@@ -624,6 +649,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 } else if (!methodClass.equals("length")) {
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
 
+                    System.out.println("ESTOU AQUI");
+
 
                     ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), method.getName(), method.getReturnType(), params.getValue());
                     expectedType = method.getReturnType();
@@ -652,8 +679,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
     }
 
     private Map.Entry<List<Type>, String> getParametersList(List<JmmNode> children, StringBuilder ollir) {
-        List<Type> params = new ArrayList<>();
 
+        List<Type> params = new ArrayList<>();
         List<String> paramsOllir = new ArrayList<>();
 
         for (JmmNode child : children) {
@@ -710,6 +737,10 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     params.add(new Type("int", false));
 
                     paramsOllir.add(result);
+                    break;
+                case "MethodCall":
+                    //currentCallMethodName=functionName;
+                    paramsOllir.add((String) visit(child, Collections.singletonList("PARAM")).get(0));
                     break;
                 default:
                     break;
