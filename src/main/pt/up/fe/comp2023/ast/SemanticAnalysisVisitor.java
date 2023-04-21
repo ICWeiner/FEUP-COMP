@@ -188,9 +188,9 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        if(methods.contains(node.get("value"))) {
+        if(!imports.contains(leftChildType.getName()) && methods.contains(node.get("value"))) {
             List<Symbol> parameters = table.getParameters(node.get("value"));
-            if(node.getChildren().size()-1 != parameters.size()) {
+            if((node.getChildren().size()-1 != parameters.size())) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
                 return false;
             }
@@ -493,7 +493,15 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(!visit(left,true)) {  //TODO
                 return false;
             }
-            leftType = new Type(table.getReturnType(left.get("value")).getName(),false);
+            if(!table.getImports().contains(left.getJmmChild(0).get("value"))) {
+                leftType = new Type(table.getReturnType(left.get("value")).getName(), false);
+            }
+            else if(node.get("op").equals("&&")) {
+                leftType = new Type("boolean",false);
+            }
+            else {
+                leftType = new Type("int",false);
+            }
         }
         else if(left.getKind().equals("LengthOp")) {
             leftType = new Type("int",false);
@@ -534,7 +542,15 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(!visit(right,true)) {  //TODO
                 return false;
             }
-            rightType = new Type(table.getReturnType(right.get("value")).getName(),false);
+            if(!table.getImports().contains(right.getJmmChild(0).get("value"))) {
+                rightType = new Type(table.getReturnType(right.get("value")).getName(), false);
+            }
+            else if(node.get("op").equals("&&")) {
+                rightType = new Type("boolean",false);
+            }
+            else {
+                rightType = new Type("int",false);
+            }
         }
         else if(right.getKind().equals("LengthOp")) {
             rightType = new Type("int",false);
