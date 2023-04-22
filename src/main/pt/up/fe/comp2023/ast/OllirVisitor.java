@@ -500,9 +500,12 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         StringBuilder ollir = new StringBuilder();
 
-
+        System.out.println("ollir antes da visita :" + ollir.toString() );
         List<Object> targetReturn = visit(targetNode, Arrays.asList("ACCESS", ollir));
+        System.out.println("ollir depois da visita :" + ollir.toString() );
+
         //List<Object> methodReturn = visit(methodNode, Arrays.asList("ACCESS", ollir));
+
 
         //###########################################################
         //StringBuilder ollir = (StringBuilder) data.get(1); TODO: ver qual era a necessidade disto - nenhuma aparentemente
@@ -511,6 +514,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         List<JmmNode> children = node.getChildren();
         children.remove(0);//remove first node as it isnt a parameter TODO:modify grammar?
         Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
+        System.out.println("ollir depois de getParametersList :" + ollir.toString() );
 
         String methodString = node.get("value");
         if (params.getKey().size() > 0) {
@@ -661,23 +665,41 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             }
         }
 
+        System.out.println("entrei no sitio certo :>>>");
+        System.out.println(data);
         if ((data.get(0).equals("CONDITION") || data.get(0).equals("BINARY") || data.get(0).equals("FIELD") || data.get(0).equals("PARAM") || data.get(0).equals("RETURN")) && expectedType != null && ollirExpression != null) {
+            System.out.println("ollir no if : " + ollir );
+            System.out.println("ollirExpression no if : " + ollirExpression );
             Symbol auxiliary = new Symbol(expectedType, "temporary" + temp_sequence++);
             ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(auxiliary), OllirTemplates.type(expectedType), ollirExpression));
             if (data.get(0).equals("CONDITION")) {
                 ollir.append(String.format("%s ==.bool 1.bool", OllirTemplates.variable(auxiliary)));
-            } else if (data.get(0).equals("BINARY") || data.get(0).equals("FIELD") || data.get(0).equals("PARAM") || data.get(0).equals("RETURN")) {
-                ollir.append(String.format("%s", OllirTemplates.variable(auxiliary)));
+            }else if (data.get(0).equals("BINARY") || data.get(0).equals("FIELD") || data.get(0).equals("PARAM") || data.get(0).equals("RETURN")) {
+                System.out.println("PARAM como pai");
+                if (methodNode.getJmmParent().getKind().equals("MethodCall")){//TODO METER CODIGO DE TEMPORARY ANTES DAS OUTRAS EXPRESSOES
+                    ollir.append(ollirExpression);
+                    System.out.println("methodcall como pai");
+                } else ollir.append(String.format("%s", OllirTemplates.variable(auxiliary)));
             }
-        } else {
-            ollir.append(ollirExpression);
-        }
+        }else {
 
+            System.out.println("ollir no else : " + ollir );
+            System.out.println("ollirExpression no else : " + ollirExpression );
+            ollir.append(ollirExpression);
+
+        }
+        System.out.println("ollir no else depois de append : " + ollir );
 
         if (data.get(0).equals("EXPR_STMT")||data.get(0).equals("METHOD") || data.get(0).equals("IF") || data.get(0).equals("ELSE") || data.get(0).equals("WHILE")) {
             ollir.append(";");
         }
 
+        System.out.println("ollir no fim da visita : " + ollir );
+
+        //if(methodNode.getJmmParent().getKind().equals("MethodCall"))
+        if (methodNode.getJmmParent().getKind().equals("MethodCall") && data.get(0).equals("PARAM")){
+            return Arrays.asList("temporary" + (temp_sequence - 1),expectedType);
+        }
         return Arrays.asList(ollir.toString(), expectedType);
     }
 
