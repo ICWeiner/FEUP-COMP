@@ -66,6 +66,16 @@ public class OllirTemplates {
         return invokevirtual(null, method, returnType, parameters);
     }
 
+    public static String invokespecial(String var, String method, Type returnType, String parameters) {
+        if (parameters.equals(""))
+            return String.format("invokespecial(%s, \"%s\")%s", var != null ? var : "this", method, type(returnType));
+        return String.format("invokespecial(%s, \"%s\", %s)%s", var != null ? var : "this", method, parameters, type(returnType));
+    }
+
+    public static String invokespecial(String method, Type returnType, String parameters) {
+        return invokespecial(null, method, returnType, parameters);
+    }
+
     public static String objectinit(String objectClass) {
         return String.format("new(%s).%s", objectClass, objectClass);
     }
