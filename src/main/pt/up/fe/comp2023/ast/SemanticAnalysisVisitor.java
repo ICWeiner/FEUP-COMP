@@ -380,67 +380,13 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 return false;
             }
         }
-        else if(child.getKind().equals("BinaryOp") && (child.get("op").equals("<") || child.get("op").equals("&&"))) {
-            JmmNode left = node.getJmmChild(0).getJmmChild(0);
-            JmmNode right = node.getJmmChild(0).getJmmChild(1);
-            Type leftType = null;
-            Type rightType = null;
-
-            if(!left.getKind().equals("LengthOp") && !left.getKind().equals("ArrayAccess")) {
-                leftType = table.getVariableType(left.get("value"), currentMethodName);
-            }
-            else if(!visit(left,true)) { //TODO
-                return false;
-            }
-
-            if(!right.getKind().equals("LengthOp") && !right.getKind().equals("ArrayAccess")) {
-                rightType = table.getVariableType(right.get("value"), currentMethodName);
-            }
-            else if(!visit(right,true)) { //TODO
-                return false;
-            }
-
-            if (!left.getKind().equals("Identifier")) {
-                if(child.get("op").equals("<") && !left.getKind().equals("Integer") && !left.getKind().equals("LengthOp") && !left.getKind().equals("ArrayAccess")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement: left type is not an integer"));
-                    return false;
-                }
-                else if(child.get("op").equals("&&") && !left.getKind().equals("Boolean")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement: left type not boolean"));
-                    return false;
-                }
-            }
-            else if(leftType == null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement: left type is null"));
-                return false;
-            }
-            else if (leftType.isArray()) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement: left type is an array"));
-                return false;
-            }
-
-            if (!right.getKind().equals("Identifier")) {
-                if(child.get("op").equals("<") && !right.getKind().equals("Integer") && !right.getKind().equals("LengthOp") && !right.getKind().equals("ArrayAccess")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement: right type is not an integer"));
-                    return false;
-                }
-                else if(child.get("op").equals("&&") && !right.getKind().equals("Boolean")) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement: right type not boolean"));
-                    return false;
-                }
-            }
-            else if(rightType == null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement: right type is null"));
-                return false;
-            }
-            else if (rightType.isArray()) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement: right type is an array"));
-                return false;
-            }
-
+        else if(child.getKind().equals("BinaryOp")) {
+            if(!visit(child,true)) return false;
+            if(!child.get("op").equals("<") && !child.get("op").equals("&&")) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement is not boolean"));
+            return false;
         }
         else if (!child.getKind().equals("Boolean")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement: not boolean"));
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement is not boolean"));
             return false;
         }
 
