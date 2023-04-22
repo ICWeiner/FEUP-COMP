@@ -487,7 +487,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         return Collections.singletonList(ollir.toString());
     }
 
-    private List<Object> dealWithMethodCall(JmmNode node, List<Object> data) {//TODO: fix when son of binary op or "="
+    private List<Object> dealWithMethodCall(JmmNode node, List<Object> data) {//TODO: fix when first child is general declaration :)))))
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
@@ -519,15 +519,18 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             }
         }
         Type returnType = table.getReturnType(methodString);
+        System.out.println("methodString is: " + methodString);
         JmmMethod method;
+
+        //ver se identifier é  ou classe do proprio ou objeto da classe propria
         try {
             method = table.getMethod(methodNode.get("value"), params.getKey(), returnType);
             methodClass = "class_method";
             System.out.println("methodClass is: " + methodClass);
 
             var identifierType = currentMethod.getField(targetNode.get("value")).getKey().getType().getName();
+            System.out.println("identifierType is: " + identifierType);
             for( var importName : table.getImports() ){
-
                 if (!targetNode.get("value").equals(importName) && !identifierType.equals(importName)){
                     System.out.println("importname is:" + importName);
                     System.out.println("targetNode is:" + targetNode.get("value"));
@@ -617,7 +620,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     if (assignment != null) {
                         ollirExpression = OllirTemplates.invokespecial(
                                 OllirTemplates.variable(auxiliary),
-                                methodNode.get("Value"),
+                                methodNode.get("value"),
                                 assignment.getType(),
                                 params.getValue()
                         );
@@ -626,7 +629,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
                         ollirExpression = OllirTemplates.invokespecial(
                                 OllirTemplates.variable(auxiliary),
-                                methodNode.get("Value"),
+                                methodNode.get("value"),
                                 expectedType,
                                 params.getValue()
                         );
