@@ -203,6 +203,18 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     else if (child.getKind().equals("Integer")) {
                         childType = new Type("int",false);
                     }
+                    else if(child.getKind().equals("MethodCall")) {
+                        if(imports.contains(child.getJmmChild(0).get("value"))) return true;
+                        if(!visit(child,true)) { //TODO
+                            if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
+                            return false;
+                        }
+                        childType = new Type(table.getReturnType(child.get("value")).getName(), false);
+                    }
+                    else if(child.getKind().equals("ArrayAccess")) {
+                        if(!visit(child,true)) return false; //TODO
+                        childType = new Type("int",false);
+                    }
                     else {
                         childType = new Type(child.getKind(),false);
                     }
@@ -212,6 +224,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     }
                     if(!parameters.isEmpty()) {
                         Type parameterType = parameters.get(child.getIndexOfSelf()-1).getType();
+                        //System.out.println(parameterType.getName() + " " + childType.getName());
                         if(!parameterType.getName().equalsIgnoreCase(childType.getName()) || !(parameterType.isArray() == childType.isArray())) {
                             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
                             return false;
