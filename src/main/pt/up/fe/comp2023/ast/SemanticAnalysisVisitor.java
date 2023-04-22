@@ -513,7 +513,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         else if (indexType == null) {
             return false;
         }
-        return !indexType.isArray() && (indexType.getName().equals("int") || indexType.getName().equals("Integer"));
+        return !indexType.isArray() && indexType.getName().equals("Integer");
 
     }
 }
