@@ -506,24 +506,33 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
             return childType;
         }
+
         return new Type(child.getKind(),false);
     }
 
     private Boolean verifyArrayIndex(JmmNode index) {
-        if(index.getKind().equals("BinaryOp")) {
-            return !index.get("op").equals("<") && !index.get("op").equals("&&") && visit(index, true);
+        if(index.getKind().equals("BinaryOp") && (index.get("op").equals("<") || index.get("op").equals("&&") || !visit(index,true))) {
+            return false;
         }
-        else if(index.getKind().equals("ArrayAccess") || (index.getKind().equals("MethodCall") && !table.getReturnType(currentMethodName).getName().equals("int"))) {
-            return visit(index, true);
+        else if(index.getKind().equals("MethodCall") && !table.getReturnType(currentMethodName).getName().equals("int") && !visit(index,true)) {
+            return false;
         }
-        else if(index.getKind().equals("LengthOp")) {
-            return table.getVariableType(index.getJmmChild(0).get("value"), currentMethodName).isArray();
+        else if(index.getKind().equals("ArrayAccess") && !visit(index,true)) {
+            return false;
         }
-        else if(!index.getKind().equals("MethodCall")) {
+        else if(index.getKind().equals("LengthOp") && !table.getVariableType(index.getJmmChild(0).get("value"), currentMethodName).isArray()) {
+            return false;
+        }
+        else if(!index.getKind().equals("BinaryOp") && !index.getKind().equals("ArrayAccess") && !index.getKind().equals("MethodCall") && !index.getKind().equals("LengthOp")) {
             Type indexType = table.getVariableType(index.get("value"), currentMethodName);
-            if (!index.getKind().equals("Identifier")) indexType = new Type(index.getKind(), false);
-            else if (indexType == null) return false;
-            return !indexType.isArray() && indexType.getName().equals("Integer");
+
+            if (!index.getKind().equals("Identifier")) {
+                indexType = new Type(index.getKind(), false);
+            }
+            else if (indexType == null) {
+                return false;
+            }
+            return !indexType.isArray() && (indexType.getName().equals("int") || indexType.getName().equals("Integer"));
         }
         return true;
     }
