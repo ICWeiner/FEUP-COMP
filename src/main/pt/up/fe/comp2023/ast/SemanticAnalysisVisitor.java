@@ -106,7 +106,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     || (table.getReturnType(child.get("value")) != null && table.getReturnType(currentMethodName).getName().equals(table.getReturnType(child.get("value")).getName()))))
 
                     && !(child.getKind().equals("ArrayAccess") && visit(child,true) && table.getReturnType(currentMethodName).getName().equals("int"))
-                    && !(child.getKind().equals("This") && !table.getReturnType(currentMethodName).getName().equals("int") && table.getReturnType(currentMethodName).getName().equals("boolean")) //TODO
+                    && child.getKind().equals("This") && !table.getReturnType(currentMethodName).getName().equals(className) //TODO
                     && !(child.getKind().equals("LengthOp") && nodeType.isArray() && table.getReturnType(currentMethodName).getName().equals("int"))) {
                 if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible return in " + currentMethodName + " method: " + child.getKind() + " and " + nodeType.getName()));  //TODO as mensagens dos reports não estão muito bem
                 return false;
@@ -224,7 +224,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     }
                     if(!parameters.isEmpty()) {
                         Type parameterType = parameters.get(child.getIndexOfSelf()-1).getType();
-                        //System.out.println(parameterType.getName() + " " + childType.getName());
                         if(!parameterType.getName().equalsIgnoreCase(childType.getName()) || !(parameterType.isArray() == childType.isArray())) {
                             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
                             return false;
