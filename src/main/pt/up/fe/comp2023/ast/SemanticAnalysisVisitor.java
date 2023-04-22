@@ -381,8 +381,15 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
         }
         else if(child.getKind().equals("BinaryOp")) {
-            if(!visit(child,true)) return false;
+            if(!visit(child,true)) return false; //TODO
             if(!child.get("op").equals("<") && !child.get("op").equals("&&")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement is not boolean"));
+                return false;
+            }
+        }
+        else if(child.getKind().equals("MethodCall")) {
+            if(!visit(child,true)) return false; //TODO
+            if(!child.getJmmChild(0).getKind().equals("This") && !table.getImports().contains(child.getJmmChild(0).get("value")) && !table.getReturnType(currentMethodName).getName().equals("boolean")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement is not boolean"));
                 return false;
             }
