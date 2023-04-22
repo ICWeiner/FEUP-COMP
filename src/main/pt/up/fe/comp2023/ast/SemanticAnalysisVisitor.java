@@ -444,6 +444,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
+        for(JmmNode bs : node.getChildren()) {
+            if(bs.getIndexOfSelf() != 0) {
+                if(!visit(bs,true)) return false;
+            }
+        }
         return true;
     }
 
