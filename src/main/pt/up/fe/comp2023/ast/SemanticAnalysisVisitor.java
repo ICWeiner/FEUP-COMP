@@ -270,35 +270,19 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        JmmNode leftChild = node.getJmmChild(0);
-        if(leftChild.getKind().equals("BinaryOp") && (leftChild.get("op").equals("<") || leftChild.get("op").equals("&&") || !visit(leftChild,true))) { //TODO
+        if(!verifyArrayIndex(node.getJmmChild(0))) {
             if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
-            return false;
-        }
-        else if(leftChild.getKind().equals("Identifier")) {
-            Type leftChildType = table.getVariableType(leftChild.get("value"),currentMethodName);
-            if(leftChildType == null || !leftChildType.getName().equals("int")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
-                return false;
-            }
-        }
-        else if(leftChild.getKind().equals("MethodCall") && !table.getImports().contains(leftChild.getJmmChild(0).get("value")) && !table.getReturnType(currentMethodName).getName().equals("int") && !visit(leftChild,true)) { //TODO
-            if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
-            return false;
-        }
-        else if(leftChild.getKind().equals("ArrayAccess") && !visit(leftChild,true)) { //TODO
-            return false;
-        }
-        else if(!leftChild.getKind().equals("ArrayAccess") && !leftChild.getKind().equals("MethodCall") && !leftChild.getKind().equals("BinaryOp") && !leftChild.getKind().equals("Integer")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
             return false;
         }
 
         JmmNode rightChild = node.getJmmChild(1);
-        if(rightChild.getKind().equals("BinaryOp") && (rightChild.get("op").equals("&&") || !visit(rightChild,true))) {
-            return false;
+        if(rightChild.getKind().equals("BinaryOp")) {
+            if(rightChild.get("op").equals("&&") || !visit(rightChild,true)) {
+                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array assignment is not an integer"));
+                return false;
+            }
         }
-        else if(!rightChild.getKind().equals("BinaryOp") && !rightChild.getKind().equals("Integer")) {
+        else if(!rightChild.getKind().equals("Integer")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array assignment is not an integer"));
             return false;
         }
@@ -438,39 +422,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        JmmNode index = node.getJmmChild(1);
-        if(index.getKind().equals("BinaryOp") && (index.get("op").equals("<") || index.get("op").equals("&&") || !visit(index,true))) { //TODO
+        if(!verifyArrayIndex(node.getJmmChild(1))) {
             if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
             return false;
         }
-        else if(index.getKind().equals("MethodCall") && !table.getReturnType(currentMethodName).getName().equals("int") && !visit(index,true)) { //TODO
-            if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
-            return false;
-        }
-        else if(index.getKind().equals("ArrayAccess") && !visit(index,true)) { //TODO
-            return false;
-        }
-        else if(index.getKind().equals("LengthOp") && !table.getVariableType(index.getJmmChild(0).get("value"), currentMethodName).isArray()) { //TODO
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
-            return false;
-        }
-        else if(!index.getKind().equals("BinaryOp") && !index.getKind().equals("ArrayAccess") && !index.getKind().equals("MethodCall") && !index.getKind().equals("LengthOp")) {
-            Type indexType = table.getVariableType(index.get("value"), currentMethodName);
 
-            if (!index.getKind().equals("Identifier")) {
-                indexType = new Type(index.getKind(), false);
-            }
-            else if (indexType == null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is null"));
-                return false;
-            }
-
-            if (indexType.isArray() || (!indexType.getName().equals("int") && !indexType.getName().equals("Integer"))) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
-                return false;
-            }
-
-        }
         return true;
     }
 
@@ -479,7 +435,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
         Type leftType = binaryOpChildType(node,node.getJmmChild(0));
         Type rightType = binaryOpChildType(node,node.getJmmChild(1));
-        
+
         if(leftType == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: BinaryOp: left type is null"));
             return false;
@@ -534,7 +490,25 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
             return childType;
         }
-
         return new Type(child.getKind(),false);
+    }
+
+    private Boolean verifyArrayIndex(JmmNode index) {
+        if(index.getKind().equals("BinaryOp")) {
+            return !index.get("op").equals("<") && !index.get("op").equals("&&") && visit(index, true);
+        }
+        else if(index.getKind().equals("ArrayAccess") || (index.getKind().equals("MethodCall") && !table.getReturnType(currentMethodName).getName().equals("int"))) {
+            return visit(index, true);
+        }
+        else if(index.getKind().equals("LengthOp")) {
+            return table.getVariableType(index.getJmmChild(0).get("value"), currentMethodName).isArray();
+        }
+        else if(!index.getKind().equals("MethodCall")) {
+            Type indexType = table.getVariableType(index.get("value"), currentMethodName);
+            if (!index.getKind().equals("Identifier")) indexType = new Type(index.getKind(), false);
+            else if (indexType == null) return false;
+            return !indexType.isArray() && indexType.getName().equals("Integer");
+        }
+        return true;
     }
 }
