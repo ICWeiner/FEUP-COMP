@@ -52,7 +52,7 @@ public class Launcher {
         //Semantic analysis (only symbol table for now)
         JmmAnalyser jmmAnalyser = new JmmAnalyser();
 
-        jmmAnalyser.semanticAnalysis(parserResult);
+        //jmmAnalyser.semanticAnalysis(parserResult);
 
         var semanticResults = jmmAnalyser.semanticAnalysis(parserResult);
 
