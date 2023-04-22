@@ -519,15 +519,18 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             }
         }
         Type returnType = table.getReturnType(methodString);
+        System.out.println("methodString is: " + methodString);
         JmmMethod method;
+
+        //ver se identifier é  ou classe do proprio ou objeto da classe propria
         try {
             method = table.getMethod(methodNode.get("value"), params.getKey(), returnType);
             methodClass = "class_method";
             System.out.println("methodClass is: " + methodClass);
 
             var identifierType = currentMethod.getField(targetNode.get("value")).getKey().getType().getName();
+            System.out.println("identifierType is: " + identifierType);
             for( var importName : table.getImports() ){
-
                 if (!targetNode.get("value").equals(importName) && !identifierType.equals(importName)){
                     System.out.println("importname is:" + importName);
                     System.out.println("targetNode is:" + targetNode.get("value"));
