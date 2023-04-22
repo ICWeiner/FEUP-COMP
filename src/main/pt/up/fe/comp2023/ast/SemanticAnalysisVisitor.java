@@ -270,27 +270,8 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return false;
         }
 
-        JmmNode leftChild = node.getJmmChild(0);
-        if(leftChild.getKind().equals("BinaryOp") && (leftChild.get("op").equals("<") || leftChild.get("op").equals("&&") || !visit(leftChild,true))) { //TODO
+        if(!verifyArrayIndex(node.getJmmChild(0))) {
             if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
-            return false;
-        }
-        else if(leftChild.getKind().equals("Identifier")) {
-            Type leftChildType = table.getVariableType(leftChild.get("value"),currentMethodName);
-            if(leftChildType == null || !leftChildType.getName().equals("int")) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
-                return false;
-            }
-        }
-        else if(leftChild.getKind().equals("MethodCall") && !table.getImports().contains(leftChild.getJmmChild(0).get("value")) && !table.getReturnType(currentMethodName).getName().equals("int") && !visit(leftChild,true)) { //TODO
-            if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
-            return false;
-        }
-        else if(leftChild.getKind().equals("ArrayAccess") && !visit(leftChild,true)) { //TODO
-            return false;
-        }
-        else if(!leftChild.getKind().equals("ArrayAccess") && !leftChild.getKind().equals("MethodCall") && !leftChild.getKind().equals("BinaryOp") && !leftChild.getKind().equals("Integer")) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
             return false;
         }
 
