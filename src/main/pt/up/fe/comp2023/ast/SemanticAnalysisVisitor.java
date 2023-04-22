@@ -509,7 +509,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(!visit(left,true)) {  //TODO
                 return false;
             }
-            if(!table.getImports().contains(left.getJmmChild(0).get("value"))) {
+            if(!right.getJmmChild(0).getKind().equals("This") && !table.getImports().contains(left.getJmmChild(0).get("value"))) {
                 leftType = new Type(table.getReturnType(left.get("value")).getName(), false);
             }
             else if(node.get("op").equals("&&")) {
@@ -558,7 +558,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(!visit(right,true)) {  //TODO
                 return false;
             }
-            if(!table.getImports().contains(right.getJmmChild(0).get("value"))) {
+            if(!right.getJmmChild(0).getKind().equals("This") && !table.getImports().contains(right.getJmmChild(0).get("value"))) {
                 rightType = new Type(table.getReturnType(right.get("value")).getName(), false);
             }
             else if(node.get("op").equals("&&")) {
