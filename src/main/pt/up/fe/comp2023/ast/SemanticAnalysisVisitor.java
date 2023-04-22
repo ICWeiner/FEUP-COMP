@@ -92,19 +92,21 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         List<String> imports = table.getImports();
         if(!child.getKind().equals("Identifier")) {
             //TODO é provavel que estas condições não estejam bem 💀
+            if(child.getKind().equals("MethodCall")) {
+                if(!visit(child,true)) return false;
+                if(!((table.getReturnType(child.get("value")) == null && !imports.isEmpty()) //TODO falta verificar mais coisas para alem dos imports?
+                    || (table.getReturnType(child.get("value")) != null && table.getReturnType(currentMethodName).getName().equals(table.getReturnType(child.get("value")).getName())))) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Method Call: Incompatible Return in " + currentMethodName + " method"));  //TODO as mensagens dos reports não estão muito bem
+                }
+            }
             if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration")
                     && (child.getJmmChild(0).getKind().equals("Integer")
                     || (table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName) != null && table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName).getName().equals("int"))))
 
-                    && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
+                    && !(!nodeType.isArray() && child.getKind().equals("Integer") && nodeType.getName().equals("int"))
                     && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO acho que isto não está bem
                     && !((child.getKind().equals("BinaryOp") && ((child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") && table.getReturnType(currentMethodName).getName().equals("boolean")) || (!child.get("op").equals("&&") && nodeType.getName().equals("int") && table.getReturnType(currentMethodName).getName().equals("int"))) && visit(child,true))) ////TODO AAAA
-
-                    && !(child.getKind().equals("MethodCall") && visit(child,true)
-                    && ((table.getReturnType(child.get("value")) == null && !imports.isEmpty()) //TODO falta verificar mais coisas para alem dos imports?
-                    || (table.getReturnType(child.get("value")) != null && table.getReturnType(currentMethodName).getName().equals(table.getReturnType(child.get("value")).getName()))))
-
                     && !(child.getKind().equals("ArrayAccess") && visit(child,true) && table.getReturnType(currentMethodName).getName().equals("int"))
                     && child.getKind().equals("This") && !table.getReturnType(currentMethodName).getName().equals(className) //TODO
                     && !(child.getKind().equals("LengthOp") && nodeType.isArray() && table.getReturnType(currentMethodName).getName().equals("int"))) {
@@ -114,8 +116,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
         else {
             Type childType = table.getVariableType(child.get("value"),currentMethodName);
-
-            if(childType == null) { //TODO isto pode não estar bem
+            if(childType == null) {
                 if (child.getKind().equals("Identifier")) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Return is null"));
                     return false;
@@ -260,8 +261,12 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         System.out.println("ArrayAssignment: " + node + " " + node.getChildren());
 
         Type nodeType = table.getVariableType(node.get("name"),currentMethodName);
-        if(nodeType == null && node.getKind().equals("Identifier")) {
+        if(nodeType == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array assignment is null"));
+            return false;
+        }
+        else if(!nodeType.isArray()) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array assignment is not an array"));
             return false;
         }
 
