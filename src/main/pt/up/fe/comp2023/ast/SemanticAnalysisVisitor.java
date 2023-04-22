@@ -477,109 +477,17 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     private Boolean dealWithBinaryOp(JmmNode node, Boolean data) {
         System.out.println("BinaryOp: " + node.getJmmChild(0) + " " + node.getJmmChild(1));
 
-        JmmNode left = node.getJmmChild(0);
-        JmmNode right = node.getJmmChild(1);
-        Type leftType = null;
-        Type rightType = null;
-
-        if(left.getKind().equals("ArrayAccess")) {
-            if(!visit(left,true)) { //TODO
-                return false;
-            }
-            leftType = new Type("int",false);
+        Type leftType = binaryOpChildType(node,node.getJmmChild(0));
+        Type rightType = binaryOpChildType(node,node.getJmmChild(1));
+        
+        if(leftType == null) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: BinaryOp: left type is null"));
+            return false;
         }
-        else if(left.getKind().equals("BinaryOp")) {
-            if(!visit(left,true)) {  //TODO
-                return false;
-            }
-            if(left.get("op").equals("&&")) {
-                leftType = new Type("boolean",false);
-            }
-            else {
-                leftType = new Type("int",false);
-            }
+        if(rightType == null) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: BinaryOp: right type is null"));
+            return false;
         }
-        else if(left.getKind().equals("MethodCall")) {
-            if(!visit(left,true)) {  //TODO
-                return false;
-            }
-            if(!left.getJmmChild(0).getKind().equals("This") && !table.getImports().contains(left.getJmmChild(0).get("value"))) {
-                leftType = new Type(table.getReturnType(left.get("value")).getName(), false);
-            }
-            else if(node.get("op").equals("&&")) {
-                leftType = new Type("boolean",false);
-            }
-            else {
-                leftType = new Type("int",false);
-            }
-        }
-        else if(left.getKind().equals("LengthOp")) {
-            leftType = new Type("int",false);
-        }
-        else if (left.getKind().equals("Identifier")){
-            leftType = table.getVariableType(left.get("value"),currentMethodName);
-            if (leftType == null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Left type is null"));
-                return false;
-            }
-            if (leftType.isArray()) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array cannot be used in arithmetic operations"));
-                return false;
-            }
-        }
-        else {
-            leftType = new Type(left.getKind(),false);
-        }
-
-        if(right.getKind().equals("ArrayAccess")) {
-            if(!visit(right,true)) { //TODO
-                return false;
-            }
-            rightType = new Type("int",false);
-        }
-        else if(right.getKind().equals("BinaryOp")) {
-            if(!visit(right,true)) {  //TODO
-                return false;
-            }
-            if(right.get("op").equals("&&")) {
-                rightType = new Type("boolean",false);
-            }
-            else {
-                rightType = new Type("int",false);
-            }
-        }
-        else if(right.getKind().equals("MethodCall")) {
-            if(!visit(right,true)) {  //TODO
-                return false;
-            }
-            if(!right.getJmmChild(0).getKind().equals("This") && !table.getImports().contains(right.getJmmChild(0).get("value"))) {
-                rightType = new Type(table.getReturnType(right.get("value")).getName(), false);
-            }
-            else if(node.get("op").equals("&&")) {
-                rightType = new Type("boolean",false);
-            }
-            else {
-                rightType = new Type("int",false);
-            }
-        }
-        else if(right.getKind().equals("LengthOp")) {
-            rightType = new Type("int",false);
-        }
-        else if (right.getKind().equals("Identifier")){
-            rightType = table.getVariableType(right.get("value"),currentMethodName);
-            if (rightType == null) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Right type is null"));
-                return false;
-            }
-            if (rightType.isArray()) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array cannot be used in arithmetic operations"));
-                return false;
-            }
-        }
-        else {
-            rightType = new Type(right.getKind(),false);
-        }
-
         if (!node.get("op").equals("&&")) {
             if ((!leftType.getName().equals("int") && !leftType.getName().equals("Integer")) || (!rightType.getName().equals("int") && !rightType.getName().equals("Integer"))) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible types in " + node.get("op") + " operation: " + leftType.getName() + " and " + rightType.getName()));
@@ -594,4 +502,39 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         return true;
     }
 
+    ////////////////////////////////////////////////////////////
+    ///////////////Semantic Analysis Utils/////////////////////
+    //////////////////////////////////////////////////////////
+
+    private Type binaryOpChildType(JmmNode node, JmmNode child) {
+
+        if(child.getKind().equals("ArrayAccess")) {
+            if(!visit(child,true)) return null;
+            return new Type("int",false);
+        }
+        else if(child.getKind().equals("BinaryOp")) {
+            if(!visit(child,true)) return null;
+            if(child.get("op").equals("&&")) return new Type("boolean",false);
+            return new Type("int",false);
+        }
+        else if(child.getKind().equals("MethodCall")) {
+            if(!visit(child,true)) return null;
+            if(!child.getJmmChild(0).getKind().equals("This") && !table.getImports().contains(child.getJmmChild(0).get("value"))) return new Type(table.getReturnType(child.get("value")).getName(), false);
+            if(node.get("op").equals("&&")) return new Type("boolean",false);
+            return new Type("int",false);
+        }
+        else if(child.getKind().equals("LengthOp")) {
+            return new Type("int",false);
+        }
+        else if (child.getKind().equals("Identifier")) {
+            Type childType = table.getVariableType(child.get("value"),currentMethodName);
+            if (childType != null && childType.isArray()) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array cannot be used in arithmetic operations"));
+                return null;
+            }
+            return childType;
+        }
+
+        return new Type(child.getKind(),false);
+    }
 }
