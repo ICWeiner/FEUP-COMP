@@ -159,7 +159,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: 'this' invoked in main method"));
                     return false;
                 }
-                leftChildType = new Type("this", false);
+                leftChildType = new Type(table.getClassName(), false);
             }
             else if (leftChild.getKind().equals("GeneralDeclaration")) {
                 if (!(table.getClassName().contains(leftChild.get("name")) || table.getImports().contains(leftChild.get("name")) || (table.getSuper() != null && table.getSuper().contains(leftChild.get("name"))))) {
@@ -180,7 +180,6 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
         List<String> methods = table.getMethods();
         String superClassName = table.getSuper();
-
         if(!(superClassName != null && imports.contains(superClassName))
                 && !imports.contains(leftChildType.getName())
                 && !methods.contains(node.get("value"))) {
@@ -210,6 +209,13 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                             return false;
                         }
                         childType = new Type(table.getReturnType(child.get("value")).getName(), false);
+                    }
+                    else if (leftChild.getKind().equals("This")) {
+                        if(currentMethodName.equals("main")) {
+                            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: 'this' invoked in main method"));
+                            return false;
+                        }
+                        childType = new Type(table.getClassName(), false);
                     }
                     else if(child.getKind().equals("ArrayAccess")) {
                         if(!visit(child,true)) return false; //TODO
