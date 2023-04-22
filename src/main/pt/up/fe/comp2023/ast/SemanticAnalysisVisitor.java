@@ -277,6 +277,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
 
         JmmNode rightChild = node.getJmmChild(1);
         if(rightChild.getKind().equals("BinaryOp") && (rightChild.get("op").equals("&&") || !visit(rightChild,true))) {
+            if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array assignment is not an integer"));
             return false;
         }
         else if(!rightChild.getKind().equals("BinaryOp") && !rightChild.getKind().equals("Integer")) {
@@ -372,14 +373,14 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             }
         }
         else if(child.getKind().equals("BinaryOp")) {
-            if(!visit(child,true)) return false; //TODO
+            if(!visit(child,true)) return false;
             if(!child.get("op").equals("<") && !child.get("op").equals("&&")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement is not boolean"));
                 return false;
             }
         }
         else if(child.getKind().equals("MethodCall")) {
-            if(!visit(child,true)) return false; //TODO
+            if(!visit(child,true)) return false;
             if(!child.getJmmChild(0).getKind().equals("This") && !table.getImports().contains(child.getJmmChild(0).get("value")) && !table.getReturnType(currentMethodName).getName().equals("boolean")) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement is not boolean"));
                 return false;
@@ -513,7 +514,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         else if (indexType == null) {
             return false;
         }
-        return !indexType.isArray() && indexType.getName().equals("Integer");
+        return !indexType.isArray() && (indexType.getName().equals("int") || indexType.getName().equals("Integer"));
 
     }
 }
