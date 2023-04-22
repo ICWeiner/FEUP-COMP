@@ -289,6 +289,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         String superClassName = table.getSuper();
         String className = table.getClassName();
         if(!child.getKind().equals("Identifier")) {
+            if(currentMethodName.equals("main") && table.getFields().contains(new Symbol(nodeType,node.get("name")))) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Field in static"));
+                return false;
+            }
             //TODO é provavel que estas condições não estejam bem 💀
             if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration")
                     && (child.getJmmChild(0).getKind().equals("Integer")
@@ -509,7 +513,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(!visit(left,true)) {  //TODO
                 return false;
             }
-            if(!right.getJmmChild(0).getKind().equals("This") && !table.getImports().contains(left.getJmmChild(0).get("value"))) {
+            if(!left.getJmmChild(0).getKind().equals("This") && !table.getImports().contains(left.getJmmChild(0).get("value"))) {
                 leftType = new Type(table.getReturnType(left.get("value")).getName(), false);
             }
             else if(node.get("op").equals("&&")) {
