@@ -125,7 +125,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         StringBuilder builder;
 
-        if (node.getKind() == "MainMethod")
+        if (node.getKind().equals("MainMethod"))
             builder = new StringBuilder(OllirTemplates.method(
                     "main",
                     currentMethod.parametersToOllir(),
