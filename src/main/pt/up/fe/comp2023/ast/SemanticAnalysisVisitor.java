@@ -54,7 +54,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithMethod(JmmNode node, Boolean data){
-        System.out.println("Method: " + node + node.getChildren());
+        System.out.println("Method: node: " + node + " children: " + node.getChildren());
 
         if (node.getKind().equals("MainMethod")) {
             currentMethodName = "main";
@@ -78,7 +78,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithReturn(JmmNode node, Boolean data){
-        System.out.println("Return: " + node.getChildren() + " " + node.getJmmParent());
+        System.out.println("Return: children: " + node.getChildren());
 
         Type nodeType = table.getReturnType(currentMethodName);
         if(nodeType == null) {
@@ -91,26 +91,27 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         String className = table.getClassName();
         List<String> imports = table.getImports();
         if(!child.getKind().equals("Identifier")) {
-            //TODO é provavel que estas condições não estejam bem 💀
+
             if(child.getKind().equals("MethodCall")) {
                 if(!visit(child,true)) return false;
-                if(!((table.getReturnType(child.get("value")) == null && !imports.isEmpty()) //TODO falta verificar mais coisas para alem dos imports?
+                if(!((table.getReturnType(child.get("value")) == null && !imports.isEmpty())
                     || (table.getReturnType(child.get("value")) != null && table.getReturnType(currentMethodName).getName().equals(table.getReturnType(child.get("value")).getName())))) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Method Call: Incompatible Return in " + currentMethodName + " method"));  //TODO as mensagens dos reports não estão muito bem
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Method Call: Incompatible Return in " + currentMethodName + " method"));
                 }
             }
+            //TODO é provavel que algumas condições não estejam bem 💀
             if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration")
                     && (child.getJmmChild(0).getKind().equals("Integer")
                     || (table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName) != null && table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName).getName().equals("int"))))
 
                     && !(!nodeType.isArray() && child.getKind().equals("Integer") && nodeType.getName().equals("int"))
                     && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
-                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO acho que isto não está bem
-                    && !((child.getKind().equals("BinaryOp") && ((child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") && table.getReturnType(currentMethodName).getName().equals("boolean")) || (!child.get("op").equals("&&") && nodeType.getName().equals("int") && table.getReturnType(currentMethodName).getName().equals("int"))) && visit(child,true))) ////TODO AAAA
+                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO tratar melhor das GeneralDeclarations
+                    && !((child.getKind().equals("BinaryOp") && ((child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") && table.getReturnType(currentMethodName).getName().equals("boolean")) || (!child.get("op").equals("&&") && nodeType.getName().equals("int") && table.getReturnType(currentMethodName).getName().equals("int"))) && visit(child,true)))
                     && !(child.getKind().equals("ArrayAccess") && visit(child,true) && table.getReturnType(currentMethodName).getName().equals("int"))
-                    && child.getKind().equals("This") && !table.getReturnType(currentMethodName).getName().equals(className) //TODO
+                    && child.getKind().equals("This") && !table.getReturnType(currentMethodName).getName().equals(className)
                     && !(child.getKind().equals("LengthOp") && nodeType.isArray() && table.getReturnType(currentMethodName).getName().equals("int"))) {
-                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible return in " + currentMethodName + " method: " + child.getKind() + " and " + nodeType.getName()));  //TODO as mensagens dos reports não estão muito bem
+                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible return in " + currentMethodName + " method: " + child.getKind() + " and " + nodeType.getName()));  //TODO as mensagens dos reports podiam estar melhor
                 return false;
             }
         }
@@ -128,7 +129,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 if (!((className.equals(childType.getName()) && superClassName != null && superClassName.equals(nodeType.getName()) && imports.contains(nodeType.getName()))
                         || (className.equals(nodeType.getName()) && imports.contains(childType.getName()))
                         || (imports.contains(nodeType.getName()) && imports.contains(childType.getName())))) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible return: " + nodeType.getName() + " to " + childType.getName()));
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible return: " + nodeType.getName() + " and " + childType.getName()));
                     return false;
                 }
             }
@@ -138,10 +139,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithMethodCall(JmmNode node, Boolean data){
-        System.out.println("MethodCall: " + node + " " + node.getChildren());
+        System.out.println("MethodCall: node: " + node + " children: " + node.getChildren());
 
         if(node.getChildren().size() > 1) {
-            if(!visit(node.getJmmChild(1),true)) {
+            if(!reports.isEmpty() || !visit(node.getJmmChild(1),true)) {
                 return false;
             }
         }
@@ -205,7 +206,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     }
                     else if(child.getKind().equals("MethodCall")) {
                         if(imports.contains(child.getJmmChild(0).get("value"))) return true;
-                        if(!visit(child,true)) { //TODO
+                        if(!visit(child,true)) {
                             if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
                             return false;
                         }
@@ -219,7 +220,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                         childType = new Type(table.getClassName(), false);
                     }
                     else if(child.getKind().equals("ArrayAccess")) {
-                        if(!visit(child,true)) return false; //TODO
+                        if(!visit(child,true)) return false;
                         childType = new Type("int",false);
                     }
                     else {
@@ -248,7 +249,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithIdentifier(JmmNode node, Boolean data) {
-        System.out.println("Identifier: " + node);
+        System.out.println("Identifier: node: " + node);
         Type nodeType = table.getVariableType(node.get("value"),currentMethodName);
         if(nodeType == null) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Variable not declared"));
@@ -258,7 +259,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithArrayAssignment(JmmNode node, Boolean data){
-        System.out.println("ArrayAssignment: " + node + " " + node.getChildren());
+        System.out.println("ArrayAssignment: node: " + node + " children: " + node.getChildren());
 
         Type nodeType = table.getVariableType(node.get("name"),currentMethodName);
         if(nodeType == null) {
@@ -289,7 +290,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithAssignment(JmmNode node, Boolean data){
-        System.out.println("Assignment: " + node + " " + node.getChildren());
+        System.out.println("Assignment: node: " + node + " children: " + node.getChildren());
 
         Type nodeType = table.getVariableType(node.get("name"),currentMethodName);
         if(nodeType == null) {
@@ -307,20 +308,20 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     return false;
                 }
             }
-            //TODO é provavel que estas condições não estejam bem 💀
+            //TODO é provavel que algumas condições não estejam bem 💀
             if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration")
                     && (child.getJmmChild(0).getKind().equals("Integer")
                     || (table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName) != null && table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName).getName().equals("int"))))
 
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
-                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO acho que isto não está bem
+                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO tratar melhor das GeneralDeclarations
                     && !((child.getKind().equals("BinaryOp") && (child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") || (!child.get("op").equals("&&") && nodeType.getName().equals("int"))) && visit(child,true)))
                     && !(child.getKind().equals("MethodCall") && visit(child,true))
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("ArrayAccess") && visit(child,true))
                     && !(child.getKind().equals("LengthOp") && nodeType.isArray())
                     && !(child.getKind().equals("This") && !currentMethodName.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
-                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethodName + " method")); //TODO as mensagens dos reports não estão muito bem
+                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethodName + " method")); //TODO as mensagens dos reports podiam estar melhor
                 return false;
             }
         }
@@ -355,7 +356,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithConditionalStmt(JmmNode node, Boolean data){
-        System.out.println("ConditionalStmt: " + node.getChildren());
+        System.out.println("ConditionalStmt: children: " + node.getChildren());
 
         JmmNode child = node.getJmmChild(0);
 
@@ -402,7 +403,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithArrayAccess(JmmNode node, Boolean data) {
-        System.out.println("ArrayAccess: " + node.getChildren());
+        System.out.println("ArrayAccess: children: " + node.getChildren());
 
         JmmNode array = node.getJmmChild(0);
 
@@ -431,17 +432,17 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
     }
 
     private Boolean dealWithBinaryOp(JmmNode node, Boolean data) {
-        System.out.println("BinaryOp: " + node.getJmmChild(0) + " " + node.getJmmChild(1));
+        System.out.println("BinaryOp: leftChild: " + node.getJmmChild(0) + " rightChild: " + node.getJmmChild(1));
 
         Type leftType = binaryOpChildType(node,node.getJmmChild(0));
         Type rightType = binaryOpChildType(node,node.getJmmChild(1));
 
         if(leftType == null) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: BinaryOp: left type is null"));
+            if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: BinaryOp: left type is null"));
             return false;
         }
         if(rightType == null) {
-            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: BinaryOp: right type is null"));
+            if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: BinaryOp: right type is null"));
             return false;
         }
         if (!node.get("op").equals("&&")) {
