@@ -536,6 +536,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 myList.add((Type) data.get(2));
                 //myList.add(element2);
 
+                params.getKey().add((Type) data.get(2));
+
                 //Map.Entry<List<Type>, String> myEntry = new AbstractMap.SimpleEntry<List<Type>, String>(myList, myString);
 
             }
@@ -708,21 +710,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                         ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), params.getValue(), expectedType,  params.getValue());
                     }
                 } else if (!methodClass.equals("length")) {
-                    System.out.println("targetnode is of kind:" + targetNode.getKind());
-                    System.out.println("TargetReturn is:" +targetReturn);
-                    Symbol targetVariable;
-                    if(targetNode.getKind().equals("GeneralDeclaration")){
-                        //if(!methodNode.getJmmParent().getKind().equals("MethodCall")){
-                        //targetVariable = (Symbol) methodCallVisitResult.get(1);
-                        System.out.println("methodCallVisitResult is:" + methodCallVisitResult);
-                        targetVariable = new Symbol(new Type("bool",false),"temporary2");//(Symbol) targetReturn.get(2);
-                    }else{
+                    Symbol targetVariable = (Symbol) targetReturn.get(1);
 
-                        targetVariable = (Symbol) targetReturn.get(1);
-                    }
-
-
-                    System.out.println("ESTOU AQUI");
                     ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), method.getName(), method.getReturnType(), params.getValue());
                     expectedType = method.getReturnType();
                 }
