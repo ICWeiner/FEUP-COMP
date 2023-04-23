@@ -491,6 +491,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
         visited.add(node);
 
+        int inner_temp_counter = temp_sequence;
+
         String methodClass;
 
         System.out.println("Visiting method call with name: " + node.get("value"));
@@ -500,15 +502,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         StringBuilder ollir = new StringBuilder();
         List<Object> methodCallVisitResult = new ArrayList<>() ;
-
-        for (JmmNode child: methodNode.getChildren()){
-            if (child.getKind().equals("MethodCall")){
-                System.out.println("visiting method within method");
-                methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
-                System.out.println("visiting method within method result is:" + methodCallVisitResult);
-                ollir.append((String) methodCallVisitResult.get(0));
-            }
-        }
 
         //return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1));
 
@@ -525,28 +518,36 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         List<JmmNode> children = node.getChildren();
         children.remove(0);//remove first node as it isnt a parameter TODO:modify grammar?
+        System.out.println("ollir antes de getParametersList " + ollir);
         Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
-
+        System.out.println("ollir depois de getParametersList " + ollir);
         System.out.println("params :" + params);
+        StringBuilder tempString = null;
+        for (JmmNode child: methodNode.getChildren()){
+            if (child.getKind().equals("MethodCall")){
+                System.out.println("visiting method within method");
+                methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
+                System.out.println("methodCallVisitResult is:" + methodCallVisitResult);
+                ollir.append((String) methodCallVisitResult.get(0));
+                if(methodCallVisitResult.get(3).equals("PARAM")){
+                    if(tempString == null){
+                        tempString = new StringBuilder(params.getValue());
+                    }
+                    if(tempString.length() >1){
+                        tempString.append(", ");
+                        tempString.append(methodCallVisitResult.get(2).toString() + OllirTemplates.type((Type) methodCallVisitResult.get(1) ));
+                    }
 
-        System.out.println(data);
-        if(methodCallVisitResult!= null){
-            if(methodCallVisitResult.size()>1){
-                if(methodCallVisitResult.get(3).equals("PARAM")
-                        && methodCallVisitResult.size()>2){
-                    System.out.println("methodCallVisitResult is: " + methodCallVisitResult);
-                    List <Type> newList = params.getKey();
-                    newList.add((Type) methodCallVisitResult.get(1));
-                    System.out.println("before params :" + params);
+                    params.getKey().add((Type) methodCallVisitResult.get(1));
+                    System.out.println("params antes "+params);
 
-                    params = new AbstractMap.SimpleEntry<List<Type>, String>(newList,  (methodCallVisitResult.get(2).toString()) +OllirTemplates.type((Type) methodCallVisitResult.get(1)) );
-                    System.out.println("after params :" + params);
-                    //Map.Entry<List<Type>, String> myEntry = new AbstractMap.SimpleEntry<List<Type>, String>(myList, myString);
-
+                    params = new AbstractMap.SimpleEntry<List<Type>, String>(params.getKey(), tempString.toString() );
+                    System.out.println("params depois  "+params);
                 }
             }
         }
 
+        System.out.println("params no fim  "+params);
 
 
         System.out.println("ollir depois de getParametersList :" + ollir.toString() );
@@ -761,8 +762,14 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         System.out.println("ollir no fim da visita : " + ollir );
 
+        System.out.println("criei estas temporarias nesta visita:" + ( temp_sequence -inner_temp_counter) );
+
         //if(methodNode.getJmmParent().getKind().equals("MethodCall"))
         if (methodNode.getJmmParent().getKind().equals("MethodCall") && data.get(0).equals("PARAM")){
+            for(int i = inner_temp_counter, j=1; i< temp_sequence; i++,j++){
+                System.out.println("vou criar esta temporary"+i);
+                System.out.println("criei estas num unico ciclo"+j);
+            }
             return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1),"PARAM");
         }
         return Arrays.asList(ollir.toString(), expectedType);
