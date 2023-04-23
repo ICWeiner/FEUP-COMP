@@ -1,0 +1,26 @@
+import A;
+class CallMethods {
+    int a;
+    boolean b;
+
+    public int foo() {
+        A c;
+        int[] d;
+        a = 1;
+        b = true;
+        c = new A();
+        d = new int[10];
+        this.bar1(a, b);
+        this.bar2(c, d);
+
+        return 1;
+    }
+
+    public int bar1(int x, boolean y) {
+        return 1;
+    }
+
+    public boolean bar2(A w, int[] z) {
+        return true;
+    }
+}

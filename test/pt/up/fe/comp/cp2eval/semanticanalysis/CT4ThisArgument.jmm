@@ -1,0 +1,18 @@
+class ThisArgument {
+
+   public int foo(ThisArgument t) {
+        return 1;
+   }
+
+   public int bar() {
+        ThisArgument a;
+        int x;
+        a = new ThisArgument();
+        x = a.foo(this);
+        return x;
+   }
+
+   public static void main(String[] args) {
+
+   }
+}

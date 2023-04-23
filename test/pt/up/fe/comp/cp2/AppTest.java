@@ -23,4 +23,17 @@ public class AppTest {
         ProjectTestUtils.runJasmin(jasminResult, "30");
     }
 
+    @Test
+    public void customTestVarLookupField() {
+        var code = SpecsIo.getResource("pt/up/fe/comp/cp2/apps/VarLookupField.jmm");
+        var jasminResult = TestUtils.backend(code, Collections.emptyMap());
+        ProjectTestUtils.runJasmin(jasminResult, "10");
+    }
+
+    @Test
+    public void customTestVarLookupLocal() {
+        var code = SpecsIo.getResource("pt/up/fe/comp/cp2/apps/VarLookupLocal.jmm");
+        var jasminResult = TestUtils.backend(code, Collections.emptyMap());
+        ProjectTestUtils.runJasmin(jasminResult, "10");
+    }
 }

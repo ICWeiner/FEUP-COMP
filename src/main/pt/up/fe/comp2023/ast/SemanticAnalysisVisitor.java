@@ -211,7 +211,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                         }
                         childType = new Type(table.getReturnType(child.get("value")).getName(), false);
                     }
-                    else if (leftChild.getKind().equals("This")) {
+                    else if (child.getKind().equals("This")) {
                         if(currentMethodName.equals("main")) {
                             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: 'this' invoked in main method"));
                             return false;
@@ -302,8 +302,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         String className = table.getClassName();
         if(!child.getKind().equals("Identifier")) {
             if(currentMethodName.equals("main") && table.getFields().contains(new Symbol(nodeType,node.get("name")))) {
-                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Field in static"));
-                return false;
+                if(table.getLocalVariables(currentMethodName) == null || !table.getLocalVariables(currentMethodName).contains(new Symbol(nodeType,node.get("name")))) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Field in static"));
+                    return false;
+                }
             }
             //TODO é provavel que estas condições não estejam bem 💀
             if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration")

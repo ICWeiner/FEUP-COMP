@@ -162,4 +162,39 @@ public class SemanticAnalysisTest {
                 .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/AssumeArguments.jmm"));
         TestUtils.noErrors(result);
     }
+
+    @Test
+    public void customT1FieldInMain() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/CT1FieldInMain.jmm"));
+        TestUtils.mustFail(result);
+    }
+
+    @Test
+    public void customT2ArrayAssignmentIndexInt() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/CT2ArrayAssignmentIndexInt.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void customT3CallToUndeclaredMethodInIf() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/CT3CallToUndeclaredMethodInIf.jmm"));
+        TestUtils.mustFail(result);
+    }
+
+    @Test
+    public void customT4ThisArgument() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/CT4ThisArgument.jmm"));
+        TestUtils.noErrors(result);
+    }
+
+    @Test
+    public void customT5CallMethods() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/CT5CallMethods.jmm"));
+        TestUtils.noErrors(result);
+    }
 }

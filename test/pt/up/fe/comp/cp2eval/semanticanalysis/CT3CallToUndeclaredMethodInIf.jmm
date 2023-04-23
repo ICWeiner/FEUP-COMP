@@ -1,0 +1,15 @@
+class CallToUndeclaredMethod {
+
+   public int bar(int x) {
+        if(true){
+           this.hello(1);
+        }
+        else {
+             this.hello(2);
+        }
+          return x;
+   }
+
+   public static void main(String[] args) {
+   }
+}

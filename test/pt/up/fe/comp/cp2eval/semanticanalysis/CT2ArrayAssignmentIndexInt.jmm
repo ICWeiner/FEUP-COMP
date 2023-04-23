@@ -1,0 +1,12 @@
+class ArrayAssignmentIndexInt {
+
+    public static void main(String[] args) {
+        int a;
+        int[] b;
+        b = new int[5];
+        a = 1;
+        b[a] = 0;
+        b[2] = 0;
+    }
+
+}
