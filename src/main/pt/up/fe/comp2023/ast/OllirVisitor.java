@@ -499,19 +499,20 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         JmmNode methodNode = node;
 
         StringBuilder ollir = new StringBuilder();
+        List<Object> methodCallVisitResult = null;
 
         for (JmmNode child: methodNode.getChildren()){
             if (child.getKind().equals("MethodCall")){
-                List<Object> methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
+                methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
                 ollir.append((String) methodCallVisitResult.get(0));
             }
         }
 
         //return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1));
 
-        System.out.println("ollir antes da visita :" + ollir.toString() );
+        System.out.println("ollir antes da visita :" + ollir );
         List<Object> targetReturn = visit(targetNode, Arrays.asList("ACCESS", ollir));
-        System.out.println("ollir depois da visita :" + ollir.toString() );
+        System.out.println("ollir depois da visita :" + ollir );
 
         //List<Object> methodReturn = visit(methodNode, Arrays.asList("ACCESS", ollir));
 
@@ -546,7 +547,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         System.out.println("ollir depois de getParametersList :" + ollir.toString() );
 
-        String methodString = node.get("value");
+        String methodString = methodNode.get("value");
         if (params.getKey().size() > 0) {
             for (Type param : params.getKey()) {
                 methodString += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
@@ -558,25 +559,43 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         //ver se identifier é  ou classe do proprio ou objeto da classe propria
         try {
-            method = table.getMethod(methodNode.get("value"), params.getKey(), returnType);
+            method = table.getMethod(methodNode.get("value"));
             methodClass = "class_method";
+            System.out.println("method is: " + methodNode.get("value"));
+            System.out.println("targetNode is: " + targetNode);
             System.out.println("methodClass is: " + methodClass);
 
-            var identifierType = currentMethod.getField(targetNode.get("value")).getKey().getType().getName();
+            String targetName;
+
+            if (targetNode.getKind().equals("GeneralDeclaration")){
+                targetName = targetNode.get("name");
+            }else{
+                targetName = targetNode.get("value");
+            }
+
+            String identifierType = "";//this might not be safe
+            if (currentMethod.fieldExists(targetName)){
+                identifierType = currentMethod.getField(targetName).getKey().getType().getName();
+            }
+
+
             System.out.println("identifierType is: " + identifierType);
+
             for( var importName : table.getImports() ){
-                if (!targetNode.get("value").equals(importName) && !identifierType.equals(importName)){
-                    System.out.println("importname is:" + importName);
-                    System.out.println("targetNode is:" + targetNode.get("value"));
-                    System.out.println("identifierType is:" + identifierType);
-                    continue;
-                }
+                System.out.println("dentro do for");
+                System.out.println("importname is:" + importName);
+                System.out.println("targetNode is:" + targetName);
+                System.out.println("identifierType is:" + identifierType);
+                System.out.println("table.getClassName(): " + table.getClassName() );
+                if (!targetName.equals(importName) && !identifierType.equals(importName)) continue;
+                if(targetName.equals(table.getClassName())) break;
+
                 methodClass = "method";
             }
 
 
-
-            System.out.println("methodClass is: " + methodClass);
+            System.out.println("method is: " + methodNode.get("value"));
+            System.out.println("methodClass after for is: " + methodClass);
 
 
 
@@ -676,18 +695,32 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     expectedType = method.getReturnType();
                 }
             } else {
+                System.out.println("method class é " + methodClass);
+                System.out.println("method  é " + methodNode.get("value"));
                 if (methodClass.equals("method")) {
 
                     if (assignment != null) {
                         ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)),  methodNode.get("value"), assignment.getType(), params.getValue());
                         expectedType = assignment.getType();
-                    } else {//TODO ENTROU AQUI
-
+                    } else {
+                        System.out.println("assignemnt is:" + assignment);
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
                         ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), params.getValue(), expectedType,  params.getValue());
                     }
-                } else if (!methodClass.equals("length")) {//TODO MAS DEVIA TER ENTRADO AQUI
-                    Symbol targetVariable = (Symbol) targetReturn.get(1);
+                } else if (!methodClass.equals("length")) {
+                    System.out.println("targetnode is of kind:" + targetNode.getKind());
+                    System.out.println("TargetReturn is:" +targetReturn);
+                    Symbol targetVariable;
+                    if(targetNode.getKind().equals("GeneralDeclaration")){
+                        //if(!methodNode.getJmmParent().getKind().equals("MethodCall")){
+                        //targetVariable = (Symbol) methodCallVisitResult.get(1);
+                        System.out.println("methodCallVisitResult is:" + methodCallVisitResult);
+                        targetVariable = new Symbol(new Type("bool",false),"temporary2");//(Symbol) targetReturn.get(2);
+                    }else{
+
+                        targetVariable = (Symbol) targetReturn.get(1);
+                    }
+
 
                     System.out.println("ESTOU AQUI");
                     ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), method.getName(), method.getReturnType(), params.getValue());
@@ -709,7 +742,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 ollir.append(String.format("%s ==.bool 1.bool", OllirTemplates.variable(auxiliary)));
             }else if (data.get(0).equals("BINARY") || data.get(0).equals("FIELD") || data.get(0).equals("PARAM") || data.get(0).equals("RETURN")) {
                 System.out.println("PARAM como pai");
-                if (methodNode.getJmmParent().getKind().equals("MethodCall")){//TODO METER CODIGO DE TEMPORARY ANTES DAS OUTRAS EXPRESSOES
+                if (methodNode.getJmmParent().getKind().equals("MethodCall")){
                     //ollir.append(ollirExpression);
                     System.out.println("methodcall como pai");
                 } else ollir.append(String.format("%s", OllirTemplates.variable(auxiliary)));
