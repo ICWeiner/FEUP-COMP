@@ -629,10 +629,18 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                         ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), new Type(assignment.getType().getName(), false), (String) params.getValue());
                         expectedType = new Type(assignment.getType().getName(), false);*/
                     } else {
+
                         ollirExpression = OllirTemplates.invokestatic(targetVariable,  methodNode.get("value"), assignment.getType(),  params.getValue());
                         expectedType = assignment.getType();
                     }
                 } else {
+                    if(expectedType == null){
+                        JmmNode parentNode =methodNode.getJmmParent();
+                        if(parentNode.getKind().equals("MethodCall")){
+                            System.out.println("metodo e: " +table.getMethod(parentNode.get("value")).getName());
+                            expectedType = table.getMethod(parentNode.get("value")).getParameters().get(methodNode.getIndexOfSelf() - 1).getType();
+                        }else expectedType = new Type("void", false);
+                    }
                     expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
                     ollirExpression = OllirTemplates.invokestatic(targetVariable,  node.get("value"), expectedType,  params.getValue());
                 }

@@ -78,14 +78,13 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
         return methods;
     }
 
-    public JmmMethod getMethod(String name) throws NoSuchMethod {
+    public JmmMethod getMethod(String name) {
         for (JmmMethod method : methods) {
             if (method.getName().equals(name)) {
                 return method;
             }
         }
-
-        throw new NoSuchMethod(name);
+        return null;
     }
 
     public JmmMethod getMethod(String name, List<Type> params, Type returnType) throws NoSuchMethod {//To support overloading
