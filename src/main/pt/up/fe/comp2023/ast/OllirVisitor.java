@@ -61,7 +61,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             if (child.getKind().equals("ImportDeclaration") ) continue;
             String ollirChild = (String) visit(child, Collections.singletonList("PROGRAM")).get(0);
             ollir.append(ollirChild);
-            System.out.println(ollirChild); //TODO:this prints the code, find another way to do it?
         }
         return Collections.singletonList(ollir.toString());
     }
@@ -255,9 +254,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         } else {
             visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
 
-            System.out.println("visitResult is: " + visitResult);
-            System.out.println("Node is of kind: " + node.getKind());
-            System.out.println("Targer node is of kind: " + node.getChildren().get(0).getKind());
 
             String result = (String) visitResult.get(0);
             String[] parts = result.split("\n");
@@ -421,7 +417,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                             OllirTemplates.type(variable.getType()),
                             OllirTemplates.getfield(field.getKey())));
                     ollir.append(String.format("%s ==.bool 1.bool", OllirTemplates.variable(variable)));
-                    System.out.println("RETURN ON 1");
                     return Arrays.asList(ollir.toString(), variable, name);
                 } else {
                     Objects.requireNonNullElse(superiorOllir, ollir).append(String.format("%s :=%s %s;\n",
@@ -430,19 +425,16 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                             OllirTemplates.getfield(field.getKey())));
 
                     ollir.append(OllirTemplates.variable(variable));
-                    System.out.println("RETURN ON 2");
                     return Arrays.asList(ollir.toString(), variable, name);
                 }
             } else {
                 if (data.get(0).equals("CONDITION")) {
-                    System.out.println("RETURN ON 3");
                     return Arrays.asList(String.format("%s ==.bool 1.bool", OllirTemplates.variable(field.getKey(), name)), field.getKey(), name);
                 }
-                System.out.println("RETURN ON 4");
+
                 return Arrays.asList(OllirTemplates.variable(field.getKey(), name), field.getKey(), name);
             }
         }
-        System.out.println("RETURN ON 5");
         return Arrays.asList("ACCESS", node.get("value"));
     }
 
@@ -491,11 +483,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 12");
         //visited.add(node);
 
-        int inner_temp_counter = temp_sequence;
 
         String methodClass;
 
-        System.out.println("Visiting method call with name: " + node.get("value"));
 
         JmmNode targetNode = node.getChildren().get(0);
         JmmNode methodNode = node;
@@ -505,10 +495,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         //return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1));
 
-        System.out.println("ollir antes da visita :" + ollir );
 
         List<Object> targetReturn = visit(targetNode, Arrays.asList("ACCESS", ollir));
-        System.out.println("ollir depois da visita :" + ollir );
+
 
         //List<Object> methodReturn = visit(methodNode, Arrays.asList("ACCESS", ollir));
 
@@ -519,17 +508,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         List<JmmNode> children = node.getChildren();
         children.remove(0);//remove first node as it isnt a parameter TODO:modify grammar?
-        System.out.println("ollir antes de getParametersList " + ollir);
+
         Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
-        System.out.println("ollir depois de getParametersList " + ollir);
-        System.out.println("params :" + params);
 
-
-
-        System.out.println("params no fim  "+params);
-
-
-        System.out.println("ollir depois de getParametersList :" + ollir.toString() );
 
         String methodString = methodNode.get("value");
         if (params.getKey().size() > 0) {
@@ -538,16 +519,12 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             }
         }
         Type returnType = table.getReturnType(methodString);
-        System.out.println("methodString is: " + methodString);
         JmmMethod method;
 
         //ver se identifier é  ou classe do proprio ou objeto da classe propria
         try {
             method = table.getMethod(methodNode.get("value"));
             methodClass = "class_method";
-            System.out.println("method is: " + methodNode.get("value"));
-            System.out.println("targetNode is: " + targetNode);
-            System.out.println("methodClass is: " + methodClass);
 
             String targetName;
 
@@ -562,26 +539,12 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 identifierType = currentMethod.getField(targetName).getKey().getType().getName();
             }
 
-
-            System.out.println("identifierType is: " + identifierType);
-
             for( var importName : table.getImports() ){
-                System.out.println("dentro do for");
-                System.out.println("importname is:" + importName);
-                System.out.println("targetNode is:" + targetName);
-                System.out.println("identifierType is:" + identifierType);
-                System.out.println("table.getClassName(): " + table.getClassName() );
                 if (!targetName.equals(importName) && !identifierType.equals(importName)) continue;
                 if(targetName.equals(table.getClassName())) break;
 
                 methodClass = "method";
             }
-
-
-            System.out.println("method is: " + methodNode.get("value"));
-            System.out.println("methodClass after for is: " + methodClass);
-
-
 
         } catch (Exception e) {
             method = null;
@@ -592,18 +555,15 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         Symbol assignment = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
 
-        System.out.println("assignment is: " + assignment );
 
         String ollirExpression = null;
         Type expectedType = (data.get(0).equals("BINARY") || (data.size() > 2 && data.get(2).equals("ARRAY_ACCESS"))) ? new Type("int", false) : null;
 
-        System.out.println("targetReturn is: " + targetReturn);
 
         if (targetReturn.get(0).equals("ACCESS")) {
             // Static Imported Methods
             if (!targetReturn.get(1).equals("this")) {
-                System.out.println("in :" + data.get(0));
-                System.out.println("params sao "+params.getValue());
+
                 String targetVariable = (String) targetReturn.get(1);
                 if (assignment != null) {
                     if (data.get(2).equals("ARRAY_ACCESS")) { /*TODO: Fix since changes
@@ -618,7 +578,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     if(expectedType == null){
                         JmmNode parentNode =methodNode.getJmmParent();
                         if(parentNode.getKind().equals("MethodCall") && table.methodExists(parentNode.get("value"))){
-                            System.out.println("metodo e: " +table.getMethod(parentNode.get("value")).getName());
+
                             expectedType = table.getMethod(parentNode.get("value")).getParameters().get(methodNode.getIndexOfSelf() - 1).getType();
                         }else expectedType = new Type("void", false);
                     }
@@ -688,15 +648,13 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     expectedType = method.getReturnType();
                 }
             } else {
-                System.out.println("method class é " + methodClass);
-                System.out.println("method  é " + methodNode.get("value"));
+
                 if (methodClass.equals("method")) {
 
                     if (assignment != null) {
                         ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)),  methodNode.get("value"), assignment.getType(), params.getValue());
                         expectedType = assignment.getType();
                     } else {
-                        System.out.println("assignemnt is:" + assignment);
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
                         ollirExpression = OllirTemplates.invokespecial(OllirTemplates.variable((Symbol) targetReturn.get(1)), params.getValue(), expectedType,  params.getValue());
                     }
@@ -709,47 +667,30 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             }
         }
 
-        System.out.println("entrei no sitio certo :>>>");
-        System.out.println(data);
         //TODO: REVER CONDICOES EM BAIXO
         if ((data.get(0).equals("CONDITION") || data.get(0).equals("BINARY") || data.get(0).equals("FIELD") || data.get(0).equals("PARAM") || data.get(0).equals("RETURN")) && expectedType != null && ollirExpression != null) {
-            System.out.println("ollir no if : " + ollir );
-            System.out.println("ollirExpression no if : " + ollirExpression );
             Symbol auxiliary = new Symbol(expectedType, "temporary" + temp_sequence++);
             ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(auxiliary), OllirTemplates.type(expectedType), ollirExpression));
-            System.out.println("ollir no if depois de append : " + ollir );
+
             if (data.get(0).equals("CONDITION")) {
                 ollir.append(String.format("%s ==.bool 1.bool", OllirTemplates.variable(auxiliary)));
             }else if (data.get(0).equals("BINARY") || data.get(0).equals("FIELD") || data.get(0).equals("PARAM") || data.get(0).equals("RETURN")) {
-                System.out.println("PARAM como pai");
+
                 if (methodNode.getJmmParent().getKind().equals("MethodCall")){
                     //ollir.append(ollirExpression);
-                    System.out.println("methodcall como pai");
+
                 } else ollir.append(String.format("%s", OllirTemplates.variable(auxiliary)));
             }
         }else {
-
-            System.out.println("ollir no else : " + ollir );
-            System.out.println("ollirExpression no else : " + ollirExpression );
             ollir.append(ollirExpression);
-
         }
-        System.out.println("ollir no else depois de append : " + ollir );
+
 
         if (data.get(0).equals("EXPR_STMT")||data.get(0).equals("METHOD") || data.get(0).equals("IF") || data.get(0).equals("ELSE") || data.get(0).equals("WHILE")) {
             ollir.append(";");
         }
 
-        System.out.println("ollir no fim da visita : " + ollir );
-
-        System.out.println("criei estas temporarias nesta visita:" + ( temp_sequence -inner_temp_counter) );
-
-        //if(methodNode.getJmmParent().getKind().equals("MethodCall"))
         if (methodNode.getJmmParent().getKind().equals("MethodCall") && data.get(0).equals("PARAM")){
-            for(int i = inner_temp_counter, j=1; i< temp_sequence; i++,j++){
-                System.out.println("vou criar esta temporary"+i);
-                System.out.println("criei estas num unico ciclo"+j);
-            }
             return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1),"PARAM");
         }
         return Arrays.asList(ollir.toString(), expectedType);
@@ -816,32 +757,15 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     paramsOllir.add(result);
                     break;
                 case "MethodCall":
-                    System.out.println("AQUIIII :" + child.getKind());
                     List<Object> methodCallVisitResult = visit(child, Arrays.asList(ollir.toString(),"PARAM"));
-                    System.out.println("visiting method within method");
+
                     methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
-                    System.out.println("methodCallVisitResult is:" + methodCallVisitResult);
+
                     ollir.append((String) methodCallVisitResult.get(0));
-                    /*if(methodCallVisitResult.get(3).equals("PARAM")){
-                        if(tempString == null){
-                            tempString = new StringBuilder(params.getValue());
-                        }
-                        if(tempString.length() >1){
-                            tempString.append(", ");
-                            tempString.append(methodCallVisitResult.get(2).toString() + OllirTemplates.type((Type) methodCallVisitResult.get(1) ));
-                        }
-
-                        params.getKey().add((Type) methodCallVisitResult.get(1));
-                        System.out.println("params antes "+params);
-
-                        params = new AbstractMap.SimpleEntry<List<Type>, String>(params.getKey(), tempString.toString() );
-                        System.out.println("params depois  "+params);
-                    }*/
-                    paramsOllir.add((String) methodCallVisitResult.get(2) + OllirTemplates.type((Type) methodCallVisitResult.get(1) ));
+                    paramsOllir.add( methodCallVisitResult.get(2) + OllirTemplates.type((Type) methodCallVisitResult.get(1) ));//adicionar variavel temp com o respetivo tipo a lista de param
                     params.add((Type) methodCallVisitResult.get(1));
-                    //currentCallMethodName=functionName;
-                    //paramsOllir.add((String) visit(child, Collections.singletonList("PARAM")).get(0));
-                    //break;
+
+                    break;
                 default:
                     break;
             }
