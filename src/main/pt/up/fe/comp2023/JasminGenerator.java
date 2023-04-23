@@ -21,7 +21,7 @@ public class JasminGenerator {
         StringBuilder BuilderOfStrings = new StringBuilder("");
 
         // class declaration
-        BuilderOfStrings.append(".class ").append(classUnit.getClassName()).append("\n");
+        BuilderOfStrings.append(".class public ").append(classUnit.getClassName()).append("\n");
 
         // extends declaration
         if (classUnit.getSuperClass() != null) {
@@ -89,12 +89,21 @@ public class JasminGenerator {
     private String dealtWithMethodIntructions(Method method) {
         StringBuilder BuilderOfStrings = new StringBuilder();
         method.getVarTable();
+        boolean doesntHaveReturnInst =true;
         for (Instruction instruction : method.getInstructions()) {
+            System.out.println("HELLO2 " + instruction.getInstType().toString());
+            if (instruction.getInstType().toString().equals("RETURN")){
+                doesntHaveReturnInst =false;
+            }
+
             BuilderOfStrings.append(dealWithInstruction(instruction, method.getVarTable(), method.getLabels()));
             if (instruction instanceof CallInstruction && ((CallInstruction) instruction).getReturnType().getTypeOfElement() != ElementType.VOID) {
                 BuilderOfStrings.append("pop\n");
                 this.decrementStackCounter(1);
             }
+        }
+        if(doesntHaveReturnInst){
+            BuilderOfStrings.append("return\n");
         }
         BuilderOfStrings.append("\n.end method\n");
         return BuilderOfStrings.toString();
@@ -132,6 +141,10 @@ public class JasminGenerator {
     private String dealWithReturnInstruction(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
         if(!instruction.hasReturnValue()) return "return";
         String returnString = "";
+        System.out.println("OLA"); // method.getReturnType());
+        //if (method.getReturnType().equals("VOID")){
+            //BuilderOfStrings.append("return \n");
+        //}
         switch (instruction.getOperand().getType().getTypeOfElement()) {
             case VOID:
                 returnString = "return";
@@ -197,7 +210,7 @@ public class JasminGenerator {
             }
             case NEW -> BuilderofStrings += this.dealWithNewObject(instruction, varTable);
             default -> {
-                return "Erro in CallInstruction";
+                return "Error in CallInstruction";
             }
         }
         return BuilderofStrings;
@@ -237,7 +250,7 @@ public class JasminGenerator {
         if (instruction.getReturnType().getTypeOfElement() != ElementType.VOID) {
             this.incrementStackCounter(1);
         }
-        BuilderOfStrings += callType.name() + " " + this.getOjectClassName(name) + "." + functionLiteral.replace("\"","") + "(" + parameters + ")" + this.convertType(instruction.getReturnType()) + "\n";
+        BuilderOfStrings += callType.name() + " " + this.getOjectClassName(name) + "/" + functionLiteral.replace("\"","") + "(" + parameters + ")" + this.convertType(instruction.getReturnType()) + "\n";
         if (functionLiteral.equals("\"<init>\"") && !name.equals("this")) {
             BuilderOfStrings += this.storeElement((Operand) instruction.getFirstArg(), varTable);
         }
