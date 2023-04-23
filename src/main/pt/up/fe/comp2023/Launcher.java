@@ -49,10 +49,10 @@ public class Launcher {
         // Check if there are parsing errors
         TestUtils.noErrors(parserResult.getReports());
 
-        //Semantic analysis (only symbol table for now)
+        //Semantic analysis
         JmmAnalyser jmmAnalyser = new JmmAnalyser();
 
-        //jmmAnalyser.semanticAnalysis(parserResult);
+        jmmAnalyser.semanticAnalysis(parserResult);
 
         var semanticResults = jmmAnalyser.semanticAnalysis(parserResult);
 
