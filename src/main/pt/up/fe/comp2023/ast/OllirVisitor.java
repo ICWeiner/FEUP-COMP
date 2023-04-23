@@ -106,7 +106,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
     private List<Object> dealWithMethodDeclaration(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 2");
-        visited.add(node);
+        //visited.add(node);
 
         scope = "METHOD";
 
@@ -157,7 +157,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
     private List<Object> dealWithVarDeclaration(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 3");
-        visited.add(node);
+        //visited.add(node);
 
         if ("CLASS".equals(data.get(0))) {
             Map.Entry<Symbol, Boolean> variable = table.getField(node.getJmmChild(0).get("name"));
@@ -173,7 +173,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
     private List<Object> dealWithAssignment(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 5");
-        visited.add(node);
+        //visited.add(node);
 
         Map.Entry<Symbol, Boolean> variable;
         boolean classField = false;
@@ -304,7 +304,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
     private List<Object> dealWithObjectInit(JmmNode node, List<Object> data){
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 6");
-        visited.add(node);
+        //visited.add(node);
 
         String toReturn = OllirTemplates.objectinit(node.get("name"));
         if (data.get(0).equals("METHOD")) {
@@ -316,7 +316,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
     private List<Object> dealWithType(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 6");
-        visited.add(node);
+        //visited.add(node);
 
         String value;
         String type;
@@ -346,7 +346,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
     private List<Object> dealWithBinaryOperation(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 7");
-        visited.add(node);
+        //visited.add(node);
 
         JmmNode left = node.getChildren().get(0);
         JmmNode right = node.getChildren().get(1);
@@ -448,7 +448,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
     private List<Object> dealWithReturn(JmmNode node, List<Object> data) {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 10");
-        visited.add(node);
+        //visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
 
@@ -477,7 +477,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
     private  List<Object> dealWithExpression(JmmNode node, List<Object> data){
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 11");
-        visited.add(node);
+        //visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
         for (JmmNode child : node.getChildren()){
@@ -617,7 +617,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 } else {
                     if(expectedType == null){
                         JmmNode parentNode =methodNode.getJmmParent();
-                        if(parentNode.getKind().equals("MethodCall")){
+                        if(parentNode.getKind().equals("MethodCall") && table.methodExists(parentNode.get("value"))){
                             System.out.println("metodo e: " +table.getMethod(parentNode.get("value")).getName());
                             expectedType = table.getMethod(parentNode.get("value")).getParameters().get(methodNode.getIndexOfSelf() - 1).getType();
                         }else expectedType = new Type("void", false);
