@@ -499,11 +499,13 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         JmmNode methodNode = node;
 
         StringBuilder ollir = new StringBuilder();
-        List<Object> methodCallVisitResult = null;
+        List<Object> methodCallVisitResult = new ArrayList<>() ;
 
         for (JmmNode child: methodNode.getChildren()){
             if (child.getKind().equals("MethodCall")){
+                System.out.println("visiting method within method");
                 methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
+                System.out.println("visiting method within method result is:" + methodCallVisitResult);
                 ollir.append((String) methodCallVisitResult.get(0));
             }
         }
@@ -528,23 +530,23 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         System.out.println("params :" + params);
 
         System.out.println(data);
-        if(data.size()>1){
-            if(data.get(1).equals("PARAM")
-                    && data.size()>2){
+        if(methodCallVisitResult!= null){
+            if(methodCallVisitResult.size()>1){
+                if(methodCallVisitResult.get(3).equals("PARAM")
+                        && methodCallVisitResult.size()>2){
+                    System.out.println("methodCallVisitResult is: " + methodCallVisitResult);
+                    List <Type> newList = params.getKey();
+                    newList.add((Type) methodCallVisitResult.get(1));
+                    System.out.println("before params :" + params);
 
-                List<Type> myList = new ArrayList<Type>();
-                myList.add((Type) data.get(2));
-                //myList.add(element2);
+                    params = new AbstractMap.SimpleEntry<List<Type>, String>(newList,  (methodCallVisitResult.get(2).toString()) +OllirTemplates.type((Type) methodCallVisitResult.get(1)) );
+                    System.out.println("after params :" + params);
+                    //Map.Entry<List<Type>, String> myEntry = new AbstractMap.SimpleEntry<List<Type>, String>(myList, myString);
 
-                params.getKey().add((Type) data.get(2));
-
-                //Map.Entry<List<Type>, String> myEntry = new AbstractMap.SimpleEntry<List<Type>, String>(myList, myString);
-
+                }
             }
         }
-        else{
-            //params = getParametersList(children, ollir);
-        }
+
 
 
         System.out.println("ollir depois de getParametersList :" + ollir.toString() );
@@ -753,7 +755,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         //if(methodNode.getJmmParent().getKind().equals("MethodCall"))
         if (methodNode.getJmmParent().getKind().equals("MethodCall") && data.get(0).equals("PARAM")){
-            return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1));
+            return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1),"PARAM");
         }
         return Arrays.asList(ollir.toString(), expectedType);
     }
