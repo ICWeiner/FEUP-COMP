@@ -381,8 +381,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
 
     private List<Object> dealWithVariable(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
-        visited.add(node);
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 9");
+        //visited.add(node);
 
         if(node.getKind().equals("This")){
             return Arrays.asList("ACCESS", "this");
@@ -447,7 +447,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
     }
 
     private List<Object> dealWithReturn(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 10");
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
@@ -476,7 +476,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
     }
 
     private  List<Object> dealWithExpression(JmmNode node, List<Object> data){
-        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 11");
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
@@ -488,8 +488,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
     }
 
     private List<Object> dealWithMethodCall(JmmNode node, List<Object> data) {//TODO: fix when first child is general declaration :)))))
-        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
-        visited.add(node);
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 12");
+        //visited.add(node);
 
         int inner_temp_counter = temp_sequence;
 
@@ -501,11 +501,12 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         JmmNode methodNode = node;
 
         StringBuilder ollir = new StringBuilder();
-        List<Object> methodCallVisitResult = new ArrayList<>() ;
+        //List<Object> methodCallVisitResult = new ArrayList<>() ;
 
         //return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1));
 
         System.out.println("ollir antes da visita :" + ollir );
+
         List<Object> targetReturn = visit(targetNode, Arrays.asList("ACCESS", ollir));
         System.out.println("ollir depois da visita :" + ollir );
 
@@ -522,30 +523,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
         System.out.println("ollir depois de getParametersList " + ollir);
         System.out.println("params :" + params);
-        StringBuilder tempString = null;
-        for (JmmNode child: methodNode.getChildren()){
-            if (child.getKind().equals("MethodCall")){
-                System.out.println("visiting method within method");
-                methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
-                System.out.println("methodCallVisitResult is:" + methodCallVisitResult);
-                ollir.append((String) methodCallVisitResult.get(0));
-                if(methodCallVisitResult.get(3).equals("PARAM")){
-                    if(tempString == null){
-                        tempString = new StringBuilder(params.getValue());
-                    }
-                    if(tempString.length() >1){
-                        tempString.append(", ");
-                        tempString.append(methodCallVisitResult.get(2).toString() + OllirTemplates.type((Type) methodCallVisitResult.get(1) ));
-                    }
 
-                    params.getKey().add((Type) methodCallVisitResult.get(1));
-                    System.out.println("params antes "+params);
 
-                    params = new AbstractMap.SimpleEntry<List<Type>, String>(params.getKey(), tempString.toString() );
-                    System.out.println("params depois  "+params);
-                }
-            }
-        }
 
         System.out.println("params no fim  "+params);
 
@@ -618,6 +597,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         String ollirExpression = null;
         Type expectedType = (data.get(0).equals("BINARY") || (data.size() > 2 && data.get(2).equals("ARRAY_ACCESS"))) ? new Type("int", false) : null;
 
+        System.out.println("targetReturn is: " + targetReturn);
 
         if (targetReturn.get(0).equals("ACCESS")) {
             // Static Imported Methods
@@ -835,7 +815,30 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
                     paramsOllir.add(result);
                     break;
-                //case "MethodCall":
+                case "MethodCall":
+                    System.out.println("AQUIIII :" + child.getKind());
+                    List<Object> methodCallVisitResult = visit(child, Arrays.asList(ollir.toString(),"PARAM"));
+                    System.out.println("visiting method within method");
+                    methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
+                    System.out.println("methodCallVisitResult is:" + methodCallVisitResult);
+                    ollir.append((String) methodCallVisitResult.get(0));
+                    /*if(methodCallVisitResult.get(3).equals("PARAM")){
+                        if(tempString == null){
+                            tempString = new StringBuilder(params.getValue());
+                        }
+                        if(tempString.length() >1){
+                            tempString.append(", ");
+                            tempString.append(methodCallVisitResult.get(2).toString() + OllirTemplates.type((Type) methodCallVisitResult.get(1) ));
+                        }
+
+                        params.getKey().add((Type) methodCallVisitResult.get(1));
+                        System.out.println("params antes "+params);
+
+                        params = new AbstractMap.SimpleEntry<List<Type>, String>(params.getKey(), tempString.toString() );
+                        System.out.println("params depois  "+params);
+                    }*/
+                    paramsOllir.add((String) methodCallVisitResult.get(2) + OllirTemplates.type((Type) methodCallVisitResult.get(1) ));
+                    params.add((Type) methodCallVisitResult.get(1));
                     //currentCallMethodName=functionName;
                     //paramsOllir.add((String) visit(child, Collections.singletonList("PARAM")).get(0));
                     //break;
