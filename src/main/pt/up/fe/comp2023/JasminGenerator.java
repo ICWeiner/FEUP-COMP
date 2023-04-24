@@ -91,7 +91,7 @@ public class JasminGenerator {
         method.getVarTable();
         boolean doesntHaveReturnInst =true;
         for (Instruction instruction : method.getInstructions()) {
-            System.out.println("HELLO2 " + instruction.getInstType().toString());
+
             if (instruction.getInstType().toString().equals("RETURN")){
                 doesntHaveReturnInst =false;
             }
@@ -141,10 +141,6 @@ public class JasminGenerator {
     private String dealWithReturnInstruction(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
         if(!instruction.hasReturnValue()) return "return";
         String returnString = "";
-        System.out.println("OLA"); // method.getReturnType());
-        //if (method.getReturnType().equals("VOID")){
-            //BuilderOfStrings.append("return \n");
-        //}
         switch (instruction.getOperand().getType().getTypeOfElement()) {
             case VOID:
                 returnString = "return";
@@ -418,7 +414,6 @@ public class JasminGenerator {
                 }
             }
         }
-        System.out.println(element);
         return "Error in loadElements\n";
     }
 
