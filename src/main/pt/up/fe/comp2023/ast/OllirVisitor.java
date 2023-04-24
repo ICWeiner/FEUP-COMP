@@ -486,6 +486,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         String methodClass;
 
+        System.out.println("visiting method call coming from :" + node.getJmmParent().getKind());
+
 
         JmmNode targetNode = node.getChildren().get(0);
         JmmNode methodNode = node;
@@ -522,34 +524,54 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         JmmMethod method;
 
         //ver se identifier é  ou classe do proprio ou objeto da classe propria
-        try {
-            method = table.getMethod(methodNode.get("value"));
-            methodClass = "class_method";
 
-            String targetName;
 
-            if (targetNode.getKind().equals("GeneralDeclaration")){
-                targetName = targetNode.get("name");
-            }else{
-                targetName = targetNode.get("value");
-            }
 
-            String identifierType = "";//this might not be safe
-            if (currentMethod.fieldExists(targetName)){
-                identifierType = currentMethod.getField(targetName).getKey().getType().getName();
-            }
+        String targetName;
 
-            for( var importName : table.getImports() ){
-                if (!targetName.equals(importName) && !identifierType.equals(importName)) continue;
-                if(targetName.equals(table.getClassName())) break;
 
-                methodClass = "method";
-            }
 
-        } catch (Exception e) {
-            method = null;
+        if (targetNode.getKind().equals("GeneralDeclaration")){
+            targetName = targetNode.get("name");
+        }else if (targetNode.getKind().equals("This")){
+            targetName = table.getClassName();
+        }else{
+            targetName = targetNode.get("value");
+        }
+
+        System.out.println("trying to get this method from table: " + methodNode.get("value"));
+        for (String child : table.getMethods()){
+            System.out.println(child);
+        }
+        method = table.getMethod(methodNode.get("value"));
+        System.out.println("method is : " + method);
+        methodClass = "class_method";
+
+        System.out.println("targetNode is of kind : " + targetNode.getKind());
+        System.out.println("target name before for :" + targetName);
+
+        String identifierType = "";//this might not be safe
+        if (currentMethod.fieldExists(targetName) || targetName.equals("This")){
+            identifierType = currentMethod.getField(targetName).getKey().getType().getName();
+        }
+
+        for( var importName : table.getImports() ){
+
+            System.out.println("targetName "+ targetName);
+            System.out.println("importName "+ importName);
+            System.out.println("identifierType "+ identifierType);
+            System.out.println("table.getClassName() " + table.getClassName());
+
+            if(targetName.equals("This")) break;
+            if (!targetName.equals(importName) && !identifierType.equals(importName)) continue;
+            if(targetName.equals(table.getClassName())) break;
+
+
+
+
             methodClass = "method";
         }
+
         //###########################################################
 
 
@@ -588,7 +610,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             } else {
                 // imported method called on "this"
                 if (methodClass.equals("method")) {
-
+                    System.out.println("aqui");
+                    System.out.println(node.get("value"));
+                    System.out.println(methodClass);
                     if (assignment != null) {
                         ollirExpression = OllirTemplates.invokespecial( node.get("value"), assignment.getType(),  params.getValue());
                         expectedType = assignment.getType();
