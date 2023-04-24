@@ -36,7 +36,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         this.addVisit("VarDeclaration", this::dealWithVarDeclaration);
         this.addVisit("Identifier", this::dealWithVariable);
-        this.addVisit("This", this::dealWithVariable);
+        this.addVisit("This", this::dealWithThis);
         this.addVisit("Assignment", this::dealWithAssignment);
         this.addVisit("Integer", this::dealWithType);
         this.addVisit("Boolean", this::dealWithType);
@@ -380,12 +380,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 9");
         //visited.add(node);
 
-        if(node.getKind().equals("This")){
-            return Arrays.asList("ACCESS", "this");
-        }
-
-
-
         Map.Entry<Symbol, Boolean> field = null;
 
 
@@ -444,6 +438,13 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         StringBuilder ollir = new StringBuilder();
 
+        if(node.getNumChildren() ==1 ){
+            if(node.getChildren().get(0).getKind().equals("This")){
+                ollir.append(OllirTemplates.ret(currentMethod.getReturnType(), ("this." + currentMethod.getReturnType().getName() )));
+                return Collections.singletonList(ollir.toString());
+            }
+        }
+
         List<Object> visit = visit(node.getChildren().get(0), Arrays.asList("RETURN"));
 
         String result = (String) visit.get(0);
@@ -464,7 +465,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         /*if (targetReturn.get(0).equals("ACCESS")) {
             // Static Imported Methods
             if (!targetReturn.get(1).equals("this")) {*/
-        return null;
+        return Arrays.asList("ACCESS", "this");
     }
 
     private  List<Object> dealWithExpression(JmmNode node, List<Object> data){
