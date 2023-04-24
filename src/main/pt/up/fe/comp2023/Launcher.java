@@ -55,8 +55,6 @@ public class Launcher {
         //Semantic analysis
         JmmAnalyser jmmAnalyser = new JmmAnalyser();
 
-        jmmAnalyser.semanticAnalysis(parserResult);
-
         JmmSemanticsResult semanticResults = jmmAnalyser.semanticAnalysis(parserResult);
 
         //OLLIR Generation
