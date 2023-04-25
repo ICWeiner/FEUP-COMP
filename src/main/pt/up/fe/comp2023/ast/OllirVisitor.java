@@ -662,7 +662,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 }
             } else {
 
-                if (methodClass.equals("method")) {
+                if (methodClass.equals("method")) {//TODO:? this used to be invokespecial, might not be correct this way or need more cases
 
                     if (assignment != null) {
                         ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable((Symbol) targetReturn.get(1)),  methodNode.get("value"), assignment.getType(), params.getValue());
