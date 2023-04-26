@@ -358,18 +358,35 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         String leftSide;
         String rightSide;
 
-        leftSide = binaryOperations(leftStmts, ollir, new Type("int", false));
-        rightSide = binaryOperations(rightStmts, ollir, new Type("int", false));
+        if( node.get("op").equals("&&") ){
+            leftSide = binaryOperations(leftStmts, ollir, new Type("boolean", false));
+            rightSide = binaryOperations(rightStmts, ollir, new Type("boolean", false));
+        }else{
+            leftSide = binaryOperations(leftStmts, ollir, new Type("int", false));
+            rightSide = binaryOperations(rightStmts, ollir, new Type("int", false));
+        }
+
 
         if (data == null) {
             return Arrays.asList("DEFAULT_VISIT 8");
         }
         if (data.get(0).equals("RETURN") || data.get(0).equals("FIELD")) {
-            Symbol variable = new Symbol(new Type("int", false), "temporary" + temp_sequence++);
-            ollir.append(String.format("%s :=.i32 %s %s.i32 %s;\n", OllirTemplates.variable(variable), leftSide, node.get("op"), rightSide));
-            ollir.append(OllirTemplates.variable(variable));
+            if(node.get("op").equals("&&") ){
+                Symbol variable = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+                ollir.append(String.format("%s :=.bool %s %s.bool %s;\n", OllirTemplates.variable(variable), leftSide, node.get("op"), rightSide));
+                ollir.append(OllirTemplates.variable(variable));
+            }else{
+                Symbol variable = new Symbol(new Type("int", false), "temporary" + temp_sequence++);
+                ollir.append(String.format("%s :=.i32 %s %s.i32 %s;\n", OllirTemplates.variable(variable), leftSide, node.get("op"), rightSide));
+                ollir.append(OllirTemplates.variable(variable));
+            }
+
         } else {
-            ollir.append(String.format("%s %s.i32 %s", leftSide, node.get("op"), rightSide));
+            if(node.get("op").equals("&&") ){
+                ollir.append(String.format("%s %s.bool %s", leftSide, node.get("op"), rightSide));
+            }else {
+                ollir.append(String.format("%s %s.i32 %s", leftSide, node.get("op"), rightSide));
+            }
         }
 
         return Collections.singletonList(ollir.toString());
@@ -761,11 +778,17 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
                     params.add((Type) accessExpression.get(1));
                     break;
-                case "BinaryOp"://TODO: falta fazer para o AND e "<", pois o resultado e boolean e
+                case "BinaryOp":
                     var = (String) visit(child, Arrays.asList("PARAM")).get(0);
-                    statements = var.split("\n");
-                    result = binaryOperations(statements, ollir, new Type("int", false));
-                    params.add(new Type("int", false));
+                    statements = var.split("\n");//TODO: falta testar :upside_down:
+                    if ( child.get("op").equals("<")  || child.get("op").equals("&&") ){
+                        result = binaryOperations(statements, ollir, new Type("boolean", false));
+                        params.add(new Type("boolean", false));
+                    }else{
+                        result = binaryOperations(statements, ollir, new Type("int", false));
+                        params.add(new Type("int", false));
+                    }
+
 
                     paramsOllir.add(result);
                     break;
