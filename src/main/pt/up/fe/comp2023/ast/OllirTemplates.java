@@ -176,6 +176,10 @@ public class OllirTemplates {
         return String.format("%s.%s[%s]%s", parameter, variable.getName(), index, type(new Type(variable.getType().getName(), false)));
     }
 
+    public static String arrayinit(String size) {
+        return String.format("new(array, %s).array.i32", size);
+    }
+
     public static String openBrackets() {
         return " {\n";
     }

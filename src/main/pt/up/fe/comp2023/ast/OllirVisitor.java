@@ -41,6 +41,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         this.addVisit("Integer", this::dealWithType);
         this.addVisit("Boolean", this::dealWithType);
         this.addVisit("GeneralDeclaration", this::dealWithObjectInit);
+        this.addVisit("IntArrayDeclaration",this::dealWithArrayDeclaration);
 
         this.addVisit("BinaryOp", this::dealWithBinaryOperation);
         this.addVisit("MethodCall", this::dealWithMethodCall);//why doesnt merge work?????
@@ -724,6 +725,26 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1),"PARAM");
         }
         return Arrays.asList(ollir.toString(), expectedType);
+    }
+
+    private List<Object> dealWithArrayDeclaration(JmmNode node, List<Object> data){
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        visited.add(node);
+
+        StringBuilder ollir = new StringBuilder();
+
+        String size = (String) visit(node.getChildren().get(0), Collections.singletonList("RETURN")).get(0);
+
+        String[] sizeParts = size.split("\n");
+        if (sizeParts.length > 1) {
+            for (int i = 0; i < sizeParts.length - 1; i++) {
+                ollir.append(sizeParts[i]).append("\n");
+            }
+        }
+
+        ollir.append(OllirTemplates.arrayinit(sizeParts[sizeParts.length - 1]));
+
+        return Arrays.asList(ollir.toString(), "ARRAY_INIT");
     }
 
     private Map.Entry<List<Type>, String> getParametersList(List<JmmNode> children, StringBuilder ollir) {
