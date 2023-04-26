@@ -770,9 +770,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     paramsOllir.add(result);
                     break;
                 case "MethodCall":
-                    List<Object> methodCallVisitResult = visit(child, Arrays.asList(ollir.toString(),"PARAM"));
-
-                    methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
+                    List<Object> methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
 
                     ollir.append((String) methodCallVisitResult.get(0));
                     paramsOllir.add( methodCallVisitResult.get(2) + OllirTemplates.type((Type) methodCallVisitResult.get(1) ));//adicionar variavel temp com o respetivo tipo a lista de param
