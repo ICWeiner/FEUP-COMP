@@ -316,7 +316,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
                     && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO tratar melhor das GeneralDeclarations
-                    && !((child.getKind().equals("BinaryOp") && (child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") || (!child.get("op").equals("&&") && nodeType.getName().equals("int"))) && visit(child,true)))
+                    && !((child.getKind().equals("BinaryOp") && (((child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equalsIgnoreCase("boolean")) || (!(child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equals("int"))) && visit(child,true)))
                     && !(child.getKind().equals("MethodCall") && visit(child,true))
                     && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("ArrayAccess") && visit(child,true))
                     && !(child.getKind().equals("LengthOp") && nodeType.isArray())
