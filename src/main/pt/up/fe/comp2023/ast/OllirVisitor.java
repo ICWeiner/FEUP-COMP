@@ -19,6 +19,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
     private int temp_sequence = 1;
 
+    private int if_sequence = 1;
+
     public OllirVisitor(SymbolTable table,List<Report> reports){
         this.table = table;
         this.reports = reports;
@@ -44,16 +46,18 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         this.addVisit("IntArrayDeclaration",this::dealWithArrayDeclaration);
 
         this.addVisit("BinaryOp", this::dealWithBinaryOperation);
-        this.addVisit("MethodCall", this::dealWithMethodCall);//why doesnt merge work?????
+        this.addVisit("MethodCall", this::dealWithMethodCall);
+        this.addVisit("IfElseStmt", this::dealWithIfStatement);
+
 
 
         setDefaultVisit(this::defaultVisit);
     }
 
     private List<Object> defaultVisit(JmmNode node, List<Object> data) {
-        StringBuilder sb = new StringBuilder(node.getKind());
-        sb.append(" DEFAULT_VISIT 1");
-        return Collections.singletonList(sb.toString());
+        StringBuilder ollir = new StringBuilder(node.getKind());
+        ollir.append(" DEFAULT_VISIT 1");
+        return Collections.singletonList(ollir.toString());
     }
 
     private List<Object> dealWithProgram(JmmNode node,List<Object> data){
@@ -728,7 +732,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
     }
 
     private List<Object> dealWithArrayDeclaration(JmmNode node, List<Object> data){
-        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 13");
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
@@ -745,6 +749,40 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         ollir.append(OllirTemplates.arrayinit(sizeParts[sizeParts.length - 1]));
 
         return Arrays.asList(ollir.toString(), "ARRAY_INIT");
+    }
+
+    private List<Object> dealWithIfStatement(JmmNode node, List<Object> data){
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 14");
+        visited.add(node);
+
+        StringBuilder ollir = new StringBuilder();
+
+        JmmNode ifConditionNode = node.getChildren().get(0);
+        JmmNode ifCodeNode = node.getChildren().get(1);
+        JmmNode elseCodeNode = node.getChildren().get(2);
+
+        int count = if_sequence++;
+
+        String ifCondition = (String) visit(ifConditionNode, Collections.singletonList("CONDITION")).get(0);
+
+        String[] ifConditionParts = ifCondition.split("\n");
+        if (ifConditionParts.length > 1) {
+            for (int i = 0; i < ifConditionParts.length - 1; i++) {
+                ollir.append(ifConditionParts[i]).append("\n");
+            }
+        }
+
+        if (ifConditionParts[ifConditionParts.length - 1].contains("==.bool 1.bool")) {
+            String condition = ifConditionParts[ifConditionParts.length - 1].split(" ==.bool ")[0];
+            ollir.append(String.format("if (%s !.bool %s) goto else%d;\n", condition, condition, count));
+        } else {
+            Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), ifConditionParts[ifConditionParts.length - 1]));
+            ollir.append(String.format("if (%s !.bool %s) goto else%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+        }
+
+
+        return Collections.singletonList(ollir.toString());
     }
 
     private Map.Entry<List<Type>, String> getParametersList(List<JmmNode> children, StringBuilder ollir) {
