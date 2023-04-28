@@ -21,6 +21,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
     private int if_sequence = 1;
 
+    private int while_sequence = 1;
+
     public OllirVisitor(SymbolTable table,List<Report> reports){
         this.table = table;
         this.reports = reports;
@@ -48,6 +50,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         this.addVisit("BinaryOp", this::dealWithBinaryOperation);
         this.addVisit("MethodCall", this::dealWithMethodCall);
         this.addVisit("IfElseStmt", this::dealWithIfStatement);
+        this.addVisit("WhileStmt",this::dealWithWhileStatement);
 
 
 
@@ -153,6 +156,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         }
 
         builder.append(String.join("\n", body));
+
+        if (node.getKind().equals("MainMethod")) builder.append("\n").append(OllirTemplates.ret(currentMethod.getReturnType(),""));
 
         builder.append(OllirTemplates.closeBrackets());
 
@@ -781,6 +786,68 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             ollir.append(String.format("if (%s !.bool %s) goto else%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
         }
 
+        List<String> ifBody = new ArrayList<>();
+
+        for (JmmNode child : ifCodeNode.getChildren()){
+            ifBody.add((String) visit(child, Collections.singletonList("IF")).get(0));
+        }
+        ollir.append(String.join("\n", ifBody)).append("\n");
+        ollir.append(String.format("goto endif%d;\n", count));
+
+        ollir.append(String.format("else%d:\n", count));
+
+        List<String> elseBody = new ArrayList<>();
+
+        for (JmmNode child : elseCodeNode.getChildren()){
+            elseBody.add((String) visit(child, Collections.singletonList("IF")).get(0));
+        }
+
+        ollir.append(String.join("\n", elseBody)).append("\n");
+
+        ollir.append(String.format("endif%d:", count));
+
+        return Collections.singletonList(ollir.toString());
+    }
+
+    private List<Object> dealWithWhileStatement(JmmNode node, List<Object> data){
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 14");
+        visited.add(node);
+
+        StringBuilder ollir = new StringBuilder();
+
+        JmmNode ConditionNode = node.getChildren().get(0);
+        JmmNode codeNode = node.getChildren().get(1);
+
+        int count = while_sequence++;
+
+        ollir.append(String.format("loop%d:\n", count));
+
+        String condition = (String) visit(ConditionNode, Collections.singletonList("WHILE")).get(0);
+        String[] conditionParts = condition.split("\n");
+        if (conditionParts.length > 1) {
+            for (int i = 0; i < conditionParts.length - 1; i++) {
+                ollir.append(conditionParts[i]).append("\n");
+            }
+        }
+
+        if (conditionParts[conditionParts.length - 1].contains("==.bool 1.bool")) {
+            String conditionAux = conditionParts[conditionParts.length - 1].split(" ==.bool ")[0];
+            ollir.append(String.format("if (%s !.bool %s) goto endloop%d;\n", conditionAux, conditionAux, count));
+        } else {
+            Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), conditionParts[conditionParts.length - 1]));
+            ollir.append(String.format("if (%s !.bool %s) goto endloop%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+        }
+
+        List<String> body = new ArrayList<>();
+        for (JmmNode child : codeNode.getChildren()){
+            body.add((String) visit(child, Collections.singletonList("IF")).get(0));
+        }
+        ollir.append(String.join("\n", body)).append("\n");
+
+        ollir.append(String.format("goto loop%d;\n", count));
+
+        ollir.append(String.format("endloop%d:", count));
 
         return Collections.singletonList(ollir.toString());
     }
