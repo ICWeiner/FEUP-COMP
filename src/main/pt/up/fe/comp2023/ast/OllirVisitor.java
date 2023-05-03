@@ -905,6 +905,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     paramsOllir.add(result);
                     break;
                 case "MethodCall":
+                case "LengthOp":
                     List<Object> methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
 
                     ollir.append((String) methodCallVisitResult.get(0));
@@ -912,6 +913,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     params.add((Type) methodCallVisitResult.get(1));
 
                     break;
+
                 default:
                     break;
             }
