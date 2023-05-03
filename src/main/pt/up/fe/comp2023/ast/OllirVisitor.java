@@ -49,8 +49,11 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         this.addVisit("BinaryOp", this::dealWithBinaryOperation);
         this.addVisit("MethodCall", this::dealWithMethodCall);
+        this.addVisit("LengthOp",this::dealWithMethodCall);
         this.addVisit("IfElseStmt", this::dealWithIfStatement);
         this.addVisit("WhileStmt",this::dealWithWhileStatement);
+
+        this.addVisit("ArrayAccess", this::dealWithArrayAccess);
 
 
 
@@ -511,38 +514,22 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 12");
         visited.add(node);
 
-
         String methodClass;
-
-
-
-
+        StringBuilder ollir = new StringBuilder();
         JmmNode targetNode = node.getChildren().get(0);
         JmmNode methodNode = node;
 
-        StringBuilder ollir = new StringBuilder();
-        //List<Object> methodCallVisitResult = new ArrayList<>() ;
-
-        //return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1));
-
-
         List<Object> targetReturn = visit(targetNode, Arrays.asList("ACCESS", ollir));
-
-
-        //List<Object> methodReturn = visit(methodNode, Arrays.asList("ACCESS", ollir));
-
-
-        //###########################################################
-        //StringBuilder ollir = (StringBuilder) data.get(1); TODO: ver qual era a necessidade disto - nenhuma aparentemente
-
-
         List<JmmNode> children = node.getChildren();
-        children.remove(0);//remove first node as it isnt a parameter TODO:modify grammar?
+
+        children.remove(0);//remove first node as it isnt a parameter
 
         Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
 
+        String methodString;
+        if (methodNode.getKind().equals("LengthOp")) methodString = "";
+        else methodString = methodNode.get("value");
 
-        String methodString = methodNode.get("value");
         if (params.getKey().size() > 0) {
             for (Type param : params.getKey()) {
                 methodString += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
@@ -551,13 +538,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         Type returnType = table.getReturnType(methodString);
         JmmMethod method;
 
-        //ver se identifier é  ou classe do proprio ou objeto da classe propria
-
-
-
+        //ver se identifier é  ou classe do proprio ou objeto da classe proprio
         String targetName;
-
-
 
         if (targetNode.getKind().equals("GeneralDeclaration")){
             targetName = targetNode.get("name");
@@ -567,13 +549,10 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             targetName = targetNode.get("value");
         }
 
-
-
-        method = table.getMethod(methodNode.get("value"));
+        if (methodNode.getKind().equals("LengthOp")) method = null;
+        else method = table.getMethod(methodNode.get("value"));
 
         methodClass = "class_method";
-
-
 
         String identifierType = "";//this might not be safe
         if (currentMethod.fieldExists(targetName) || targetName.equals("This")){
@@ -584,18 +563,13 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             if(targetName.equals("This")) break;
             if (!targetName.equals(importName) && !identifierType.equals(importName)) continue;
             if(targetName.equals(table.getClassName())) break;
-
-
-
-
             methodClass = "method";
         }
 
+        if (methodNode.getKind().equals("LengthOp")) methodClass = "length";
         //###########################################################
 
-
         Symbol assignment = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
-
 
         String ollirExpression = null;
         Type expectedType = (data.get(0).equals("BINARY") || (data.size() > 2 && data.get(2).equals("ARRAY_ACCESS"))) ? new Type("int", false) : null;
@@ -607,9 +581,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
                 String targetVariable = (String) targetReturn.get(1);
                 if (assignment != null) {
-                    if (data.get(2).equals("ARRAY_ACCESS")) { /*TODO: Fix since changes
-                        ollirExpression = OllirTemplates.invokestatic(targetVariable, (String) methodReturn.get(1), new Type(assignment.getType().getName(), false), (String) params.getValue());
-                        expectedType = new Type(assignment.getType().getName(), false);*/
+                    if (data.get(2).equals("ARRAY_ACCESS")) { //TODO: Fix since changes
+                        ollirExpression = OllirTemplates.invokestatic(targetVariable, methodNode.get("value"), new Type(assignment.getType().getName(), false), params.getValue());
+                        expectedType = new Type(assignment.getType().getName(), false);
                     } else {
 
                         ollirExpression = OllirTemplates.invokestatic(targetVariable,  methodNode.get("value"), assignment.getType(),  params.getValue());
@@ -703,6 +677,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
                     ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), method.getName(), method.getReturnType(), params.getValue());
                     expectedType = method.getReturnType();
+                }else {
+                    ollirExpression = OllirTemplates.arraylength(OllirTemplates.variable((Symbol) targetReturn.get(1), (String) targetReturn.get(2)));
+                    expectedType = new Type("int", false);
                 }
             }
         }
@@ -850,6 +827,15 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         ollir.append(String.format("endloop%d:", count));
 
         return Collections.singletonList(ollir.toString());
+    }
+
+    private List<Object> dealWithArrayAccess(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 15");
+        visited.add(node);
+
+        String visit = (String) visit(node.getChildren().get(0), Arrays.asList("RETURN")).get(0);
+
+        return Arrays.asList(visit);
     }
 
     private Map.Entry<List<Type>, String> getParametersList(List<JmmNode> children, StringBuilder ollir) {
