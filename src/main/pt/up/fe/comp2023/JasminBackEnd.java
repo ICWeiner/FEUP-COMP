@@ -19,7 +19,7 @@ public class JasminBackEnd implements JasminBackend {
         try{
             ollirClass.checkMethodLabels();
             ollirClass.buildCFGs();
-            ollirClass.outputCFGs();
+            //ollirClass.outputCFGs();
             ollirClass.buildVarTables();
             ollirClass.show();
 
