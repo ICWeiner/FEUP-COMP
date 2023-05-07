@@ -42,6 +42,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         this.addVisit("Identifier", this::dealWithVariable);
         this.addVisit("This", this::dealWithThis);
         this.addVisit("Assignment", this::dealWithAssignment);
+        this.addVisit("ArrayAssignment", this::dealWithAssignment);
         this.addVisit("Integer", this::dealWithType);
         this.addVisit("Boolean", this::dealWithType);
         this.addVisit("GeneralDeclaration", this::dealWithObjectInit);
@@ -206,53 +207,60 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
 
         List<Object> visitResult;
+        System.out.println("visiting ArrayAssignment");
 
         // ARRAY ACCESS
-        /*if ( node.getJmmChild(0).getKind().equals("ArrayAccess")) {
-            /*String target = (String) visit(node.getChildren().get(0)).get(0);
-            String[] parts = target.split("\n");
-            if (parts.length > 1) {
-                for (int i = 0; i < parts.length - 1; i++) {
-                    ollir.append(parts[i]).append("\n");
-                }
+        if ( node.getKind().equals("ArrayAssignment")) {
+            JmmNode indexNode = node.getChildren().get(0);
+            Map.Entry<Symbol, Boolean> indexVariable;
+            boolean indexClassField = false;
+
+            if ((indexVariable = currentMethod.getField(node.get("name"))) == null) {
+                indexVariable = table.getField(node.get("name"));
+                indexClassField = true;
             }
+            String indexName = !classField ? currentMethod.isParameter(indexVariable.getKey()) : null;
+            List<Object> indexVisitResult = visit(indexNode, Arrays.asList(indexClassField ? "FIELD" : "ASSIGNMENT", indexVariable.getKey(), "ARRAY_ACCESS"));
+            System.out.println("indexvisitresult is :" +indexVisitResult);
+            String indexResult = (String) indexVisitResult.get(0);
 
-            //visitResult = visit(node.getChildren().get(0).getChildren().get(1), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "ARRAY_ACCESS"));
-
-            visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "ARRAY_ACCESS"));
-
-            String result = (String) visitResult.get(0);
-            String[] parts2 = result.split("\n");
-
-            System.out.println("visited array access and result was " + result);
+            visitResult = visit(node.getChildren().get(1), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "ARRAY_ACCESS"));
+            String target = (String) visitResult.get(0);
+            System.out.println("target is :" +target);
 
 
             if (!classField) {
                 System.out.println("ESTOU AQUI");
                 String temp = "temporary" + temp_sequence++ + ".i32";
-                ollir.append(String.format("%s :=.i32 %s;\n", temp, result));
+                ollir.append(String.format("%s :=.i32 %s;\n", temp, target));
 
                 System.out.println("Var variable is :" + variable.getKey());
+                System.out.println("Var indexName is :" + indexName);
                 System.out.println("Var name is :" + name);
-                System.out.println("Var result is :" + result);
+                System.out.println("Var result is :" + target);
                 System.out.println("Var temp is :" + temp);
 
                 ollir.append(String.format("%s :=%s %s;\n",
-                        ollirVariable,
-                        ollirType,
-                        OllirTemplates.arrayaccess(new Symbol(new Type("int", true),result),name,temp)));
+                        OllirTemplates.arrayaccess(new Symbol(new Type("int", true),node.get("name")),name,temp),
+                        OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
+                        target));
+
+                /*ollir.append(String.format("%s :=%s %s;\n",
+                        OllirTemplates.arrayaccess(new Symbol(new Type("int", true), temp), null, indexResult),
+                        OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
+                        target));*/
             } else {
                 String temp = "temporary" + temp_sequence++;
 
                 ollir.append(String.format("%s :=%s %s;\n", temp + ollirType, ollirType, OllirTemplates.getfield(variable.getKey())));
 
                 ollir.append(String.format("%s :=%s %s;\n",
-                        OllirTemplates.arrayaccess(new Symbol(new Type("int", true), temp), null, result),
+                        OllirTemplates.arrayaccess(new Symbol(new Type("int", true), temp), null, indexResult),
                         OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
-                        result));
+                        indexResult));
             }
 
-        } else {*/
+        } else {
             visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
 
             String result = (String) visitResult.get(0);
@@ -288,7 +296,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     ollir.append(";");
                 }
             }
-       // }
+        }
 
 
         if (visitResult.size() > 1 && visitResult.get(1).equals("OBJECT_INIT")) {
@@ -312,7 +320,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
     }
 
     private List<Object> dealWithType(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 6");
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 20");
         visited.add(node);
 
         String value;
