@@ -173,7 +173,6 @@ public class OllirTemplates {
     }
 
     public static String arrayaccess(Symbol variable, String parameter, String index) {
-        variable = escapeVariable(variable);
 
         if (parameter == null)
             return String.format("%s[%s]%s", variable.getName(), index, type(new Type(variable.getType().getName(), false)));

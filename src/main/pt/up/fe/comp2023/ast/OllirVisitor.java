@@ -49,7 +49,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         this.addVisit("BinaryOp", this::dealWithBinaryOperation);
         this.addVisit("MethodCall", this::dealWithMethodCall);
-        this.addVisit("LengthOp",this::dealWithMethodCall);
         this.addVisit("IfElseStmt", this::dealWithIfStatement);
         this.addVisit("WhileStmt",this::dealWithWhileStatement);
 
@@ -204,69 +203,60 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         ollirVariable = OllirTemplates.variable(variable.getKey(), name);
         ollirType = OllirTemplates.type(variable.getKey().getType());
 
+
         List<Object> visitResult;
 
         // ARRAY ACCESS
-        if (node.getChildren().size() > 1) {
-            String target = (String) visit(node.getChildren().get(0)).get(0);
+        if ( node.getJmmChild(0).getKind().equals("ArrayAccess")) {
+            /*String target = (String) visit(node.getChildren().get(0)).get(0);
             String[] parts = target.split("\n");
             if (parts.length > 1) {
                 for (int i = 0; i < parts.length - 1; i++) {
                     ollir.append(parts[i]).append("\n");
                 }
-            }
+            }*/
 
-            visitResult = visit(node.getChildren().get(1), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "ARRAY_ACCESS"));
+            //visitResult = visit(node.getChildren().get(0).getChildren().get(1), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "ARRAY_ACCESS"));
+
+            visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "ARRAY_ACCESS"));
 
             String result = (String) visitResult.get(0);
             String[] parts2 = result.split("\n");
 
-            if (parts2.length > 1) {
-                for (int i = 0; i < parts2.length - 1; i++) {
-                    ollir.append(parts2[i]).append("\n");
-                }
+            System.out.println("visited array access and result was " + result);
 
-                if (!classField) {
-                    String temp = "temporary" + temp_sequence++ + ".i32";
-                    ollir.append(String.format("%s :=.i32 %s;\n", temp, parts2[parts2.length - 1]));
 
-                    ollir.append(String.format("%s :=%s %s;\n",
-                            OllirTemplates.arrayaccess(variable.getKey(), name, parts[parts.length - 1]),
-                            OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
-                            temp));
-                } else {
-                    String temp = "temporary" + temp_sequence++;
+            if (!classField) {
+                System.out.println("ESTOU AQUI");
+                String temp = "temporary" + temp_sequence++ + ".i32";
+                ollir.append(String.format("%s :=.i32 %s;\n", temp, result));
 
-                    ollir.append(String.format("%s :=%s %s;\n", temp + ollirType, ollirType, OllirTemplates.getfield(variable.getKey())));
+                System.out.println("Var variable is :" + variable.getKey());
+                System.out.println("Var name is :" + name);
+                System.out.println("Var result is :" + result);
+                System.out.println("Var temp is :" + temp);
+                ollir.append(String.format("%s :=%s %s;\n",
+                        OllirTemplates.arrayaccess(variable.getKey(), name, result),
+                        OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
+                        temp));
 
-                    ollir.append(String.format("%s :=%s %s;\n",
-                            OllirTemplates.arrayaccess(new Symbol(new Type("int", true), temp), null, parts[parts.length - 1]),
-                            OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
-                            parts2[parts2.length - 1]));
-                }
+                ollir.append(String.format("%s :=%s %s;\n",
+                        ollirVariable,
+                        ollirType,
+                        OllirTemplates.arrayaccess(new Symbol(new Type("int", true),result),name,temp)));
             } else {
-                if (!classField) {
-                    String temp = "temporary" + temp_sequence++ + ".i32";
-                    ollir.append(String.format("%s :=.i32 %s;\n", temp, result));
+                String temp = "temporary" + temp_sequence++;
 
-                    ollir.append(String.format("%s :=%s %s;\n",
-                            OllirTemplates.arrayaccess(variable.getKey(), name, parts[parts.length - 1]),
-                            OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
-                            temp));
-                } else {
-                    String temp = "temporary" + temp_sequence++;
+                ollir.append(String.format("%s :=%s %s;\n", temp + ollirType, ollirType, OllirTemplates.getfield(variable.getKey())));
 
-                    ollir.append(String.format("%s :=%s %s;\n", temp + ollirType, ollirType, OllirTemplates.getfield(variable.getKey())));
-
-                    ollir.append(String.format("%s :=%s %s;\n",
-                            OllirTemplates.arrayaccess(new Symbol(new Type("int", true), temp), null, parts[parts.length - 1]),
-                            OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
-                            result));
-                }
+                ollir.append(String.format("%s :=%s %s;\n",
+                        OllirTemplates.arrayaccess(new Symbol(new Type("int", true), temp), null, result),
+                        OllirTemplates.type(new Type(variable.getKey().getType().getName(), false)),
+                        result));
             }
+
         } else {
             visitResult = visit(node.getChildren().get(0), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "SIMPLE"));
-
 
             String result = (String) visitResult.get(0);
             String[] parts = result.split("\n");
@@ -307,6 +297,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visitResult.size() > 1 && visitResult.get(1).equals("OBJECT_INIT")) {
             ollir.append("\n").append(OllirTemplates.objectinstance(variable.getKey()));
         }
+
 
         return Collections.singletonList(ollir.toString());
     }
@@ -492,9 +483,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
     }
 
     private List<Object> dealWithThis(JmmNode node, List<Object> data){
-        /*if (targetReturn.get(0).equals("ACCESS")) {
-            // Static Imported Methods
-            if (!targetReturn.get(1).equals("this")) {*/
         return Arrays.asList("ACCESS", "this");
     }
 
@@ -515,30 +503,43 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         visited.add(node);
 
         String methodClass;
-        StringBuilder ollir = new StringBuilder();
+
         JmmNode targetNode = node.getChildren().get(0);
         JmmNode methodNode = node;
 
-        List<Object> targetReturn = visit(targetNode, Arrays.asList("ACCESS", ollir));
-        List<JmmNode> children = node.getChildren();
+        StringBuilder ollir = new StringBuilder();
+        //List<Object> methodCallVisitResult = new ArrayList<>() ;
 
-        children.remove(0);//remove first node as it isnt a parameter
+        //return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1));
+
+        List<Object> targetReturn = visit(targetNode, Arrays.asList("ACCESS", ollir));
+
+        //List<Object> methodReturn = visit(methodNode, Arrays.asList("ACCESS", ollir));
+
+        //###########################################################
+        //StringBuilder ollir = (StringBuilder) data.get(1); TODO: ver qual era a necessidade disto - nenhuma aparentemente
+
+
+        List<JmmNode> children = node.getChildren();
+        children.remove(0);//remove first node as it isnt a parameter TODO:modify grammar?
 
         Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
 
-        String methodString;
-        if (methodNode.getKind().equals("LengthOp")) methodString = "";
-        else methodString = methodNode.get("value");
-
-        if (params.getKey().size() > 0) {
-            for (Type param : params.getKey()) {
-                methodString += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
+        String methodString = null;
+        if (!methodNode.getKind().equals("ArrayAccess")){
+            methodString = methodNode.get("value");
+            if (params.getKey().size() > 0) {
+                for (Type param : params.getKey()) {
+                    methodString += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
+                }
             }
         }
-        Type returnType = table.getReturnType(methodString);
-        JmmMethod method;
 
-        //ver se identifier é  ou classe do proprio ou objeto da classe proprio
+
+        JmmMethod method = null;
+
+        //ver se identifier é  ou classe do proprio ou objeto da classe propria
+
         String targetName;
 
         if (targetNode.getKind().equals("GeneralDeclaration")){
@@ -549,8 +550,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             targetName = targetNode.get("value");
         }
 
-        if (methodNode.getKind().equals("LengthOp")) method = null;
-        else method = table.getMethod(methodNode.get("value"));
+        //if (!methodNode.getKind().equals("ArrayAccess")){
+        //method = table.getMethod(methodNode.get("value"));
+        //}
 
         methodClass = "class_method";
 
@@ -563,29 +565,42 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             if(targetName.equals("This")) break;
             if (!targetName.equals(importName) && !identifierType.equals(importName)) continue;
             if(targetName.equals(table.getClassName())) break;
+
             methodClass = "method";
         }
 
-        if (methodNode.getKind().equals("LengthOp")) methodClass = "length";
         //###########################################################
 
+
         Symbol assignment = (data.get(0).equals("ASSIGNMENT")) ? (Symbol) data.get(1) : null;
+
 
         String ollirExpression = null;
         Type expectedType = (data.get(0).equals("BINARY") || (data.size() > 2 && data.get(2).equals("ARRAY_ACCESS"))) ? new Type("int", false) : null;
 
 
-        if (targetReturn.get(0).equals("ACCESS")) {
+        if (methodNode.getKind().equals("ArrayAccess")) {
+            // ARRAY ACCESS TODO:ADAPT SINCE MAJOR CHANGES
+            Symbol array = (Symbol) targetReturn.get(1);
+            String index = methodNode.getJmmChild(1).get("value");
+
+            System.out.println("dealing with ArrayAcess");
+            System.out.println("var array is " + array.getName());
+            System.out.println("var index is " + index);
+
+
+            ollirExpression = OllirTemplates.arrayaccess(array, (String) targetReturn.get(2), index);
+            expectedType = new Type(array.getType().getName(), false);
+        } else if (targetReturn.get(0).equals("ACCESS")) {
             // Static Imported Methods
             if (!targetReturn.get(1).equals("this")) {
 
                 String targetVariable = (String) targetReturn.get(1);
                 if (assignment != null) {
                     if (data.get(2).equals("ARRAY_ACCESS")) { //TODO: Fix since changes
-                        ollirExpression = OllirTemplates.invokestatic(targetVariable, methodNode.get("value"), new Type(assignment.getType().getName(), false), params.getValue());
+                        ollirExpression = OllirTemplates.invokestatic(targetVariable,  methodNode.get("value"), new Type(assignment.getType().getName(), false), params.getValue());
                         expectedType = new Type(assignment.getType().getName(), false);
                     } else {
-
                         ollirExpression = OllirTemplates.invokestatic(targetVariable,  methodNode.get("value"), assignment.getType(),  params.getValue());
                         expectedType = assignment.getType();
                     }
@@ -593,7 +608,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     if(expectedType == null){
                         JmmNode parentNode =methodNode.getJmmParent();
                         if(parentNode.getKind().equals("MethodCall") && table.methodExists(parentNode.get("value"))){
-
                             expectedType = table.getMethod(parentNode.get("value")).getParameters().get(methodNode.getIndexOfSelf() - 1).getType();
                         }else expectedType = new Type("void", false);
                     }
@@ -616,20 +630,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     expectedType = method.getReturnType();
                 }
             }
-        } else if (methodNode.getKind().equals("ArrayAccess")) {
-            // ARRAY ACCESS TODO:ADAPT SINCE MAJOR CHANGES
-            /*Symbol array = (Symbol) targetReturn.get(1);
-            String index = (String) methodReturn.get(0);
-
-            String[] parts = index.split("\n");
-            if (parts.length > 1) {
-                for (int i = 0; i < parts.length - 1; i++) {
-                    ollir.append(parts[i]).append("\n");
-                }
-            }
-
-            ollirExpression = OllirTemplates.arrayaccess(array, (String) targetReturn.get(2), parts[parts.length - 1]);
-            expectedType = new Type(array.getType().getName(), false);*/
         } else {
             if (targetReturn.get(1).equals("OBJECT_INIT")) {
                 Type type = new Type((String) targetReturn.get(2), false);
@@ -677,9 +677,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
                     ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), method.getName(), method.getReturnType(), params.getValue());
                     expectedType = method.getReturnType();
-                }else {
-                    ollirExpression = OllirTemplates.arraylength(OllirTemplates.variable((Symbol) targetReturn.get(1), (String) targetReturn.get(2)));
-                    expectedType = new Type("int", false);
                 }
             }
         }
@@ -731,6 +728,15 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         ollir.append(OllirTemplates.arrayinit(sizeParts[sizeParts.length - 1]));
 
         return Arrays.asList(ollir.toString(), "ARRAY_INIT");
+    }
+
+    private List<Object> dealWithArrayAccess(JmmNode node, List<Object> data) {
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
+        visited.add(node);
+
+        String visit = (String) visit(node.getChildren().get(0), Arrays.asList("RETURN")).get(0);
+
+        return Arrays.asList(visit);
     }
 
     private List<Object> dealWithIfStatement(JmmNode node, List<Object> data){
@@ -829,15 +835,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         return Collections.singletonList(ollir.toString());
     }
 
-    private List<Object> dealWithArrayAccess(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 15");
-        visited.add(node);
-
-        String visit = (String) visit(node.getChildren().get(0), Arrays.asList("RETURN")).get(0);
-
-        return Arrays.asList(visit);
-    }
-
     private Map.Entry<List<Type>, String> getParametersList(List<JmmNode> children, StringBuilder ollir) {
 
         List<Type> params = new ArrayList<>();
@@ -905,7 +902,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     paramsOllir.add(result);
                     break;
                 case "MethodCall":
-                case "LengthOp":
                     List<Object> methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
 
                     ollir.append((String) methodCallVisitResult.get(0));
@@ -913,7 +909,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     params.add((Type) methodCallVisitResult.get(1));
 
                     break;
-
                 default:
                     break;
             }
