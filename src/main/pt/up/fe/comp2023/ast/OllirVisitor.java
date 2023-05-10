@@ -232,7 +232,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             if (!classField) {
                 System.out.println("ESTOU AQUI");
                 String temp = "temporary" + temp_sequence++ + ".i32";
-                ollir.append(String.format("%s :=.i32 %s;\n", temp, target));
+                ollir.append(String.format("%s :=.i32 %s;\n", temp, indexVisitResult.get(0)));
 
                 System.out.println("Var variable is :" + variable.getKey());
                 System.out.println("Var indexName is :" + indexName);
@@ -507,6 +507,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 12");
         visited.add(node);
 
+        System.out.println("at start of method call current temp counter is :" + temp_sequence );
+
         String methodClass;
         StringBuilder ollir = new StringBuilder();
         JmmNode targetNode = node.getChildren().get(0);
@@ -706,6 +708,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (data.get(0).equals("EXPR_STMT")||data.get(0).equals("METHOD") || data.get(0).equals("IF") || data.get(0).equals("ELSE") || data.get(0).equals("WHILE")) {
             ollir.append(";");
         }
+
+        System.out.println("at end of method call current temp counter is :" + temp_sequence );
 
         if (methodNode.getJmmParent().getKind().equals("MethodCall") && data.get(0).equals("PARAM")){
             return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1),"PARAM");
