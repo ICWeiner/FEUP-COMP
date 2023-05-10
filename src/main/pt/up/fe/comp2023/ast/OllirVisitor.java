@@ -528,6 +528,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 methodString += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
             }
         }
+        System.out.println("methodString is :" + methodString );
+        System.out.println("params.getvalue is :"  + params.getValue());
         Type returnType = table.getReturnType(methodString);
         JmmMethod method;
 
@@ -613,20 +615,20 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             Symbol array = (Symbol) targetReturn.get(1);
             //String index = (String) visit(methodNode.getChildren().get(1)).get(0);
 
-            String index = (String) visit(node.getChildren().get(1), Arrays.asList(data.get(0),array,"ARRAY_ACCESS")).get(0);
+            //String index = (String) visit(node.getChildren().get(1), Arrays.asList(data.get(0),array,"ARRAY_ACCESS")).get(0);
 
-            String[] parts = index.split("\n");
+            /*String[] parts = index.split("\n");
             if (parts.length > 1) {
                 for (int i = 0; i < parts.length - 1; i++) {
                     ollir.append(parts[i]).append("\n");
                 }
-            }
+            }*/
             System.out.println("INSIDE ARRAY ACCESS OF METHOD CALL");
             System.out.println("var array is " + array);
-            System.out.println("var index is " + index);
+            //System.out.println("var index is " + index);
 
 
-            ollirExpression = OllirTemplates.arrayaccess(array, (String) targetReturn.get(2), index);
+            ollirExpression = OllirTemplates.arrayaccess(array, (String) targetReturn.get(2), params.getValue());
             expectedType = new Type(array.getType().getName(), false);
         } else {
             if (targetReturn.get(1).equals("OBJECT_INIT")) {
