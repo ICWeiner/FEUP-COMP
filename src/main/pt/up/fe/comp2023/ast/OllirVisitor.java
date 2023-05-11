@@ -848,8 +848,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         int count = while_sequence++;
 
-        ollir.append(String.format("loop%d:\n", count));
-
         String condition = (String) visit(ConditionNode, Collections.singletonList("WHILE")).get(0);
         String[] conditionParts = condition.split("\n");
         if (conditionParts.length > 1) {
@@ -866,6 +864,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), conditionParts[conditionParts.length - 1]));
             ollir.append(String.format("if (%s !.bool %s) goto endloop%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
         }
+
+        ollir.append(String.format("loop%d:\n", count));
 
         List<String> body = new ArrayList<>();
         for (JmmNode child : codeNode.getChildren()){
