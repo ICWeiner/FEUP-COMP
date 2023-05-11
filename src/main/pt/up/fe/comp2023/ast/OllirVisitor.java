@@ -885,11 +885,11 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         if (condition.contains("==.bool 1.bool")) {
             String conditionAux = condition.split(" ==.bool ")[0];
-            ollir.append(String.format("if (%s) goto endloop%d;\n", conditionAux, count));
+            ollir.append(String.format("if (%s) goto body%d;\n", conditionAux, count));
         } else {
             Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
             ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), condition));
-            ollir.append(String.format("if (%s) goto endloop%d;\n", OllirTemplates.variable(aux), count));
+            ollir.append(String.format("if (%s) goto body%d;\n", OllirTemplates.variable(aux), count));
         }
 
         //ollir.append(String.format("goto loop%d;\n", count));
