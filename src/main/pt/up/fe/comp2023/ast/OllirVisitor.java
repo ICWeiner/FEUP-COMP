@@ -689,7 +689,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         //TODO: REVER CONDICOES EM BAIXO
         if ((data.get(0).equals("CONDITION") || data.get(0).equals("BINARY") || data.get(0).equals("FIELD") || data.get(0).equals("PARAM") || data.get(0).equals("RETURN")) && expectedType != null && ollirExpression != null) {
             Symbol auxiliary = new Symbol(expectedType, "temporary" + temp_sequence++);
-            ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(auxiliary), OllirTemplates.type(expectedType), ollirExpression));
+            ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(auxiliary), OllirTemplates.type(expectedType), ollirExpression));//TODO: problema parece estar aqui
 
             if (data.get(0).equals("CONDITION")) {
                 ollir.append(String.format("%s ==.bool 1.bool", OllirTemplates.variable(auxiliary)));
@@ -710,8 +710,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         }
 
         System.out.println("at end of method call current temp counter is :" + temp_sequence );
+        System.out.println("at end of method call current ollir is :" + ollir);
 
-        if (methodNode.getJmmParent().getKind().equals("MethodCall") && data.get(0).equals("PARAM")){
+        if (methodNode.getJmmParent().getKind().equals("MethodCall") || methodNode.getJmmParent().getKind().equals("ArrayAccess")  && data.get(0).equals("PARAM")){
             return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1),"PARAM");
         }
         return Arrays.asList(ollir.toString(), expectedType);
@@ -898,7 +899,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     params.add(((Symbol) variable.get(1)).getType());
                     paramsOllir.add(statements[statements.length - 1]);
                     break;
-                case "ArrayAccess":
+                /*case "ArrayAccess":
                     List<Object> accessExpression = visit(child, Arrays.asList("PARAM"));
                     statements = ((String) accessExpression.get(0)).split("\n");
                     if (statements.length > 1) {
@@ -906,8 +907,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                             ollir.append(statements[i]).append("\n");
                         }
                     }
-                    ollir.append(String.format("%s%s :=%s %s;\n",
-                            "temporary" + temp_sequence,
+                    ollir.append(String.format("%s%s :=%s %s;\n",//TODO: PROBLEMA AQUI
+                            "testtemporary" + temp_sequence,
                             OllirTemplates.type((Type) accessExpression.get(1)),
                             OllirTemplates.type((Type) accessExpression.get(1)),
                             statements[statements.length - 1]));
@@ -915,7 +916,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     paramsOllir.add("temporary" + temp_sequence++ + OllirTemplates.type((Type) accessExpression.get(1)));
 
                     params.add((Type) accessExpression.get(1));
-                    break;
+                    break;*/
                 case "BinaryOp":
                     var = (String) visit(child, Arrays.asList("PARAM")).get(0);
                     statements = var.split("\n");//TODO: falta testar :upside_down:
@@ -930,6 +931,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
                     paramsOllir.add(result);
                     break;
+                case "ArrayAccess":
                 case "MethodCall":
                 case "LengthOp":
                     List<Object> methodCallVisitResult = visit(child, Collections.singletonList("PARAM"));
