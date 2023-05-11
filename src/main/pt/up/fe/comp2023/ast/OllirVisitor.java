@@ -56,6 +56,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         this.addVisit("ArrayAccess", this::dealWithMethodCall);
 
+        this.addVisit("UnaryOp",this::dealWithUnaryOperation);
+
 
 
         setDefaultVisit(this::defaultVisit);
@@ -64,6 +66,19 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
     private List<Object> defaultVisit(JmmNode node, List<Object> data) {
         StringBuilder ollir = new StringBuilder(node.getKind());
         ollir.append(" DEFAULT_VISIT 1");
+        return Collections.singletonList(ollir.toString());
+    }
+
+    private List<Object> dealWithUnaryOperation(JmmNode node,List<Object> data){
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 20");
+        visited.add(node);
+
+        StringBuilder ollir = new StringBuilder("!.bool ");
+        String ollirChild = (String) visit(node.getChildren().get(0), Collections.singletonList("UNARY")).get(0);
+
+        ollir.append(ollirChild);
+
+
         return Collections.singletonList(ollir.toString());
     }
 
