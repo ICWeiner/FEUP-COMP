@@ -382,7 +382,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         String leftSide;
         String rightSide;
 
-        if( node.get("op").equals("&&") ){
+        if( node.get("op").equals("&&")  || node.get("op").equals("<") ){
             leftSide = binaryOperations(leftStmts, ollir, new Type("boolean", false));
             rightSide = binaryOperations(rightStmts, ollir, new Type("boolean", false));
         }else{
@@ -395,7 +395,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             return Arrays.asList("DEFAULT_VISIT 8");
         }
         if (data.get(0).equals("RETURN") || data.get(0).equals("FIELD")) {
-            if(node.get("op").equals("&&") ){
+            if(node.get("op").equals("&&") || node.get("op").equals("<")){
                 Symbol variable = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
                 ollir.append(String.format("%s :=.bool %s %s.bool %s;\n", OllirTemplates.variable(variable), leftSide, node.get("op"), rightSide));
                 ollir.append(OllirTemplates.variable(variable));
@@ -406,7 +406,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             }
 
         } else {
-            if(node.get("op").equals("&&") ){
+            if(node.get("op").equals("&&") || node.get("op").equals("<") ){
                 ollir.append(String.format("%s %s.bool %s", leftSide, node.get("op"), rightSide));
             }else {
                 ollir.append(String.format("%s %s.i32 %s", leftSide, node.get("op"), rightSide));
