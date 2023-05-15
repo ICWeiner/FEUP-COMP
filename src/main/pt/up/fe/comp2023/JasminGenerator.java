@@ -144,6 +144,10 @@ public class JasminGenerator {
         StringBuilder stringBuilder = new StringBuilder();
         //switch (instruction.getCondition().getOpType()) {
 
+        if (instruction instanceof OpCondInstruction){
+
+        }
+
         if (instruction instanceof OpCondInstruction) {
             OpInstruction opInstruction = ((OpCondInstruction) instruction).getCondition();
             Operation operation = opInstruction.getOperation();
@@ -159,8 +163,12 @@ public class JasminGenerator {
                     // ...
                     this.decrementStackCounter(1);
                     break;
+                case LTH:
+
+                    //stringBuilder.append(dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable)).toString();
+                    break;
                 default:
-                    return "Error in CondBranchInstruction";
+                    return "Error in CondBranchInstruction " + operation.getOpType() + " " ;
             }
         }
 
