@@ -134,8 +134,39 @@ public class JasminGenerator {
                     BuilderOfStrings.append(dealWithGetFieldInstruction((GetFieldInstruction) instruction, varTable)).toString();
             case RETURN ->
                     BuilderOfStrings.append(dealWithReturnInstruction((ReturnInstruction) instruction, varTable)).toString();
+            case BRANCH ->
+                    BuilderOfStrings.append(dealWithCondBranchInstruction((CondBranchInstruction) instruction, varTable)).toString();
             default -> "Error in Instructions";
         };
+    }
+
+    private String dealWithCondBranchInstruction(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
+        StringBuilder stringBuilder = new StringBuilder();
+        //switch (instruction.getCondition().getOpType()) {
+
+        if (instruction instanceof OpCondInstruction) {
+            OpInstruction opInstruction = ((OpCondInstruction) instruction).getCondition();
+            Operation operation = opInstruction.getOperation();
+
+            switch (operation.getOpType()) {
+                case NOTB:
+                    stringBuilder.append(this.loadElement(instruction.getOperands().get(0), varTable))
+                            .append("ifeq ")
+                            .append(instruction.getLabel())
+                            .append("\n");
+
+                    // ..., value →
+                    // ...
+                    this.decrementStackCounter(1);
+                    break;
+                default:
+                    return "Error in CondBranchInstruction";
+            }
+        }
+
+
+
+        return stringBuilder.toString();
     }
 
     private String dealWithReturnInstruction(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {

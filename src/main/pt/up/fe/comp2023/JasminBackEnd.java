@@ -18,10 +18,10 @@ public class JasminBackEnd implements JasminBackend {
         ClassUnit ollirClass = ollirResult.getOllirClass();
         try{
             ollirClass.checkMethodLabels();
-            ollirClass.buildCFGs();
+            //ollirClass.buildCFGs();
             //ollirClass.outputCFGs();
-            ollirClass.buildVarTables();
-            ollirClass.show();
+            //ollirClass.buildVarTables();
+            //ollirClass.show();
 
             String CodeofJasmin = new JasminGenerator(ollirClass).dealWithClass();
 
