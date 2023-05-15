@@ -72,7 +72,7 @@ public class Launcher {
 
         System.out.println(jasminResult.getJasminCode());
 
-        jasminResult.run();
+        //jasminResult.run();
         // ... add remaining stages
     }
 
