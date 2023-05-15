@@ -56,14 +56,14 @@ expression
     : '(' expression ')' #Parenthesis
     | expression '[' expression ']' #ArrayAccess
     | expression '.' value=ID '(' ( expression ( ',' expression )* )? ')' #MethodCall
-    | expression op='.' 'length' #LengthOp //#AccessOp
+    | expression '.' op='length' #LengthOp //#AccessOp
+    | 'new' name=ID '(' ')' #GeneralDeclaration
+    | 'new' 'int' '[' expression ']' #IntArrayDeclaration
     | op='!' expression #UnaryOp
     | expression op=('*' | '/') expression #BinaryOp
     | expression op=('+' | '-') expression #BinaryOp
     | expression op='<' expression #BinaryOp
     | expression op='&&' expression #BinaryOp
-    | 'new' name=ID '(' ')' #GeneralDeclaration
-    | 'new' 'int' '[' expression ']' #IntArrayDeclaration
     | value=('true' | 'false') #Boolean
     | 'this' #This
     | value=INTEGER #Integer

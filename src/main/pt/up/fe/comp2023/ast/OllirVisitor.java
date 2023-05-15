@@ -406,7 +406,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             }
 
         } else {
-            if(node.get("op").equals("&&") || node.get("op").equals("<") ){
+            if(node.get("op").equals("&&") || node.get("op").equals("<")){
                 ollir.append(String.format("%s %s.bool %s", leftSide, node.get("op"), rightSide));
             }else {
                 ollir.append(String.format("%s %s.i32 %s", leftSide, node.get("op"), rightSide));
@@ -848,24 +848,34 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         int count = while_sequence++;
 
-        ollir.append(String.format("loop%d:\n", count));
-
         String condition = (String) visit(ConditionNode, Collections.singletonList("WHILE")).get(0);
-        String[] conditionParts = condition.split("\n");
+        /*String[] conditionParts = condition.split("\n");
         if (conditionParts.length > 1) {
             for (int i = 0; i < conditionParts.length - 1; i++) {
                 ollir.append(conditionParts[i]).append("\n");
             }
-        }
+        }*/
 
-        if (conditionParts[conditionParts.length - 1].contains("==.bool 1.bool")) {
+        /*if (conditionParts[conditionParts.length - 1].contains("==.bool 1.bool")) {
             String conditionAux = conditionParts[conditionParts.length - 1].split(" ==.bool ")[0];
             ollir.append(String.format("if (%s !.bool %s) goto endloop%d;\n", conditionAux, conditionAux, count));
         } else {
             Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
             ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), conditionParts[conditionParts.length - 1]));
             ollir.append(String.format("if (%s !.bool %s) goto endloop%d;\n", OllirTemplates.variable(aux), OllirTemplates.variable(aux), count));
+        }*/
+
+        if (condition.contains("==.bool 1.bool")) {
+            String conditionAux = condition.split(" ==.bool ")[0];
+            ollir.append(String.format("if (!.bool %s) goto endloop%d;\n", conditionAux, count));
+        } else {
+            Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), condition));
+            ollir.append(String.format("if (!.bool %s) goto endloop%d;\n", OllirTemplates.variable(aux), count));
         }
+
+        ollir.append(String.format("loop%d:\n", count));
+
 
         List<String> body = new ArrayList<>();
         for (JmmNode child : codeNode.getChildren()){
@@ -873,7 +883,16 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         }
         ollir.append(String.join("\n", body)).append("\n");
 
-        ollir.append(String.format("goto loop%d;\n", count));
+        if (condition.contains("==.bool 1.bool")) {
+            String conditionAux = condition.split(" ==.bool ")[0];
+            ollir.append(String.format("if (%s) goto body%d;\n", conditionAux, count));
+        } else {
+            Symbol aux = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=.bool %s;\n", OllirTemplates.variable(aux), condition));
+            ollir.append(String.format("if (%s) goto body%d;\n", OllirTemplates.variable(aux), count));
+        }
+
+        //ollir.append(String.format("goto loop%d;\n", count));
 
         ollir.append(String.format("endloop%d:", count));
 

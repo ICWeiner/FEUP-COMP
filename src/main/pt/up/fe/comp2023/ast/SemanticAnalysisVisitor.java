@@ -206,6 +206,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     }
                     else if(child.getKind().equals("MethodCall")) {
                         if(imports.contains(child.getJmmChild(0).get("value"))) return true;
+                        if(child.getJmmChild(0).getKind().equals("Identifier") && imports.contains(table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName).getName())) return true;
                         if(!visit(child,true)) {
                             if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
                             return false;
