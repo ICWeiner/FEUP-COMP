@@ -73,13 +73,16 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 20");
         visited.add(node);
 
-        StringBuilder ollir = new StringBuilder("!.bool ");
+        StringBuilder ollir = new StringBuilder();
         String ollirChild = (String) visit(node.getChildren().get(0), Collections.singletonList("UNARY")).get(0);
+
+        String temp = "temporary" + temp_sequence++ + ".bool";
+        ollir.append(String.format("%s :=.bool !.bool %s;\n", temp, ollirChild));
 
         ollir.append(ollirChild);
 
 
-        return Collections.singletonList(ollir.toString());
+        return Arrays.asList(ollir.toString(),temp);
     }
 
     private List<Object> dealWithProgram(JmmNode node,List<Object> data){
@@ -222,7 +225,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
 
         List<Object> visitResult;
-        System.out.println("visiting ArrayAssignment");
+
 
         // ARRAY ACCESS
         if ( node.getKind().equals("ArrayAssignment")) {
@@ -236,24 +239,18 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             }
             String indexName = !classField ? currentMethod.isParameter(indexVariable.getKey()) : null;
             List<Object> indexVisitResult = visit(indexNode, Arrays.asList(indexClassField ? "FIELD" : "ASSIGNMENT", indexVariable.getKey(), "ARRAY_ACCESS"));
-            System.out.println("indexvisitresult is :" +indexVisitResult);
+
             String indexResult = (String) indexVisitResult.get(0);
 
             visitResult = visit(node.getChildren().get(1), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "ARRAY_ACCESS"));
             String target = (String) visitResult.get(0);
-            System.out.println("target is :" +target);
+
 
 
             if (!classField) {
-                System.out.println("ESTOU AQUI");
+
                 String temp = "temporary" + temp_sequence++ + ".i32";
                 ollir.append(String.format("%s :=.i32 %s;\n", temp, indexVisitResult.get(0)));
-
-                System.out.println("Var variable is :" + variable.getKey());
-                System.out.println("Var indexName is :" + indexName);
-                System.out.println("Var name is :" + name);
-                System.out.println("Var result is :" + target);
-                System.out.println("Var temp is :" + temp);
 
                 ollir.append(String.format("%s :=%s %s;\n",
                         OllirTemplates.arrayaccess(new Symbol(new Type("int", true),node.get("name")),name,temp),
@@ -522,7 +519,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 12");
         visited.add(node);
 
-        System.out.println("at start of method call current temp counter is :" + temp_sequence );
 
         String methodClass;
         StringBuilder ollir = new StringBuilder();
@@ -536,6 +532,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         Map.Entry<List<Type>, String> params = getParametersList(children, ollir);
 
+        System.out.println("PARAMS IS :" + params.getValue());
+
         String methodString;
         if ( methodNode.getKind().equals("LengthOp") || methodNode.getKind().equals("ArrayAccess") ) methodString = "";
         else methodString = methodNode.get("value");
@@ -545,8 +543,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 methodString += "::" + param.getName() + ":" + (param.isArray() ? "true" : "false");
             }
         }
-        System.out.println("methodString is :" + methodString );
-        System.out.println("params.getvalue is :"  + params.getValue());
         Type returnType = table.getReturnType(methodString);
         JmmMethod method;
 
@@ -623,6 +619,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     }
                 } else {
                     // Declared method called on "this
+                    System.out.println("ENTREI NO 5");
                     ollirExpression = OllirTemplates.invokevirtual(method.getName(), method.getReturnType(),  params.getValue());
                     expectedType = method.getReturnType();
                 }
@@ -640,9 +637,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     ollir.append(parts[i]).append("\n");
                 }
             }*/
-            System.out.println("INSIDE ARRAY ACCESS OF METHOD CALL");
-            System.out.println("var array is " + array);
-            //System.out.println("var index is " + index);
 
 
             ollirExpression = OllirTemplates.arrayaccess(array, (String) targetReturn.get(2), params.getValue());
@@ -675,6 +669,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
                 } else {
                     // Declared method called on "this"
+                    System.out.println("ENTREI NO 1");
                     ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(auxiliary), method.getName(), method.getReturnType(), params.getValue());
                     expectedType = method.getReturnType();
                 }
@@ -683,15 +678,20 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 if (methodClass.equals("method")) {//TODO:? this used to be invokespecial, might not be correct this way or need more cases
 
                     if (assignment != null) {
+                        System.out.println("ENTREI NO 2");
                         ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable((Symbol) targetReturn.get(1)),  methodNode.get("value"), assignment.getType(), params.getValue());
                         expectedType = assignment.getType();
                     } else {
                         expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
+                        System.out.println("ENTREI NO 3");
                         ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable((Symbol) targetReturn.get(1)), params.getValue(), expectedType,  params.getValue());
                     }
                 } else if (!methodClass.equals("length")) {
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
-
+                    System.out.println("ENTREI NO 4");
+                    System.out.println("method.getName() :" + method.getName());
+                    System.out.println("method.getReturnType() :" + method.getReturnType());
+                    System.out.println("params.getValue() :" + params.getValue());
                     ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), method.getName(), method.getReturnType(), params.getValue());
                     expectedType = method.getReturnType();
                 }else {
@@ -723,9 +723,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (data.get(0).equals("EXPR_STMT")||data.get(0).equals("METHOD") || data.get(0).equals("IF") || data.get(0).equals("ELSE") || data.get(0).equals("WHILE")) {
             ollir.append(";");
         }
-
-        System.out.println("at end of method call current temp counter is :" + temp_sequence );
-        System.out.println("at end of method call current ollir is :" + ollir);
 
         if (methodNode.getJmmParent().getKind().equals("MethodCall") || methodNode.getJmmParent().getKind().equals("ArrayAccess")  && data.get(0).equals("PARAM")){
             return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1),"PARAM");
@@ -776,8 +773,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         String ollir =  OllirTemplates.arrayaccess(new Symbol(new Type("int", true), indexVisitResult), null, targetVisitResult);
 
-        System.out.println("ON ARRAY ACCESS VISIT");
-        System.out.println("ollir built on visit is" + ollir);
 
         //String visit = (String) visit(node.getChildren().get(0), Arrays.asList("RETURN")).get(0);
 
@@ -904,12 +899,39 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         List<Type> params = new ArrayList<>();
         List<String> paramsOllir = new ArrayList<>();
 
+        System.out.println("PARAMETERS LIST CHILDREN IS :");
+
+        for (JmmNode child : children) {
+            System.out.println(child);
+        }
+
         for (JmmNode child : children) {
             Type type;
             String var;
             String[] statements;
             String result;
             switch (child.getKind()) {
+                case "UnaryOp":
+                    //var = (String) visit(child, Arrays.asList("PARAM")).get(0);
+
+                    List<Object> visitResult = visit(child, Arrays.asList("PARAM"));
+                    var = (String) visitResult.get(1);
+                    String tempVar = (String) visitResult.get(0);
+
+                    statements = var.split("\n");
+                    System.out.println("VISIT RESULT :"  + tempVar.split("\n")[0]);
+
+                    ollir.append(tempVar.split("\n")[0]).append("\n");
+                    result = binaryOperations(statements, ollir, new Type("boolean", false));
+                    params.add(new Type("boolean", false));
+
+
+
+                    paramsOllir.add(result);
+                    break;
+
+                    //paramsOllir.add(var);
+                    //break;
                 case "Integer":
                     type = new Type("int", false);
                     paramsOllir.add(String.format("%s%s", child.get("value"), OllirTemplates.type(type)));
