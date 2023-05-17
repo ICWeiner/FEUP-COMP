@@ -75,33 +75,19 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
+        String ollirChild = (String) visit(node.getChildren().get(0), Collections.singletonList("UNARY")).get(0);
 
-        System.out.println("node.getChildren().get(0) :" + node.getChildren().get(0));
+        String temp = "temporary" + temp_sequence++ + ".bool";
+        ollir.append(String.format("%s :=.bool !.bool %s;\n", temp, ollirChild));
 
-        if( node.getChildren().get(0).getKind().equals("Identifier") || node.getChildren().get(0).getKind().equals("Boolean")){//TODO: BAND-AID FIX FOR THIS CASE b = (a && !a);
-            System.out.println("OLA");
-            String ollirChild = (String) visit(node.getChildren().get(0), Collections.singletonList("UNARY")).get(0);
-
-            ollir.append("!.bool ").append(ollirChild);
-            return Arrays.asList(ollir.toString());
-        }else{
-            String ollirChild = (String) visit(node.getChildren().get(0), Collections.singletonList("UNARY")).get(0);
-
-            String temp = "temporary" + temp_sequence++ + ".bool";
-            ollir.append(String.format("%s :=.bool !.bool %s;\n", temp, ollirChild));
-
-            ollir.append(ollirChild);
-
-            return Arrays.asList(ollir.toString(),temp);
-        }
+        ollir.append(ollirChild);
 
 
-
-        /*if(data.get(0).equals("BINARY")){
+        if(data.get(0).equals("BINARY")){//TODO: DEAL WITH THIS CASE b = (a && !a);
             System.out.println("OLAAAAA");
             Arrays.asList("Test");
-        }*/
-
+        }
+        return Arrays.asList(ollir.toString(),temp);
     }
 
     private List<Object> dealWithParenthesis(JmmNode node,List<Object> data){
