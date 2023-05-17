@@ -55,6 +55,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         this.addVisit("WhileStmt",this::dealWithWhileStatement);
 
         this.addVisit("ArrayAccess", this::dealWithMethodCall);
+        this.addVisit("Parenthesis", this::dealWithParenthesis);
 
         this.addVisit("UnaryOp",this::dealWithUnaryOperation);
 
@@ -83,6 +84,20 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
 
         return Arrays.asList(ollir.toString(),temp);
+    }
+
+    private List<Object> dealWithParenthesis(JmmNode node,List<Object> data){
+        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 20");
+        visited.add(node);
+
+        StringBuilder ollir = new StringBuilder();
+        String ollirChild = (String) visit(node.getChildren().get(0), Collections.singletonList("Parenthesis")).get(0);
+
+
+        ollir.append(ollirChild);
+
+
+        return Collections.singletonList(ollir.toString());
     }
 
     private List<Object> dealWithProgram(JmmNode node,List<Object> data){
