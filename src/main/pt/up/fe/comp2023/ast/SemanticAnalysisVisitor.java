@@ -202,12 +202,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
 
         if(!imports.contains(leftChildType.getName()) && methods.contains(node.get("value"))) {
-            /* TODO
-               if(!leftChildType.getName().equals(table.getClassName())) {
+            if(!leftChildType.getName().equals(table.getClassName())) { //TODO
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Variable is not of class type"));
                 return false;
-                }
-            */
+            }
             List<Symbol> parameters = table.getParameters(node.get("value"));
             if((node.getChildren().size()-1 != parameters.size())) {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Wrong number of parameters"));
@@ -340,7 +338,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO tratar melhor das GeneralDeclarations
                     && !((child.getKind().equals("BinaryOp") && (((child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equalsIgnoreCase("boolean")) || (!(child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equals("int"))) && visit(child,true)))
-                    && !(child.getKind().equals("MethodCall") && visit(child,true) && table.getReturnType(child.get("value")).equals(nodeType))
+                    && !(child.getKind().equals("MethodCall") && visit(child,true)) //TODO fix -> && table.getReturnType(child.get("value")).equals(nodeType))
                     && !(child.getKind().equals("ArrayAccess") && !nodeType.isArray() && visit(child,true) && nodeType.getName().equals("int"))
                     && !(child.getKind().equals("LengthOp") && nodeType.isArray())
                     && !(child.getKind().equals("This") && !currentMethodName.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
