@@ -339,6 +339,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO tratar melhor das GeneralDeclarations
                     && !((child.getKind().equals("BinaryOp") && (((child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equalsIgnoreCase("boolean")) || (!(child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equals("int"))) && visit(child,true)))
                     && !(child.getKind().equals("MethodCall") && visit(child,true)) //TODO fix -> && table.getReturnType(child.get("value")).equals(nodeType))
+                    && !(child.getKind().equals("UnaryOp") && visit(child,true) && nodeType.getName().equals("boolean"))
                     && !(child.getKind().equals("ArrayAccess") && !nodeType.isArray() && visit(child,true) && nodeType.getName().equals("int"))
                     && !(child.getKind().equals("LengthOp") && nodeType.isArray())
                     && !(child.getKind().equals("This") && !currentMethodName.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
@@ -409,6 +410,9 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement is not boolean"));
                 return false;
             }
+        }
+        else if (child.getKind().equals("UnaryOp")) {
+            if(!visit(child,true)) return false;
         }
         else if (!child.getKind().equals("Boolean")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Conditional statement is not boolean"));
