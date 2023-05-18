@@ -340,7 +340,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
                     && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO tratar melhor das GeneralDeclarations
                     && !((child.getKind().equals("BinaryOp") && (((child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equalsIgnoreCase("boolean")) || (!(child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equals("int"))) && visit(child,true)))
-                    && !(child.getKind().equals("MethodCall") && visit(child,true)) //TODO && table.getReturnType(child.get("value")).equals(nodeType))
+                    && !(child.getKind().equals("MethodCall") && visit(child,true) && table.getReturnType(child.get("value")).equals(nodeType))
                     && !(child.getKind().equals("ArrayAccess") && !nodeType.isArray() && visit(child,true) && nodeType.getName().equals("int"))
                     && !(child.getKind().equals("LengthOp") && nodeType.isArray())
                     && !(child.getKind().equals("This") && !currentMethodName.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
