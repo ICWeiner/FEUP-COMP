@@ -56,6 +56,7 @@ public class Launcher {
         JmmAnalyser jmmAnalyser = new JmmAnalyser();
 
         JmmSemanticsResult semanticResults = jmmAnalyser.semanticAnalysis(parserResult);
+        if(!semanticResults.getReports().isEmpty()) return;
 
         //OLLIR Generation
         JmmOptimizer jmmOptimizer = new JmmOptimizer();
