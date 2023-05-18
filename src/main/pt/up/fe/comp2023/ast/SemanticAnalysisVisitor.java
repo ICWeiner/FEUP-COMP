@@ -36,6 +36,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         this.addVisit("Identifier", this::dealWithIdentifier);
         this.addVisit("MethodDeclaration", this::dealWithMethod);
         this.addVisit("ReturnDeclaration", this::dealWithReturn);
+        this.addVisit("UnaryOp", this::dealWithUnaryOp);
     }
 
     private Boolean dealWithDefault(JmmNode node, Boolean data) {
@@ -97,6 +98,14 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 if(!((table.getReturnType(child.get("value")) == null && !imports.isEmpty())
                     || (table.getReturnType(child.get("value")) != null && table.getReturnType(currentMethodName).getName().equals(table.getReturnType(child.get("value")).getName())))) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Method Call: Incompatible Return in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            if(child.getKind().equals("UnaryOp")) {
+                if(visit(child,true)) return false;
+                if(table.getReturnType(currentMethodName).getName().equals("boolean")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: UnaryOp: Incompatible Return in " + currentMethodName + " method"));
+                    return false;
                 }
             }
             //TODO é provavel que algumas condições não estejam bem 💀
@@ -212,6 +221,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                             return false;
                         }
                         childType = new Type(table.getReturnType(child.get("value")).getName(), false);
+                    }
+                    else if(child.getKind().equals("UnaryOp")) {
+                        if(!visit(child,true)) return false;
+                        childType = new Type("boolean", false);
                     }
                     else if (child.getKind().equals("This")) {
                         if(currentMethodName.equals("main")) {
@@ -460,6 +473,25 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         return true;
     }
 
+    private Boolean dealWithUnaryOp(JmmNode node, Boolean data) {
+        System.out.println("UnaryOp: child: " + node.getJmmChild(0));
+
+        JmmNode child = node.getJmmChild(0);
+        Type childType = table.getVariableType(child.get("value"), currentMethodName);
+
+        if (childType == null) {
+            if(!child.getKind().equals("Boolean")) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Unary Op: Variable not declared"));
+                return false;
+            }
+        }
+        else if(!childType.getName().equalsIgnoreCase("boolean")) {
+            reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Unary Op: Variable is not a boolean"));
+            return false;
+        }
+        return true;
+    }
+
     ////////////////////////////////////////////////////////////
     ///////////////Semantic Analysis Utils/////////////////////
     //////////////////////////////////////////////////////////
@@ -483,6 +515,10 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
         else if(child.getKind().equals("LengthOp")) {
             return new Type("int",false);
+        }
+        else if(child.getKind().equals("UnaryOp")) {
+            if(!visit(child,true)) return null;
+            return new Type("boolean",false);
         }
         else if (child.getKind().equals("Identifier")) {
             Type childType = table.getVariableType(child.get("value"),currentMethodName);
@@ -508,6 +544,9 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
         }
         else if(index.getKind().equals("LengthOp")) {
             return table.getVariableType(index.getJmmChild(0).get("value"), currentMethodName).isArray();
+        }
+        else if(index.getKind().equals("UnaryOp")) {
+            return false;
         }
 
         Type indexType = table.getVariableType(index.get("value"), currentMethodName);
