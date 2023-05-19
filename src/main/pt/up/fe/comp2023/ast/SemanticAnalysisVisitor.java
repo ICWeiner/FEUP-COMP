@@ -96,7 +96,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(child.getKind().equals("MethodCall")) {
                 if(!visit(child,true)) return false;
                 if(!((table.getReturnType(child.get("value")) == null && !imports.isEmpty())
-                    || (table.getReturnType(child.get("value")) != null && table.getReturnType(currentMethodName).getName().equals(table.getReturnType(child.get("value")).getName())))) {
+                        || (table.getReturnType(child.get("value")) != null && table.getReturnType(currentMethodName).getName().equals(table.getReturnType(child.get("value")).getName())))) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Method Call: Incompatible Return in " + currentMethodName + " method"));
                     return false;
                 }
@@ -141,7 +141,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     return false;
                 }
             }
-            else if(child.getKind().equals("IntArrayDeclaration")) {
+            else if(child.getKind().equals("IntArrayDeclaration")) { //TODO array index
                 if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getJmmChild(0).getKind().equals("Integer"))) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: IntArrayDeclaration: Incompatible Return in " + currentMethodName + " method"));
                     return false;
@@ -357,21 +357,58 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     return false;
                 }
             }
-            //TODO é provavel que algumas condições não estejam bem 💀
-            if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration")
-                    && (child.getJmmChild(0).getKind().equals("Integer")
-                    || (table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName) != null && table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName).getName().equals("int"))))
-
-                    && !(!nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("Integer"))
-                    && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
-                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO tratar melhor das GeneralDeclarations
-                    && !((child.getKind().equals("BinaryOp") && (((child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equalsIgnoreCase("boolean")) || (!(child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equals("int"))) && visit(child,true)))
-                    && !(child.getKind().equals("MethodCall") && visit(child,true)) //TODO fix -> && table.getReturnType(child.get("value")).equals(nodeType))
-                    && !(child.getKind().equals("UnaryOp") && visit(child,true) && nodeType.getName().equals("boolean"))
-                    && !(child.getKind().equals("ArrayAccess") && !nodeType.isArray() && visit(child,true) && nodeType.getName().equals("int"))
-                    && !(child.getKind().equals("LengthOp") && nodeType.isArray())
-                    && !(child.getKind().equals("This") && !currentMethodName.equals("main") && ((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName())))) {
-                if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethodName + " method")); //TODO as mensagens dos reports podiam estar melhor
+            if(child.getKind().equals("MethodCall")) { //TODO fix -> && table.getReturnType(child.get("value")).equals(nodeType))
+                return visit(child, true);
+            }
+            else if(child.getKind().equals("UnaryOp")) {
+                if(!visit(child,true)) return false;
+                if(!nodeType.getName().equals("boolean")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to boolean in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            else if(child.getKind().equals("BinaryOp")) {
+                if(!visit(child,true)) return false;
+                if(!(((child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equalsIgnoreCase("boolean"))
+                        || (!(child.get("op").equals("&&") || child.get("op").equals("<")) && nodeType.getName().equals("int")))) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assignment in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            else if(child.getKind().equals("ArrayAccess")) {
+                if(!visit(child,true)) return false;
+                if(!(!nodeType.isArray() && nodeType.getName().equals("int"))) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to int in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            else if(child.getKind().equals("LengthOp")) {
+                return nodeType.isArray() && nodeType.getName().equals("int");
+            }
+            else if(child.getKind().equals("IntArrayDeclaration")) { //TODO array index
+                if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getJmmChild(0).getKind().equals("Integer"))) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: IntArrayDeclaration: Assign in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            else if(child.getKind().equals("GeneralDeclaration")) {
+                if(!nodeType.getName().equals(child.get("name"))) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: General Declaration: Assign in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            else if(child.getKind().equals("This")) {
+                if(currentMethodName.equals("main")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: 'this' invoked in main method"));
+                    return false;
+                }
+                if(!((superClassName != null && superClassName.equals(nodeType.getName())) || className.equals(nodeType.getName()))) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to 'this' in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            else if(!(!nodeType.isArray() && child.getKind().equals("Integer") && nodeType.getName().equals("int")) && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to " + child.getKind() + " in " + currentMethodName + " method"));
                 return false;
             }
         }
