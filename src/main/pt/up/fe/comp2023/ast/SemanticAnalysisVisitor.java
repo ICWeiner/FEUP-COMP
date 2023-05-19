@@ -357,8 +357,12 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     return false;
                 }
             }
-            if(child.getKind().equals("MethodCall")) { //TODO fix -> && table.getReturnType(child.get("value")).equals(nodeType))
-                return visit(child, true);
+            if(child.getKind().equals("MethodCall")) {
+                if(!visit(child, true)) return false;
+                if(!child.getJmmChild(0).getKind().equals("This") && !table.getImports().contains(child.getJmmChild(0).get("value")) && !table.getReturnType(child.get("value")).equals(nodeType)) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to " + table.getReturnType(child.get("value")) + " in " + currentMethodName + " method"));
+                    return false;
+                }
             }
             else if(child.getKind().equals("UnaryOp")) {
                 if(!visit(child,true)) return false;
