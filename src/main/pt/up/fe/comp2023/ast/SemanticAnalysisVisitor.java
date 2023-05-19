@@ -358,12 +358,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                 }
             }
             if(child.getKind().equals("MethodCall")) { //TODO fix -> && table.getReturnType(child.get("value")).equals(nodeType))
-                if(!visit(child, true)) return false;
-                if(child.getJmmChild(0).getKind().equals("Identifier") && table.getImports().contains(table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName).getName())) return true;
-                if(!child.getJmmChild(0).getKind().equals("This") && !table.getImports().contains(child.getJmmChild(0).get("value")) && !table.getReturnType(child.get("value")).equals(nodeType)) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to " + table.getReturnType(child.get("value")).getName() + " in " + currentMethodName + " method"));
-                    return false;
-                }
+                return visit(child, true);
             }
             else if(child.getKind().equals("UnaryOp")) {
                 if(!visit(child,true)) return false;
@@ -380,22 +375,25 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     return false;
                 }
             }
-            else if(child.getKind().equals("ArrayAccess") || child.getKind().equals("LengthOp")) {
-                if(child.getKind().equals("ArrayAccess") && !visit(child,true)) return false;
+            else if(child.getKind().equals("ArrayAccess")) {
+                if(!visit(child,true)) return false;
                 if(!(!nodeType.isArray() && nodeType.getName().equals("int"))) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to int in " + currentMethodName + " method"));
                     return false;
                 }
             }
+            else if(child.getKind().equals("LengthOp")) {
+                return nodeType.isArray() && nodeType.getName().equals("int");
+            }
             else if(child.getKind().equals("IntArrayDeclaration")) { //TODO array index
                 if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getJmmChild(0).getKind().equals("Integer"))) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: IntArrayDeclaration: Assign " + nodeType.getName() + " to int[] in " + currentMethodName + " method"));
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: IntArrayDeclaration: Assign in " + currentMethodName + " method"));
                     return false;
                 }
             }
             else if(child.getKind().equals("GeneralDeclaration")) {
                 if(!nodeType.getName().equals(child.get("name"))) {
-                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: General Declaration: Assignment in " + currentMethodName + " method"));
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: General Declaration: Assign in " + currentMethodName + " method"));
                     return false;
                 }
             }
