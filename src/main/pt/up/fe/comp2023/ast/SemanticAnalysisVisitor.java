@@ -101,25 +101,53 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     return false;
                 }
             }
-            if(child.getKind().equals("UnaryOp")) {
+            else if(child.getKind().equals("UnaryOp")) {
                 if(visit(child,true)) return false;
                 if(table.getReturnType(currentMethodName).getName().equals("boolean")) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: UnaryOp: Incompatible Return in " + currentMethodName + " method"));
                     return false;
                 }
             }
-            //TODO é provavel que algumas condições não estejam bem 💀
-            if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getKind().equals("IntArrayDeclaration")
-                    && (child.getJmmChild(0).getKind().equals("Integer")
-                    || (table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName) != null && table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName).getName().equals("int"))))
-
-                    && !(!nodeType.isArray() && child.getKind().equals("Integer") && nodeType.getName().equals("int"))
-                    && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))
-                    && !(child.getKind().equals("GeneralDeclaration") && nodeType.getName().equals(child.get("name"))) //TODO tratar melhor das GeneralDeclarations
-                    && !((child.getKind().equals("BinaryOp") && ((child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") && table.getReturnType(currentMethodName).getName().equals("boolean")) || (!child.get("op").equals("&&") && nodeType.getName().equals("int") && table.getReturnType(currentMethodName).getName().equals("int"))) && visit(child,true)))
-                    && !(child.getKind().equals("ArrayAccess") && visit(child,true) && table.getReturnType(currentMethodName).getName().equals("int"))
-                    && child.getKind().equals("This") && !table.getReturnType(currentMethodName).getName().equals(className)
-                    && !(child.getKind().equals("LengthOp") && nodeType.isArray() && table.getReturnType(currentMethodName).getName().equals("int"))) {
+            else if(child.getKind().equals("GeneralDeclaration")) {
+                if(!nodeType.getName().equals(child.get("name"))) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: General Declaration: Incompatible Return in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            else if(child.getKind().equals("BinaryOp")) {
+                if(!visit(child,true)) return false;
+                if(!((child.get("op").equals("&&") && nodeType.getName().equalsIgnoreCase("boolean") && table.getReturnType(currentMethodName).getName().equals("boolean"))
+                        || (!child.get("op").equals("&&") && nodeType.getName().equals("int") && table.getReturnType(currentMethodName).getName().equals("int")))) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: BinaryOp: Incompatible Return in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            else if(child.getKind().equals("ArrayAccess")) {
+                if(!visit(child,true)) return false;
+                if(!table.getReturnType(currentMethodName).getName().equals("int")) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: BinaryOp: Incompatible Return in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            else if(child.getKind().equals("This")) {
+                if(!table.getReturnType(currentMethodName).getName().equals(className)) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible Return in " + currentMethodName + " method: 'this'"));
+                    return false;
+                }
+            }
+            else if(child.getKind().equals("LengthOp")) {
+                if(!(nodeType.isArray() && table.getReturnType(currentMethodName).getName().equals("int"))) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: LengthOp: Incompatible Return in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            else if(child.getKind().equals("IntArrayDeclaration")) {
+                if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getJmmChild(0).getKind().equals("Integer"))) {
+                    reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: IntArrayDeclaration: Incompatible Return in " + currentMethodName + " method"));
+                    return false;
+                }
+            }
+            else if(!(!nodeType.isArray() && child.getKind().equals("Integer") && nodeType.getName().equals("int")) && !(child.getKind().equals("Boolean") && nodeType.getName().equals("boolean"))) {
                 if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible return in " + currentMethodName + " method: " + child.getKind() + " and " + nodeType.getName()));  //TODO as mensagens dos reports podiam estar melhor
                 return false;
             }
