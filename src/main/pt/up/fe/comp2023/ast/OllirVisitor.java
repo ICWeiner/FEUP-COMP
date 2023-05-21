@@ -705,12 +705,13 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                         System.out.println("ENTREI NO 3");
                         ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable((Symbol) targetReturn.get(1)), params.getValue(), expectedType,  params.getValue());
                     }
+                }else if(method == null) {
+                    Symbol targetVariable = (Symbol) targetReturn.get(1);
+                    ollirExpression = OllirTemplates.invokevirtual( node.get("value"), assignment.getType(),  params.getValue());//OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), method.getName(), method.getReturnType(), params.getValue());
+                    //expectedType = assignment.getType();
+                    expectedType = (expectedType == null) ? new Type("void", false) : expectedType;
                 } else if (!methodClass.equals("length")) {
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
-                    System.out.println("ENTREI NO 4");
-                    System.out.println("method.getName() :" + method.getName());
-                    System.out.println("method.getReturnType() :" + method.getReturnType());
-                    System.out.println("params.getValue() :" + params.getValue());
                     ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), method.getName(), method.getReturnType(), params.getValue());
                     expectedType = method.getReturnType();
                 }else {
