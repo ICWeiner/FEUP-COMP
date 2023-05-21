@@ -705,7 +705,11 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                         System.out.println("ENTREI NO 3");
                         ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable((Symbol) targetReturn.get(1)), params.getValue(), expectedType,  params.getValue());
                     }
-                }else if(method == null) {
+                }else if (node.getKind().equals("LengthOp")){
+                    ollirExpression = OllirTemplates.arraylength(OllirTemplates.variable((Symbol) targetReturn.get(1), (String) targetReturn.get(2)));
+                    expectedType = new Type("int", false);
+                }
+                else if(method == null) {
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
                     ollirExpression = OllirTemplates.invokevirtual( node.get("value"), assignment.getType(),  params.getValue());//OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), method.getName(), method.getReturnType(), params.getValue());
                     //expectedType = assignment.getType();
@@ -714,9 +718,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     Symbol targetVariable = (Symbol) targetReturn.get(1);
                     ollirExpression = OllirTemplates.invokevirtual(OllirTemplates.variable(targetVariable), method.getName(), method.getReturnType(), params.getValue());
                     expectedType = method.getReturnType();
-                }else {
-                    ollirExpression = OllirTemplates.arraylength(OllirTemplates.variable((Symbol) targetReturn.get(1), (String) targetReturn.get(2)));
-                    expectedType = new Type("int", false);
                 }
             }
         }
