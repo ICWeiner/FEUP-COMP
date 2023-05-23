@@ -7,9 +7,6 @@ import pt.up.fe.comp.jmm.report.Report;
 import pt.up.fe.comp.jmm.report.ReportType;
 import pt.up.fe.comp.jmm.report.Stage;
 import pt.up.fe.comp.jmm.analysis.table.Type;
-
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
@@ -141,7 +138,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                     return false;
                 }
             }
-            else if(child.getKind().equals("IntArrayDeclaration")) { //TODO array index
+            else if(child.getKind().equals("IntArrayDeclaration")) {
+                if(!verifyArrayIndex(child.getJmmChild(0))) {
+                    if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
+                    return false;
+                }
                 if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getJmmChild(0).getKind().equals("Integer"))) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: IntArrayDeclaration: Incompatible Return in " + currentMethodName + " method"));
                     return false;
@@ -249,7 +250,7 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
                         childType = new Type("int",false);
                     }
                     else if(child.getKind().equals("MethodCall")) {
-                        if(imports.contains(child.getJmmChild(0).get("value"))) return true;
+                        if(!child.getJmmChild(0).getKind().equals("This") && !child.getJmmChild(0).getKind().equals("GeneralDeclaration") && imports.contains(child.getJmmChild(0).get("value"))) return true;
                         if(child.getJmmChild(0).getKind().equals("Identifier") && imports.contains(table.getVariableType(child.getJmmChild(0).get("value"),currentMethodName).getName())) return true;
                         if(!visit(child,true)) {
                             if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Incompatible arguments"));
@@ -330,6 +331,23 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array assignment is not an integer"));
             return false;
         }
+        else if(rightChild.getKind().equals("ArrayAccess")) {
+            return visit(rightChild, true);
+        }
+        else if(rightChild.getKind().equals("MethodCall")) {
+            if(!visit(rightChild, true)) return false;
+            if(!rightChild.getJmmChild(0).getKind().equals("This") && !rightChild.getJmmChild(0).getKind().equals("GeneralDeclaration") && table.getImports().contains(rightChild.getJmmChild(0).get("value"))) return true;
+            if(rightChild.getJmmChild(0).getKind().equals("Identifier") && table.getImports().contains(table.getVariableType(rightChild.getJmmChild(0).get("value"),currentMethodName).getName())) return true;
+            if(table.getSuper() != null && table.getImports().contains(table.getSuper()) && !table.getMethods().contains(rightChild.get("value"))) return true;
+            if(!table.getReturnType(rightChild.get("value")).equals(new Type("int",false))) {
+                reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Assign " + nodeType.getName() + " to " + table.getReturnType(rightChild.get("value")).getName() + " in " + currentMethodName + " method"));
+                return false;
+            }
+        }
+        else if(rightChild.getKind().equals("LengthOp")) {
+            Type type = table.getVariableType(rightChild.getJmmChild(0).get("value"), currentMethodName);
+            return type.isArray() && type.getName().equals("int");
+        }
         else if(!rightChild.getKind().equals("BinaryOp") && !rightChild.getKind().equals("Integer")) {
             reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array assignment is not an integer"));
             return false;
@@ -392,7 +410,11 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             else if(child.getKind().equals("LengthOp")) {
                 return nodeType.isArray() && nodeType.getName().equals("int");
             }
-            else if(child.getKind().equals("IntArrayDeclaration")) { //TODO array index
+            else if(child.getKind().equals("IntArrayDeclaration")) {
+                if(!verifyArrayIndex(child.getJmmChild(0))) {
+                    if(reports.isEmpty()) reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: Array index is not an integer"));
+                    return false;
+                }
                 if(!(nodeType.isArray() && nodeType.getName().equals("int") && child.getJmmChild(0).getKind().equals("Integer"))) {
                     reports.add(new Report(ReportType.ERROR, Stage.SEMANTIC, Integer.parseInt(node.get("lineStart")), Integer.parseInt(node.get("colStart")), "Error: IntArrayDeclaration: Assign in " + currentMethodName + " method"));
                     return false;
@@ -626,7 +648,8 @@ public class SemanticAnalysisVisitor extends AJmmVisitor<Boolean, Boolean> {
             return visit(index, true);
         }
         else if(index.getKind().equals("LengthOp")) {
-            return table.getVariableType(index.getJmmChild(0).get("value"), currentMethodName).isArray();
+            Type type = table.getVariableType(index.getJmmChild(0).get("value"), currentMethodName);
+            return type.isArray() && type.getName().equals("int");
         }
         else if(index.getKind().equals("UnaryOp")) {
             return false;

@@ -197,4 +197,11 @@ public class SemanticAnalysisTest {
                 .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/CT5CallMethods.jmm"));
         TestUtils.noErrors(result);
     }
+
+    @Test
+    public void customT6CallInheritedMethod() {
+        var result = TestUtils
+                .analyse(SpecsIo.getResource("pt/up/fe/comp/cp2eval/semanticanalysis/CT6CallInheritedMethod.jmm"));
+        TestUtils.noErrors(result);
+    }
 }

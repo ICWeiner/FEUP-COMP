@@ -1,0 +1,11 @@
+import superClass;
+
+class CallInheritedMethod extends superClass {
+
+    public static void main(String[] args) {
+        CallInheritedMethod t;
+        t = new CallInheritedMethod();
+        boolean a;
+        a = t.foo2();
+    }
+}
