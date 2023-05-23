@@ -141,40 +141,178 @@ public class JasminGenerator {
     }
 
     private String dealWithCondBranchInstruction(CondBranchInstruction instruction, HashMap<String, Descriptor> varTable) {
-        StringBuilder stringBuilder = new StringBuilder();
-        //switch (instruction.getCondition().getOpType()) {
+        StringBuilder BuilderOfStrings = new StringBuilder();
 
-        if (instruction instanceof OpCondInstruction){
+        Instruction Newcond;
+        if (instruction instanceof SingleOpCondInstruction) {
+            SingleOpCondInstruction singleOpCondInstruction = (SingleOpCondInstruction) instruction;
+            Newcond = singleOpCondInstruction.getCondition();
 
+        } else if (instruction instanceof OpCondInstruction) {
+            OpCondInstruction opCondInstruction = (OpCondInstruction) instruction;
+            Newcond = opCondInstruction.getCondition();
+
+        } else {
+            return "; ERROR: invalid CondBranchInstruction instance\n";
         }
 
-        if (instruction instanceof OpCondInstruction) {
-            OpInstruction opInstruction = ((OpCondInstruction) instruction).getCondition();
-            Operation operation = opInstruction.getOperation();
+        String operation;
+        switch (Newcond.getInstType()) {
+            case BINARYOPER -> {
+                BinaryOpInstruction binaryOpInstruction = (BinaryOpInstruction) Newcond;
+                switch (binaryOpInstruction.getOperation().getOpType()) {
+                    case LTH -> {
+                        Element leftElement = binaryOpInstruction.getLeftOperand();
+                        Element rightElement = binaryOpInstruction.getRightOperand();
 
-            switch (operation.getOpType()) {
-                case NOTB:
-                    stringBuilder.append(this.loadElement(instruction.getOperands().get(0), varTable))
-                            .append("ifeq ")
-                            .append(instruction.getLabel())
-                            .append("\n");
+                        Integer parsedInt = null;
+                        Element otherElement = null;
+                        operation = "if_icmplt";
 
-                    // ..., value →
-                    // ...
-                    this.decrementStackCounter(1);
-                    break;
-                case LTH:
+                        // instruction selection for 0 < x
+                        if (leftElement instanceof LiteralElement) {
+                            String literal = ((LiteralElement) leftElement).getLiteral();
+                            parsedInt = Integer.parseInt(literal);
+                            otherElement = rightElement;
+                            operation = "ifgt";
 
-                    //stringBuilder.append(dealWithBinaryOpInstruction((BinaryOpInstruction) instruction, varTable)).toString();
-                    break;
-                default:
-                    return "Error in CondBranchInstruction " + operation.getOpType() + " " ;
+                            // instruction selection for x < 0
+                        } else if (rightElement instanceof LiteralElement) {
+                            String literal = ((LiteralElement) rightElement).getLiteral();
+                            parsedInt = Integer.parseInt(literal);
+                            otherElement = leftElement;
+                            operation = "iflt";
+                        }
+
+                        if (parsedInt != null && parsedInt == 0) {
+                            BuilderOfStrings.append(this.getLoadToStack(otherElement, varTable));
+
+                        } else {
+                            BuilderOfStrings.append(this.getLoadToStack(leftElement, varTable))
+                                    .append(this.getLoadToStack(rightElement, varTable));
+
+                            operation = "if_icmplt";
+                        }
+
+                    }
+                    case ANDB -> {
+                        BuilderOfStrings.append(this.dealWithInstruction(Newcond, varTable, new HashMap<String, Instruction>()));
+                        operation = "ifne";
+                    }
+                    default -> {
+                        // not supposed to happen
+                        BuilderOfStrings.append("; Invalid BINARYOPER\n");
+                        BuilderOfStrings.append(this.dealWithInstruction(Newcond, varTable, new HashMap<String, Instruction>()));
+                        operation = "ifne";
+                    }
+                }
+            }
+            case UNARYOPER -> {
+                UnaryOpInstruction unaryOpInstruction = (UnaryOpInstruction) Newcond;
+                if (unaryOpInstruction.getOperation().getOpType() == NOTB) {
+                    BuilderOfStrings.append(this.getLoadToStack(unaryOpInstruction.getOperand(), varTable));
+                    operation = "ifeq";
+                } else {
+                    // not supposed to happen
+                    BuilderOfStrings.append("; Invalid UNARYOPER\n");
+                    BuilderOfStrings.append(this.dealWithInstruction(Newcond, varTable, new HashMap<String, Instruction>()));
+                    operation = "ifne";
+                }
+            }
+            default -> {
+                BuilderOfStrings.append(this.dealWithInstruction(Newcond, varTable, new HashMap<String, Instruction>()));
+                operation = "ifne";
             }
         }
 
+        BuilderOfStrings.append("\t").append(operation).append(" ").append(instruction.getLabel()).append("\n");
 
+        if (operation.equals("if_icmplt")) {
+            this.incrementStackCounter(-2);
+        } else {
+            this.incrementStackCounter(-1);
+        }
 
-        return stringBuilder.toString();
+        return BuilderOfStrings.toString();
+    }
+
+    private String getLoadToStack(Element element, HashMap<String, Descriptor> varTable) {
+        StringBuilder BuilderOfStrings = new StringBuilder();
+
+        if (element instanceof LiteralElement) {
+            String literal = ((LiteralElement) element).getLiteral();
+
+            if (element.getType().getTypeOfElement() == ElementType.INT32
+                    || element.getType().getTypeOfElement() == ElementType.BOOLEAN) {
+
+                int parsedInt = Integer.parseInt(literal);
+
+                if (parsedInt >= -1 && parsedInt <= 5) { // [-1,5]
+                    BuilderOfStrings.append("\ticonst_");
+                } else if (parsedInt >= -128 && parsedInt <= 127) { // byte
+                    BuilderOfStrings.append("\tbipush ");
+                } else if (parsedInt >= -32768 && parsedInt <= 32767) { // short
+                    BuilderOfStrings.append("\tsipush ");
+                } else {
+                    BuilderOfStrings.append("\tldc "); // int
+                }
+
+                if (parsedInt == -1) {
+                    BuilderOfStrings.append("m1");
+                } else {
+                    BuilderOfStrings.append(parsedInt);
+                }
+
+            } else {
+                BuilderOfStrings.append("\tldc ").append(literal);
+            }
+
+            this.incrementStackCounter(+1);
+
+        } else if (element instanceof ArrayOperand) {
+            ArrayOperand operand = (ArrayOperand) element;
+
+            BuilderOfStrings.append("\taload").append(this.getVariableNumber(operand.getName(), varTable)).append("\n"); // load array (ref)
+            this.incrementStackCounter(+1);
+
+            BuilderOfStrings.append(getLoadToStack(operand.getIndexOperands().get(0), varTable)); // load index
+            BuilderOfStrings.append("\tiaload"); // load array[index]
+
+            this.incrementStackCounter(-1);
+        } else if (element instanceof Operand) {
+            Operand operand = (Operand) element;
+            switch (operand.getType().getTypeOfElement()) {
+                case INT32, BOOLEAN -> BuilderOfStrings.append("\tiload").append(this.getVariableNumber(operand.getName(), varTable));
+                case OBJECTREF, STRING, ARRAYREF -> BuilderOfStrings.append("\taload").append(this.getVariableNumber(operand.getName(), varTable));
+                case THIS -> BuilderOfStrings.append("\taload_0");
+                default -> BuilderOfStrings.append("; ERROR: getLoadToStack() operand ").append(operand.getType().getTypeOfElement()).append("\n");
+            }
+
+            this.incrementStackCounter(+1);
+        } else {
+            BuilderOfStrings.append("; ERROR: getLoadToStack() invalid element instance\n");
+        }
+
+        BuilderOfStrings.append("\n");
+        return BuilderOfStrings.toString();
+    }
+
+    private String getVariableNumber(String name, HashMap<String, Descriptor> varTable) {
+        if (name.equals("this")) {
+            return "_0";
+        }
+
+        int virtualReg = varTable.get(name).getVirtualReg();
+
+        StringBuilder BuilderOfSTrings = new StringBuilder();
+
+        // virtual reg 0, 1, 2, 3 have specific operation
+        if (virtualReg < 4) BuilderOfSTrings.append("_");
+        else BuilderOfSTrings.append(" ");
+
+        BuilderOfSTrings.append(virtualReg);
+
+        return BuilderOfSTrings.toString();
     }
 
     private String dealWithReturnInstruction(ReturnInstruction instruction, HashMap<String, Descriptor> varTable) {
