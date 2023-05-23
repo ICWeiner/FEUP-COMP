@@ -473,7 +473,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         }
 
         if (field != null) {
-            String name = currentMethod.isParameter(field.getKey());
+            String name =null; //TODO: this line seems to cause issues for... reasons currentMethod.isParameter(field.getKey());
             if (classField && !scope.equals("CLASS")) {
                 StringBuilder ollir = new StringBuilder();
                 Symbol variable = new Symbol(field.getKey().getType(), "temporary" + temp_sequence++);
@@ -879,7 +879,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         int count = while_sequence++;
 
-        String condition = (String) visit(ConditionNode, Collections.singletonList("WHILE")).get(0);
+        String condition = (String) visit(ConditionNode, Collections.singletonList("IF")).get(0);
         /*String[] conditionParts = condition.split("\n");
         if (conditionParts.length > 1) {
             for (int i = 0; i < conditionParts.length - 1; i++) {
