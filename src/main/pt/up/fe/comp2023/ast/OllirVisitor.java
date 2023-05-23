@@ -75,12 +75,12 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
-        String ollirChild = (String) visit(node.getChildren().get(0), Collections.singletonList("UNARY")).get(0);
+        String result = (String) visit(node.getChildren().get(0), Collections.singletonList("UNARY")).get(0);
 
         String temp = "temporary" + temp_sequence++ + ".bool";
-        ollir.append(String.format("%s :=.bool !.bool %s;\n", temp, ollirChild));
+        ollir.append(String.format("%s :=.bool !.bool %s;\n", temp, result));
 
-        ollir.append(ollirChild);
+        ollir.append(temp);
 
 
         if(data.get(0).equals("BINARY")){//TODO: DEAL WITH THIS CASE b = (a && !a);
