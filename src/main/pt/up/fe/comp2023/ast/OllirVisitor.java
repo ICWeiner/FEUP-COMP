@@ -342,7 +342,22 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 6");
         visited.add(node);
 
-        String toReturn = OllirTemplates.objectinit(node.get("name"));
+        String toReturn;
+        if(data.get(0).equals("RETURN")){
+            StringBuilder builder = new StringBuilder();
+            Type type = new Type(node.get("name"), false);
+            Symbol auxiliary = new Symbol(type, "temporary" + temp_sequence++);
+            builder.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(auxiliary), OllirTemplates.type(type), OllirTemplates.objectinit(type.getName())));
+            builder.append(OllirTemplates.objectinstance(auxiliary)).append("\n");
+            builder.append(auxiliary.getName()).append(".").append(type.getName()).append("\n");
+
+            toReturn = builder.toString();
+        }else{
+            toReturn = OllirTemplates.objectinit(node.get("name"));
+        }
+
+
+
         if (data.get(0).equals("METHOD")) {
             toReturn += ";";
         }
@@ -489,13 +504,13 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         return Arrays.asList("ACCESS", node.get("value"));
     }
 
-    private List<Object> dealWithReturn(JmmNode node, List<Object> data) {
+    private List<Object> dealWithReturn(JmmNode node, List<Object> data) {//TODO FIX RETURN ARRAY OR NEW TEST()
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 10");
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
 
-        if(node.getNumChildren() ==1 ){
+        if(node.getNumChildren() == 1 ){
             if(node.getChildren().get(0).getKind().equals("This")){
                 ollir.append(OllirTemplates.ret(currentMethod.getReturnType(), ("this." + currentMethod.getReturnType().getName() )));
                 return Collections.singletonList(ollir.toString());
