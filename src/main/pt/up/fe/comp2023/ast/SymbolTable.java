@@ -175,17 +175,16 @@ public class SymbolTable implements pt.up.fe.comp.jmm.analysis.table.SymbolTable
                 return parameter.getType();
             }
         }
-        List<String> imports = getImports();
-        for (String i : imports) {
-            if (s.equals(i)) {
-                return new Type(i,false);
-            }
-        }
-
         List<Symbol> fields = getFields();
         for (Symbol field : fields) {
             if (field.getName().equals(s)) {
                 return field.getType();
+            }
+        }
+        List<String> imports = getImports();
+        for (String i : imports) {
+            if (s.equals(i)) {
+                return new Type(i,false);
             }
         }
 
