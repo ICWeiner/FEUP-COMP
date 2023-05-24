@@ -942,13 +942,30 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             String var;
             String[] statements;
             String result;
+            List<Object> visitResult;
+            String tempVar;
             switch (child.getKind()) {
+                case "Parenthesis":
+                    visitResult = visit(child, Arrays.asList("PARAM"));
+                    var = (String) visitResult.get(0);
+                    tempVar = (String) visitResult.get(0);
+
+                    statements = var.split("\n");
+
+                    ollir.append(tempVar.split("\n")[0]).append("\n");
+                    result = binaryOperations(statements, ollir, new Type("boolean", false));
+                    params.add(new Type("boolean", false));
+
+
+
+                    paramsOllir.add(result);
+                    break;
                 case "UnaryOp":
                     //var = (String) visit(child, Arrays.asList("PARAM")).get(0);
 
-                    List<Object> visitResult = visit(child, Arrays.asList("PARAM"));
+                    visitResult = visit(child, Arrays.asList("PARAM"));
                     var = (String) visitResult.get(1);
-                    String tempVar = (String) visitResult.get(0);
+                    tempVar = (String) visitResult.get(0);
 
                     statements = var.split("\n");
                     System.out.println("VISIT RESULT :"  + tempVar.split("\n")[0]);
@@ -987,24 +1004,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     params.add(((Symbol) variable.get(1)).getType());
                     paramsOllir.add(statements[statements.length - 1]);
                     break;
-                /*case "ArrayAccess":
-                    List<Object> accessExpression = visit(child, Arrays.asList("PARAM"));
-                    statements = ((String) accessExpression.get(0)).split("\n");
-                    if (statements.length > 1) {
-                        for (int i = 0; i < statements.length - 1; i++) {
-                            ollir.append(statements[i]).append("\n");
-                        }
-                    }
-                    ollir.append(String.format("%s%s :=%s %s;\n",//TODO: PROBLEMA AQUI
-                            "testtemporary" + temp_sequence,
-                            OllirTemplates.type((Type) accessExpression.get(1)),
-                            OllirTemplates.type((Type) accessExpression.get(1)),
-                            statements[statements.length - 1]));
-
-                    paramsOllir.add("temporary" + temp_sequence++ + OllirTemplates.type((Type) accessExpression.get(1)));
-
-                    params.add((Type) accessExpression.get(1));
-                    break;*/
                 case "BinaryOp":
                     var = (String) visit(child, Arrays.asList("PARAM")).get(0);
                     statements = var.split("\n");//TODO: falta testar :upside_down:
