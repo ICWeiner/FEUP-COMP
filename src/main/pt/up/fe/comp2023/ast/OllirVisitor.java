@@ -81,6 +81,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         String[] resultParts = result.split("\n");
 
+        for(int i = 0; i < resultParts.length; i++){
+            if (resultParts[i].contains(":=")) ollir.append(resultParts[i]).append("\n") ;
+        }
 
         ollir.append(String.format("%s :=.bool !.bool %s;\n", temp, resultParts[resultParts.length - 1]));
 
