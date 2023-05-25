@@ -792,7 +792,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
         Symbol aux = new Symbol(new Type("int", true), "temporary" + temp_sequence++);
 
-        ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(aux), ZOllirTemplates.type(aux.getType()), OllirTemplates.arrayinit(sizeParts[sizeParts.length - 1])));
+        ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(aux), OllirTemplates.type(aux.getType()), OllirTemplates.arrayinit(sizeParts[sizeParts.length - 1])));
         ollir.append(OllirTemplates.variable(aux));
 
         return Arrays.asList(ollir.toString(), "ARRAY_INIT");
