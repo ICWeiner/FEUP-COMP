@@ -798,32 +798,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         return Arrays.asList(ollir.toString(), "ARRAY_INIT");
     }
 
-    private List<Object> dealWithArrayAccess(JmmNode node, List<Object> data) {
-        if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT");
-        visited.add(node);
-
-        /*String target = (String) visit(node.getChildren().get(0)).get(0);
-            String[] parts = target.split("\n");
-            if (parts.length > 1) {
-                for (int i = 0; i < parts.length - 1; i++) {
-                    ollir.append(parts[i]).append("\n");
-                }
-            }*/
-
-        //visitResult = visit(node.getChildren().get(0).getChildren().get(1), Arrays.asList(classField ? "FIELD" : "ASSIGNMENT", variable.getKey(), "ARRAY_ACCESS"));
-
-        String targetVisitResult  = (String) visit(node.getChildren().get(0), Arrays.asList("RETURN")).get(0);
-        String indexVisitResult = (String) visit(node.getChildren().get(1), Arrays.asList(data.get(0),data.get(1),"ARRAY_ACCESS")).get(0);
-
-        //String result = (String) visitResult.get(0);
-
-        String ollir =  OllirTemplates.arrayaccess(new Symbol(new Type("int", true), indexVisitResult), null, targetVisitResult);
-
-
-        //String visit = (String) visit(node.getChildren().get(0), Arrays.asList("RETURN")).get(0);
-
-        return Arrays.asList(targetVisitResult);
-    }
 
     private List<Object> dealWithIfStatement(JmmNode node, List<Object> data){
         if (visited.contains(node)) return Collections.singletonList("DEFAULT_VISIT 14");
@@ -951,6 +925,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             List<Object> visitResult;
             String tempVar;
             switch (child.getKind()) {
+                case "IntArrayDeclaration":
                 case "GeneralDeclaration":
                     visitResult = visit(child, Arrays.asList("PARAM"));
                     var = (String) visitResult.get(0);
@@ -981,14 +956,11 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     paramsOllir.add(result);
                     break;
                 case "UnaryOp":
-                    //var = (String) visit(child, Arrays.asList("PARAM")).get(0);
-
                     visitResult = visit(child, Arrays.asList("PARAM"));
                     var = (String) visitResult.get(1);
                     tempVar = (String) visitResult.get(0);
 
                     statements = var.split("\n");
-                    System.out.println("VISIT RESULT :"  + tempVar.split("\n")[0]);
 
                     ollir.append(tempVar.split("\n")[0]).append("\n");
                     result = binaryOperations(statements, ollir, new Type("boolean", false));
@@ -998,9 +970,6 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
 
                     paramsOllir.add(result);
                     break;
-
-                    //paramsOllir.add(var);
-                    //break;
                 case "Integer":
                     type = new Type("int", false);
                     paramsOllir.add(String.format("%s%s", child.get("value"), OllirTemplates.type(type)));
