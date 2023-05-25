@@ -350,7 +350,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         visited.add(node);
 
         String toReturn;
-        if(data.get(0).equals("RETURN")){
+        if(data.get(0).equals("RETURN") || data.get(0).equals("PARAM")){
             StringBuilder builder = new StringBuilder();
             Type type = new Type(node.get("name"), false);
             Symbol auxiliary = new Symbol(type, "temporary" + temp_sequence++);
@@ -948,7 +948,21 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             List<Object> visitResult;
             String tempVar;
             switch (child.getKind()) {
-                case "Parenthesis":
+                case "GeneralDeclaration":
+                    visitResult = visit(child, Arrays.asList("PARAM"));
+                    var = (String) visitResult.get(0);
+                    String[] varParts = var.split("\n");
+                    tempVar = varParts[varParts.length - 1];
+
+                    ollir.append(varParts[0]).append("\n");
+                    for( int i = 1; i < varParts.length - 1; i++){
+                        ollir.append(varParts[i]).append("\n");
+                    }
+
+                    paramsOllir.add(tempVar);
+
+                    break;
+                case "Parenthesis"://TODO: needs checking
                     visitResult = visit(child, Arrays.asList("PARAM"));
                     var = (String) visitResult.get(0);
                     tempVar = (String) visitResult.get(0);
