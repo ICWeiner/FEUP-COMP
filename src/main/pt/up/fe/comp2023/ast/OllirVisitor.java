@@ -101,11 +101,13 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
-        String ollirChild = (String) visit(node.getChildren().get(0), Collections.singletonList("Parenthesis")).get(0);
+        List<Object> visitResult = visit(node.getChildren().get(0), Collections.singletonList("Parenthesis"));
+        String ollirChild = (String) visitResult.get(0);
 
 
         ollir.append(ollirChild);
 
+        if( visitResult.size() > 1) return Arrays.asList(ollir.toString(),visitResult.get(1));
 
         return Collections.singletonList(ollir.toString());
     }
@@ -415,38 +417,33 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         String leftSide;
         String rightSide;
 
+        Type opType;
+
         if( node.get("op").equals("&&")  || node.get("op").equals("<") ){
-            leftSide = binaryOperations(leftStmts, ollir, new Type("boolean", false));
-            rightSide = binaryOperations(rightStmts, ollir, new Type("boolean", false));
+            opType = new Type("boolean", false);
         }else{
-            leftSide = binaryOperations(leftStmts, ollir, new Type("int", false));
-            rightSide = binaryOperations(rightStmts, ollir, new Type("int", false));
+            opType = new Type("int", false);
         }
+
+        leftSide = binaryOperations(leftStmts, ollir, opType);
+        rightSide = binaryOperations(rightStmts, ollir, opType);
 
 
         if (data == null) {
             return Arrays.asList("DEFAULT_VISIT 8");
         }
         if (data.get(0).equals("RETURN") || data.get(0).equals("FIELD")) {
-            if(node.get("op").equals("&&") || node.get("op").equals("<")){
-                Symbol variable = new Symbol(new Type("boolean", false), "temporary" + temp_sequence++);
-                ollir.append(String.format("%s :=.bool %s %s.bool %s;\n", OllirTemplates.variable(variable), leftSide, node.get("op"), rightSide));
-                ollir.append(OllirTemplates.variable(variable));
-            }else{
-                Symbol variable = new Symbol(new Type("int", false), "temporary" + temp_sequence++);
-                ollir.append(String.format("%s :=.i32 %s %s.i32 %s;\n", OllirTemplates.variable(variable), leftSide, node.get("op"), rightSide));
-                ollir.append(OllirTemplates.variable(variable));
-            }
+            Symbol variable = new Symbol( opType, "temporary" + temp_sequence++);
+            ollir.append(String.format("%s :=%s %s %s%s %s;\n", OllirTemplates.variable(variable),OllirTemplates.type(opType) , leftSide, node.get("op"), OllirTemplates.type(opType), rightSide));
+            ollir.append(OllirTemplates.variable(variable));
 
         } else {
-            if(node.get("op").equals("&&") || node.get("op").equals("<")){
-                ollir.append(String.format("%s %s.bool %s", leftSide, node.get("op"), rightSide));
-            }else {
-                ollir.append(String.format("%s %s.i32 %s", leftSide, node.get("op"), rightSide));
-            }
+
+            ollir.append(String.format("%s %s%s %s", leftSide, node.get("op"),OllirTemplates.type(opType) , rightSide));
+
         }
 
-        return Collections.singletonList(ollir.toString());
+        return Arrays.asList(ollir.toString(),opType);
     }
 
 
@@ -917,20 +914,20 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                     paramsOllir.add(tempVar);
 
                     break;
-                case "Parenthesis"://TODO: needs checking
+                case "Parenthesis"://TODO: needs fixing for this case  a=io.teste( (2 * (1 + 2 ) ) );
                     visitResult = visit(child, Arrays.asList("PARAM"));
                     var = (String) visitResult.get(0);
                     tempVar = (String) visitResult.get(0);
 
-                    statements = var.split("\n");
+                    //statements = var.split("\n");
 
-                    ollir.append(tempVar.split("\n")[0]).append("\n");
-                    result = binaryOperations(statements, ollir, new Type("boolean", false));
-                    params.add(new Type("boolean", false));
+                    //ollir.append(tempVar.split("\n")[0]).append("\n");
+                    //result = binaryOperations(statements, ollir, new Type("boolean", false));
+                    //params.add(new Type("boolean", false));
 
 
 
-                    paramsOllir.add(result);
+                    paramsOllir.add(var);
                     break;
                 case "UnaryOp":
                     visitResult = visit(child, Arrays.asList("PARAM"));
