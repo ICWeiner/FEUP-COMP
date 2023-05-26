@@ -888,6 +888,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         for (JmmNode child : children) {
             Type type;
             String var;
+            String[] varParts;
             String[] statements;
             String result;
             List<Object> visitResult;
@@ -903,7 +904,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 case "GeneralDeclaration":
                     visitResult = visit(child, Arrays.asList("PARAM"));
                     var = (String) visitResult.get(0);
-                    String[] varParts = var.split("\n");
+                    varParts = var.split("\n");
                     tempVar = varParts[varParts.length - 1];
 
                     ollir.append(varParts[0]).append("\n");
@@ -917,17 +918,22 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
                 case "Parenthesis"://TODO: needs fixing for this case  a=io.teste( (2 * (1 + 2 ) ) );
                     visitResult = visit(child, Arrays.asList("PARAM"));
                     var = (String) visitResult.get(0);
-                    tempVar = (String) visitResult.get(0);
+                    varParts = var.split("\n");
+                    tempVar = varParts[varParts.length - 1];
+                    type = (Type) visitResult.get(1);
 
-                    //statements = var.split("\n");
+                    ollir.append(varParts[0]).append("\n");
+                    for( int i = 1; i < varParts.length - 1; i++){
+                        ollir.append(varParts[i]).append("\n");
+                    }
 
-                    //ollir.append(tempVar.split("\n")[0]).append("\n");
-                    //result = binaryOperations(statements, ollir, new Type("boolean", false));
-                    //params.add(new Type("boolean", false));
+                    if (tempVar.split(" ").length >1){
+                        tempVar = String.format("temporary%d", temp_sequence++);
+                        ollir.append( String.format("%s%s :=%s %s;", tempVar,OllirTemplates.type(type), OllirTemplates.type(type) ,varParts[varParts.length - 1]) ).append("\n");//TODO: FALTA TIPO
+                    }
 
+                    paramsOllir.add(String.format("%s%s", tempVar,OllirTemplates.type(type)));
 
-
-                    paramsOllir.add(var);
                     break;
                 case "UnaryOp":
                     visitResult = visit(child, Arrays.asList("PARAM"));
