@@ -1,5 +1,12 @@
 # Compilers Project
 
+## Group
+* Daniela Tomás, up202004946, Contribution: 33,(3)%
+* Diogo Nunes, up202007895, Contribution: 33,(3)%
+* João Veloso, up202005801, Contribution: 33,(3)%
+
+* Auto-evaluation: 18
+
 For this project, you need to install [Java](https://jdk.java.net/), [Gradle](https://gradle.org/install/), and [Git](https://git-scm.com/downloads/) (and optionally, a [Git GUI client](https://git-scm.com/downloads/guis), such as TortoiseGit or GitHub Desktop). Please check the [compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html) for Java and Gradle versions.
 
 ## Project setup
