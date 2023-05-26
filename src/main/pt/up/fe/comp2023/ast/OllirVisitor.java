@@ -75,14 +75,23 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         visited.add(node);
 
         StringBuilder ollir = new StringBuilder();
-        String result = (String) visit(node.getChildren().get(0), Collections.singletonList("UNARY")).get(0);
+        List<Object> visitResult  = visit(node.getChildren().get(0), Collections.singletonList("UNARY"));
+        String result = (String) visitResult.get(0);
 
-        String temp = "temporary" + temp_sequence++ + ".bool";//TODO: PROBLEM IS SOMEWHERE AROUND HERE
+
 
         String[] resultParts = result.split("\n");
 
+        if(node.getJmmChild(0).getKind().equals("Parenthesis")){
+            String temp = "temporary" + temp_sequence++ + ".bool";
+            ollir.append(String.format("%s :=.bool %s;\n", temp, resultParts[0]));
+            resultParts[0]  = temp;
+        }
+
+        String temp = "temporary" + temp_sequence++ + ".bool";//TODO: PROBLEM IS SOMEWHERE AROUND HERE
+
         for(int i = 0; i < resultParts.length; i++){
-            if (resultParts[i].contains(":=")) ollir.append(resultParts[i]).append("\n") ;
+            if (resultParts[i].contains(":=")) ollir.append(resultParts[i]).append("\n");
         }
 
         ollir.append(String.format("%s :=.bool !.bool %s;\n", temp, resultParts[resultParts.length - 1]));
