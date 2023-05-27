@@ -598,6 +598,12 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
             targetName = targetNode.get("value");
         }
 
+        if (targetNode.getKind().equals("MethodCall")){
+            //ollir.append(targetReturn.get(3))
+            Symbol tempVar =  (Symbol) targetReturn.get(1);
+            ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(tempVar ), OllirTemplates.type(tempVar.getType()), targetReturn.get(0)));
+        }
+
         if (methodNode.getKind().equals("LengthOp")  || methodNode.getKind().equals("ArrayAccess")) method = null;
         else method = table.getMethod(methodNode.get("value"));
 
