@@ -751,7 +751,7 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         }
 
         if (methodNode.getJmmParent().getKind().equals("MethodCall") || methodNode.getJmmParent().getKind().equals("ArrayAccess")  && data.get(0).equals("PARAM")){
-            return Arrays.asList(ollir.toString(),expectedType,"temporary" + (temp_sequence - 1),"PARAM");
+            return Arrays.asList(ollir.toString(), new Symbol(expectedType, "temporary" + (temp_sequence - 1)),"temporary" + (temp_sequence - 1),"PARAM");
         }
         return Arrays.asList(ollir.toString(), expectedType);
 
