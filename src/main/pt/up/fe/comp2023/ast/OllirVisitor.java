@@ -601,7 +601,9 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         if (targetNode.getKind().equals("MethodCall")){
             //ollir.append(targetReturn.get(3))
             Symbol tempVar =  (Symbol) targetReturn.get(1);
-            ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(tempVar ), OllirTemplates.type(tempVar.getType()), targetReturn.get(0)));
+            String[] resultParts = ((String) targetReturn.get(0)).split("\n");
+            for(int i = 0; i < resultParts.length - 1; i++) ollir.append(resultParts[i]).append("\n");
+            ollir.append(String.format("%s :=%s %s;\n", OllirTemplates.variable(tempVar ), OllirTemplates.type(tempVar.getType()), resultParts[resultParts.length - 1]));
         }
 
         if (methodNode.getKind().equals("LengthOp")  || methodNode.getKind().equals("ArrayAccess")) method = null;
@@ -757,7 +759,8 @@ public class OllirVisitor extends AJmmVisitor<List<Object>, List<Object>> {
         }
 
         if (methodNode.getJmmParent().getKind().equals("MethodCall") || methodNode.getJmmParent().getKind().equals("ArrayAccess")  && data.get(0).equals("PARAM")){
-            return Arrays.asList(ollir.toString(), new Symbol(expectedType, "temporary" + (temp_sequence - 1)),"temporary" + (temp_sequence - 1),"PARAM");
+            Symbol tempVar = new Symbol(expectedType, "temporary" + temp_sequence++);
+            return Arrays.asList(ollir.toString(), tempVar,tempVar.getName(),"PARAM");
         }
         return Arrays.asList(ollir.toString(), expectedType);
 
